@@ -10,9 +10,10 @@ ML techniques active in this file:
   - IQR anomaly detection           (via ml_engine.detect_anomalies)
   - Confidence scoring              (via ml_engine.confidence_score)
 """
-from typing import List, Dict
+from typing import List, Dict, Tuple
 from app.domain.questions import QUESTIONS_BY_ID, CATEGORY_LABELS
 from app.domain.ml_engine import get_weight, run_ml_pipeline
+from app.domain.answer_matcher import match_answer
 from app.models.schemas import RiskScores, ReportData
 
 
@@ -24,6 +25,12 @@ from app.models.schemas import RiskScores, ReportData
 
 def option_risk(question: Dict, answer: str) -> int:
     """Map one answer string to a 0-100 risk integer using fuzzy-aware logic."""
+    # Free-form (spoken / typed) answers: find the option they mean first,
+    # otherwise they would all score a neutral 50. See answer_matcher.py.
+    if answer.strip().lower() not in {o.lower() for o in question.get("options", [])}:
+        matched = match_answer(question, answer).option
+        if matched:
+            answer = matched
     normalized = answer.strip().lower()
     risk_map: Dict[str, int] = question.get("risk_map", {})
 
@@ -62,12 +69,12 @@ def option_risk(question: Dict, answer: str) -> int:
 # Main scoring function
 # ─────────────────────────────────────────────────────────────────────────────
 
-def calculate_scores(answers: List[Dict]) -> RiskScores:
+def calculate_scores(answers: List[Dict]) -> Tuple[RiskScores, Dict]:
     """
     1. Maps each answer to a risk value.
     2. Applies feature importance weights (ML — mirrors Random Forest weights).
     3. Runs the ML pipeline (ensemble + decision tree + fuzzy + anomaly).
-    4. Returns RiskScores.
+    4. Returns (RiskScores, ml_dict).
     """
     # Enrich answers with risk values, weights, and category
     enriched: List[Dict] = []
@@ -105,7 +112,7 @@ def calculate_scores(answers: List[Dict]) -> RiskScores:
         musculoskeletal_risk = scores["musculoskeletal_risk"],
         recovery_risk        = scores["recovery_risk"],
         overall_risk         = ml["overall_risk"],
-    )
+    ), ml
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -199,7 +206,7 @@ def _tier(score: float) -> str:
 # Report builder
 # ─────────────────────────────────────────────────────────────────────────────
 
-def build_report(scores: RiskScores, answers: List[Dict]) -> ReportData:
+def build_report(scores: RiskScores, ml: Dict) -> ReportData:
     """
     Builds the full report including ML outputs:
     - Decision tree tier and clinical action
@@ -209,27 +216,8 @@ def build_report(scores: RiskScores, answers: List[Dict]) -> ReportData:
     - Feature importance (top 5 questions that drove the score)
     """
     from app.domain.ml_engine import (
-        run_ml_pipeline, fuzzy_classify, detect_anomalies, confidence_score, get_weight
+        fuzzy_classify, detect_anomalies, confidence_score, get_weight
     )
-
-    # Re-enrich answers (same as calculate_scores — needed for ML pipeline)
-    enriched: List[Dict] = []
-    for answer in answers:
-        q = QUESTIONS_BY_ID.get(answer["question_id"])
-        if not q:
-            continue
-        value = answer.get("typed_answer") or answer.get("transcript") or ""
-        if not value:
-            continue
-        enriched.append({
-            "question_id":   answer["question_id"],
-            "question_text": q["text"],
-            "category":      q["category"],
-            "risk":          option_risk(q, value),
-            "weight":        get_weight(answer["question_id"]),
-        })
-
-    ml = run_ml_pipeline(enriched, {})
 
     tier           = ml["tier"]
     clinical_action = ml["clinical_action"]

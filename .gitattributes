@@ -9,6 +9,11 @@
 *.css text eol=lf
 *.svg text eol=lf
 *.txt text eol=lf
+*.js text eol=lf
+*.ino text eol=lf
+*.h text eol=lf
+# Windows scripts need CRLF or cmd.exe can misread them
+*.bat text eol=crlf
 
 # Binaries — don't touch line endings
 *.png binary

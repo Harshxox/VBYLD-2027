@@ -52,6 +52,11 @@ export type BackendReport = {
   category_breakdown: Record<string, number>
   detailed_findings: string[]
   positive_habits: string[]
+  wearable?: {
+    available: boolean
+    combined?: { index: number; level: string }
+    insights?: { type: string; title: string; message: string }[]
+  }
 }
 
 export type CompleteSessionResponse = {
@@ -62,24 +67,43 @@ export type CompleteSessionResponse = {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-async function request<T>(path: string, options?: RequestInit): Promise<T> {
-  const res = await fetch(`${API_BASE}${path}`, {
-    headers: { 'Content-Type': 'application/json' },
-    ...options,
-  })
-  if (!res.ok) {
-    const detail = await res.text()
-    throw new Error(`API ${res.status}: ${detail}`)
+async function request<T>(path: string, options?: RequestInit, retries = 2): Promise<T> {
+  try {
+    const res = await fetch(`${API_BASE}${path}`, {
+      headers: { 'Content-Type': 'application/json' },
+      ...options,
+    })
+    if (!res.ok) {
+      const detail = await res.text()
+      throw new Error(`API ${res.status}: ${detail}`)
+    }
+    return res.json() as Promise<T>
+  } catch (err) {
+    if (retries > 0) {
+      await new Promise(r => setTimeout(r, 500))
+      return request(path, options, retries - 1)
+    }
+    throw err
   }
-  return res.json() as Promise<T>
 }
 
 // ── Session ───────────────────────────────────────────────────────────────────
 
-export async function apiCreateSession(inputMode: 'typed' | 'voice'): Promise<BackendSession> {
+export async function apiCreateSession(
+  inputMode: 'typed' | 'voice',
+  clientInfo?: { name?: string; email?: string; phone?: string; age?: number; job?: string; consent?: boolean }
+): Promise<BackendSession> {
   return request<BackendSession>('/api/sessions', {
     method: 'POST',
-    body: JSON.stringify({ input_mode: inputMode }),
+    body: JSON.stringify({
+      input_mode: inputMode,
+      consent: clientInfo?.consent ?? true, // ensure it's sent
+      client_name: clientInfo?.name,
+      client_email: clientInfo?.email,
+      client_phone: clientInfo?.phone,
+      client_age: clientInfo?.age,
+      client_job: clientInfo?.job,
+    }),
   })
 }
 

@@ -3,7 +3,7 @@ Sessions route — v4
 Changes from v3:
   - REMOVED public GET /api/sessions (was leaking all client PII without auth)
   - GET  /api/sessions/admin  → now uses Depends(_require_admin) correctly (Bug 3 fix)
-  - Updated default ADMIN_TOKEN to ec-admin-cp04-2026 (Bug G fix)
+  - Admin routes now use a server-side login (see app/security.py)
   - DELETE /api/sessions/{id}         → admin only
   - GET  /api/sessions/{id}/audio     → list audio files for a session
 """
@@ -16,18 +16,14 @@ from typing import Optional
 from app.db.database import get_db
 from app.models.assessment import AssessmentSession, AudioFile
 from app.models.schemas import SessionCreate, SessionOut
+from app.models.sensors import SensorLink, SensorReading
+from app.models.consent import Consent, CONSENT_VERSION
+from app.security import require_admin
 import uuid
 
 router = APIRouter()
 
-ADMIN_TOKEN = os.getenv("ADMIN_TOKEN", "ec-admin-cp04-2026")
 AUDIO_DIR   = os.getenv("AUDIO_UPLOAD_DIR", "./uploads/audio")
-
-
-def _require_admin(x_admin_token: Optional[str] = Header(default=None)):
-    """FastAPI Depends — raises 401 if the X-Admin-Token header is missing or wrong."""
-    if x_admin_token != ADMIN_TOKEN:
-        raise HTTPException(status_code=401, detail="Invalid or missing admin token")
 
 
 # ── Create session ────────────────────────────────────────────────────────────
@@ -40,6 +36,8 @@ def create_session(payload: SessionCreate, db: Session = Depends(get_db)):
     """
     if payload.input_mode not in ("typed", "voice"):
         raise HTTPException(status_code=422, detail="input_mode must be 'typed' or 'voice'")
+    if not payload.consent:
+        raise HTTPException(status_code=422, detail="Consent is required before any data can be stored.")
 
     session = AssessmentSession(
         id=str(uuid.uuid4()),
@@ -52,6 +50,8 @@ def create_session(payload: SessionCreate, db: Session = Depends(get_db)):
         client_job=payload.client_job,
     )
     db.add(session)
+    db.add(Consent(session_id=session.id, version=payload.consent_version or CONSENT_VERSION,
+                   accepted_at=datetime.now(timezone.utc)))
     db.commit()
     db.refresh(session)
     return session
@@ -62,11 +62,11 @@ def create_session(payload: SessionCreate, db: Session = Depends(get_db)):
 @router.get("/admin", response_model=list[SessionOut])
 def admin_list_sessions(
     db: Session = Depends(get_db),
-    _: None = Depends(_require_admin),  # Bug 3 fix: use Depends, not manual call
+    _: str = Depends(require_admin),
 ):
     """
     Return ALL sessions (most recent first) including client details and scores.
-    Requires X-Admin-Token header matching ADMIN_TOKEN env var.
+    Requires admin login (Authorization: Bearer <token> from POST /api/admin/login).
     """
     return (
         db.query(AssessmentSession)
@@ -91,11 +91,11 @@ def get_session(session_id: str, db: Session = Depends(get_db)):
 def delete_session(
     session_id: str,
     db: Session = Depends(get_db),
-    _: None = Depends(_require_admin),  # Bug 3 fix: use Depends
+    _: str = Depends(require_admin),
 ):
     """
     Permanently delete a session, all its answers, and all audio files from disk.
-    Requires X-Admin-Token. Called by index.html deleteClient().
+    Requires admin login. Called by index.html deleteClient().
     """
     session = db.query(AssessmentSession).filter(AssessmentSession.id == session_id).first()
     if not session:
@@ -106,6 +106,9 @@ def delete_session(
     if os.path.isdir(session_audio_dir):
         shutil.rmtree(session_audio_dir, ignore_errors=True)
 
+    db.query(SensorReading).filter(SensorReading.session_id == session_id).delete()
+    db.query(SensorLink).filter(SensorLink.session_id == session_id).delete()
+    db.query(Consent).filter(Consent.session_id == session_id).delete()
     db.delete(session)   # cascades to answers + audio_files rows
     db.commit()
     return

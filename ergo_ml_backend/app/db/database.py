@@ -16,7 +16,7 @@ class Base(DeclarativeBase):
 
 
 def create_db_tables():
-    from app.models import assessment  # noqa: F401 – registers models
+    from app.models import assessment, sensors, consent  # noqa: F401 – registers models
     Base.metadata.create_all(bind=engine)
 
 

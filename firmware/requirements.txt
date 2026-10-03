@@ -1,0 +1,1 @@
+pyserial>=3.5   # usb_bridge.py and serial_monitor.py

@@ -7,6 +7,11 @@ python-multipart==0.0.12
 reportlab==4.2.5
 aiofiles==24.1.0
 
+# Answer matcher: MiniLM sentence embeddings via ONNX (no PyTorch needed, ~90 MB model
+# downloaded once into models_cache/). Without it the matcher falls back to rules only.
+fastembed==0.8.1
+numpy>=1.26
+
 # ── All ML is implemented in pure Python (ml_engine.py) ──────────────────────
 # No scikit-learn or numpy required — the algorithms are self-contained:
 #   Fuzzy Logic, Weighted Ensemble, Decision Tree, IQR Anomaly Detection,

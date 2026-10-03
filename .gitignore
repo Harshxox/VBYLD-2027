@@ -48,3 +48,10 @@ build/
 
 # ── Misc ─────────────────────────────────────────────────────────────────────
 *.docx
+
+# ESP32 firmware Wi-Fi credentials
+firmware/**/secrets.h
+
+# Downloaded ML models (answer matcher)
+ergo_ml_backend/models_cache/
+models_cache/

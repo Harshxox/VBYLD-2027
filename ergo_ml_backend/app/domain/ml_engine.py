@@ -274,15 +274,18 @@ def confidence_score(
     total_questions:   int,
     answered:          int,
     anomaly_count:     int,
-    high_weight_answered: int,   # how many high-weight (>1.3) questions answered
+    high_weight_answered: int,   # how many high-weight (>= 1.3) questions answered
+    high_weight_total: int,      # how many high-weight questions exist
 ) -> float:
     """
     Returns confidence 0–100.
-    - Full answers + no anomalies + all key questions answered = 98–100%
+    - Full answers + no anomalies + all key questions answered = 90% (the maximum: 50% + 40%)
     - Missing answers or anomalies reduce confidence proportionally.
     """
     completeness    = answered / max(total_questions, 1)
-    key_completeness = high_weight_answered / 10   # 10 high-weight questions exist
+    # Was '/ 10' while 11 high-weight questions exist, so a full session scored 94%
+    # instead of the 90% maximum of 50% + 40%. Count them instead of hard-coding.
+    key_completeness = high_weight_answered / max(high_weight_total, 1)
     penalty         = anomaly_count * 0.07          # 7% per anomaly
 
     raw = (
@@ -376,6 +379,7 @@ def run_ml_pipeline(
         answered=len(answered_qids),
         anomaly_count=len(anomalies),
         high_weight_answered=high_weight_answered,
+        high_weight_total=len(high_weight_qids),
     )
 
     # ── Feature importance — top 5 most influential answered questions ─────────

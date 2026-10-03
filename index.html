@@ -12,11 +12,14 @@
   var _rawMeta = document.querySelector('meta[name="api-base"]')?.content || ''
   window.__ERGO_API__ = (_rawMeta && _rawMeta !== '%VITE_API_BASE%') ? _rawMeta : 'http://127.0.0.1:8000'
 </script>
+<!-- Hindi / Kannada text (public/i18n.js) - loaded before the app script -->
+<script src="/i18n.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Playfair+Display:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300..700;1,9..40,300..700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<!-- Served from public/vendor so the demo works without internet -->
+<script src="/vendor/three-r128.min.js"></script>
+<script src="/vendor/chart-4.4.0.umd.min.js"></script>
 <style>
 /* ─── Design Tokens ─── */
 :root, [data-theme="light"] {
@@ -636,6 +639,119 @@ footer{color:#74877f !important}
 }
 </style>
 
+<style>
+/* ─── Wearable: connect, baseline, live panel, on-screen warnings ─── */
+.wear-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:20px}
+.wear-card{background:var(--panel);border:1.5px solid var(--line);border-radius:18px;padding:28px;box-shadow:var(--shadow-sm);display:grid;gap:18px;align-content:start}
+.wear-card h2{font-family:var(--font-display);font-weight:700}
+.wear-card .lead{color:var(--muted);font-size:.95rem;line-height:1.65}
+.wear-status{display:inline-flex;align-items:center;gap:8px;justify-self:start;font-size:.85rem;font-weight:600;padding:6px 14px;border-radius:999px;background:#f1f5f9;color:var(--muted)}
+.wear-status .dot{width:9px;height:9px;border-radius:50%;background:#94a3b8}
+.wear-status.on{background:#e8f7f4;color:#0f766e}
+.wear-status.on .dot{background:#10b981;animation:wear-pulse 1.6s infinite}
+@keyframes wear-pulse{0%{box-shadow:0 0 0 0 rgba(16,185,129,.55)}70%{box-shadow:0 0 0 8px rgba(16,185,129,0)}100%{box-shadow:0 0 0 0 rgba(16,185,129,0)}}
+.wear-check{list-style:none;display:grid;gap:12px}
+.wear-check li{display:flex;gap:12px;align-items:flex-start;font-size:.92rem;font-weight:500}
+.wear-check .ic{flex:none;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-size:.75rem;font-weight:700;background:#f1f5f9;color:#94a3b8;transition:background 200ms}
+.wear-check li.ok .ic{background:#10b981;color:#fff}
+.wear-check small{display:block;color:var(--muted);font-size:.8rem;font-weight:400}
+.wear-actions{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+.live-tiles{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.live-tile{border:1.5px solid var(--line);border-radius:14px;padding:16px;display:grid;gap:4px;align-content:start;background:var(--surface);transition:background 300ms,border-color 300ms}
+.live-tile .lt-label{font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600}
+.live-tile .lt-value{font-family:var(--font-display);font-size:1.7rem;font-weight:700;line-height:1.15;font-variant-numeric:tabular-nums}
+.live-tile .lt-value small{font-size:.9rem;font-weight:600}
+.lt-sub{font-size:.8rem;color:var(--muted)}
+.live-tile.good{border-color:#a7f3d0;background:#f0fdf8}
+.live-tile.warn{border-color:#fcd34d;background:#fffbeb}
+.live-tile.bad{border-color:#fca5a5;background:#fef2f2}
+.posture-bar{height:8px;border-radius:999px;background:#e2e8f0;overflow:hidden;margin-top:6px}
+.posture-bar span{display:block;height:100%;border-radius:999px;transition:width 400ms ease,background 400ms ease}
+.baseline-ring{position:relative;width:190px;height:190px;margin:0 auto}
+.baseline-ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.baseline-ring .br-num{position:absolute;inset:0;display:grid;place-items:center;text-align:center}
+.baseline-ring .br-num b{font-family:var(--font-display);font-size:3.2rem;line-height:1;font-variant-numeric:tabular-nums}
+.baseline-result{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.live-panel{border-top:1px solid var(--line);padding-top:16px;display:grid;gap:10px}
+.live-panel-head{display:flex;justify-content:space-between;align-items:center;font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600}
+.live-panel-head .wear-status{padding:2px 9px;font-size:.7rem}
+.lp-row{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:.88rem}
+.lp-row .lp-k{color:var(--muted)}
+.lp-row .lp-v{font-weight:600;font-variant-numeric:tabular-nums}
+.lp-row .lp-v small{color:var(--muted);font-weight:400}
+.stress-pill{padding:2px 10px;border-radius:999px;font-size:.75rem;font-weight:700;text-transform:capitalize}
+.stress-pill.calm{background:#d1fae5;color:#065f46}
+.stress-pill.elevated{background:#fef3c7;color:#92400e}
+.stress-pill.high{background:#fee2e2;color:#991b1b}
+.stress-pill.unknown{background:#f1f5f9;color:#64748b}
+.lp-hint{font-size:.76rem;color:#92400e;background:#fffbeb;border-radius:8px;padding:6px 10px}
+#sensor-alerts{position:fixed;top:84px;left:50%;transform:translateX(-50%);z-index:150;display:grid;gap:10px;width:min(560px,calc(100% - 32px));pointer-events:none}
+.s-alert{display:flex;gap:12px;align-items:center;padding:14px 18px;border-radius:14px;font-weight:600;font-size:.95rem;line-height:1.4;box-shadow:var(--shadow-lg);animation:alert-in 300ms ease both}
+.s-alert .sa-ic{font-size:1.4rem;flex:none}
+.s-alert.danger{background:#dc2626;color:#fff}
+.s-alert.warning{background:#f59e0b;color:#1f1300}
+.s-alert.leaving{animation:alert-out 300ms ease both}
+@keyframes alert-in{from{opacity:0;transform:translateY(-12px) scale(.98)}to{opacity:1;transform:none}}
+@keyframes alert-out{to{opacity:0;transform:translateY(-12px) scale(.98)}}
+@media (prefers-reduced-motion:reduce){.s-alert,.s-alert.leaving,.wear-status.on .dot{animation:none}}
+.idx-chip{display:inline-flex;align-items:center;gap:8px;align-self:flex-start;justify-self:start;width:fit-content;padding:8px 16px;border-radius:999px;background:#fff;border:1.5px solid #f59e0b;color:#92400e;font-weight:600;font-size:.92rem;text-decoration:none;box-shadow:var(--shadow-sm)}
+.idx-chip b{font-size:1.05rem;color:#b45309}
+.idx-chip small{font-weight:400;color:var(--muted)}
+.body-section{display:grid;gap:18px;scroll-margin-top:90px}
+.idx-card{display:grid;grid-template-columns:auto 1fr;gap:32px;align-items:center;background:var(--panel);border:1.5px solid var(--line);border-radius:18px;padding:26px 28px;box-shadow:var(--shadow-sm)}
+.idx-num{font-family:var(--font-display);font-size:3.6rem;font-weight:800;line-height:1}
+.idx-split{display:flex;height:14px;border-radius:999px;overflow:hidden;background:#e2e8f0;margin:12px 0 8px}
+.idx-split span{display:block;height:100%}
+.idx-legend{display:flex;flex-wrap:wrap;gap:18px;font-size:.85rem;color:var(--muted)}
+.idx-legend b{color:var(--ink)}
+.insight-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.insight-card{border-radius:14px;padding:16px 18px;border:1.5px solid;display:grid;gap:6px}
+.insight-card.warning{background:#fff7ed;border-color:#fdba74;color:#7c2d12}
+.insight-card.info{background:#eff6ff;border-color:#93c5fd;color:#1e3a8a}
+.insight-card h4{font-size:1rem;font-weight:700}
+.insight-card p{font-size:.9rem;line-height:1.55}
+.body-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+.bs-card{background:var(--panel);border:1.5px solid var(--line);border-radius:14px;padding:16px;display:grid;gap:4px;align-content:start}
+.bs-k{font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600}
+.bs-v{font-family:var(--font-display);font-size:1.6rem;font-weight:700;line-height:1.15;font-variant-numeric:tabular-nums}
+.bs-s{font-size:.8rem;color:var(--muted)}
+.method-note{font-size:.8rem;color:var(--muted);line-height:1.6}
+@media(max-width:640px){.idx-card{grid-template-columns:1fr;gap:16px}}
+/* A site-wide "button{...!important}" rule painted every option dark green, so the
+   selected answer was invisible. Options: light; selected: filled + tick; suggested: amber outline. */
+.option-btn{background:#f9fafc !important;color:var(--ink) !important;border:1.5px solid var(--line) !important;box-shadow:none !important;font-weight:500 !important}
+.option-btn:hover:not(:disabled){background:#f0faf8 !important;border-color:var(--teal) !important}
+.option-btn.selected{background:linear-gradient(135deg,var(--teal-dark),var(--teal)) !important;color:#fff !important;border-color:transparent !important;box-shadow:0 8px 20px rgba(10,147,150,.28) !important;font-weight:700 !important}
+.option-btn.selected::before{content:"✓  "}
+.option-btn.suggested{outline:2px dashed #f59e0b;outline-offset:2px}
+.match-note:empty{display:none}
+/* Phones: grid items default to min-width:auto, so the charts/table section
+   forced the whole report wider than the screen. Let them shrink; the wide
+   severity table scrolls inside its own card instead. */
+.results-body>*,.charts-section,.chart-grid-2>*,.chart-card,.body-section>*{min-width:0}
+.chart-card{overflow-x:auto}
+.chart-canvas-wrap{position:relative;max-width:100%}
+.lang-picker{display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-size:.88rem;color:var(--muted);font-weight:500}
+.lang-btn{padding:6px 16px !important;border-radius:999px !important;background:#fff !important;color:var(--ink) !important;border:1.5px solid var(--line) !important;box-shadow:none !important;font-weight:600 !important;font-size:.9rem}
+.lang-btn.active{background:linear-gradient(135deg,var(--teal-dark),var(--teal)) !important;color:#fff !important;border-color:transparent !important}
+[lang="hi"],[lang="kn"]{font-family:'Noto Sans Devanagari','Noto Sans Kannada','Nirmala UI','Tunga','Mangal',var(--font-body)}
+.q-text[lang="hi"],.q-text[lang="kn"]{font-family:'Noto Sans Devanagari','Noto Sans Kannada','Nirmala UI','Tunga','Mangal',sans-serif;line-height:1.5;letter-spacing:0}
+.mismatch-pill{background:#fef3c7 !important;color:#92400e !important;margin-top:4px;font-size:.68rem !important}
+.admin-stats-row{grid-template-columns:repeat(auto-fit,minmax(150px,1fr)) !important}
+.consent-wrap{display:grid;gap:8px;margin:18px 0 6px}
+.consent-box{display:flex;gap:10px;align-items:flex-start;font-size:.86rem;line-height:1.55;color:var(--color-text);cursor:pointer}
+.consent-box input[type=checkbox]{flex:none;width:18px !important;height:18px !important;margin-top:3px;padding:0 !important;accent-color:var(--teal);box-shadow:none !important}
+.consent-box a{color:var(--teal-dark);font-weight:600}
+.consent-details{font-size:.8rem;color:var(--muted);background:#f4f9f7;border:1px solid var(--line);border-radius:10px;padding:10px 14px;display:grid;gap:6px}
+.screening-note{background:#eff6ff;border:1px solid #bfdbfe;color:#1e3a8a;border-radius:12px;padding:12px 16px;font-size:.9rem;line-height:1.5}
+.match-note{font-size:.9rem;padding:10px 14px;border-radius:10px;margin-top:-6px}
+.match-note.ok{background:#ecfdf5;color:#065f46;border:1px solid #a7f3d0}
+.match-note.none{background:#fffbeb;color:#92400e;border:1px solid #fcd34d}
+.match-note small{color:var(--muted);font-weight:400}
+@media(max-width:960px){.wear-grid{grid-template-columns:1fr}}
+@media(max-width:640px){.wear-card{padding:20px}.baseline-result{grid-template-columns:1fr}#sensor-alerts{top:64px}}
+</style>
+
 </head>
 <body>
 
@@ -713,7 +829,7 @@ footer{color:#74877f !important}
         <div class="register-card">
           <div class="card-header">
             <h2>Client Registration</h2>
-            <p>Fill in your details to begin. Stored securely in-session.</p>
+            <p>Fill in your details to begin. Used only for your screening report.</p>
           </div>
           <div class="reg-err-banner" id="reg-err-banner"></div>
           <div class="form-grid">
@@ -738,16 +854,23 @@ footer{color:#74877f !important}
               <span class="field-err" id="err-phone">Enter a valid phone number.</span>
             </div>
             <div class="form-field">
-  <label for="f-job">Job Role</label>
-  
-  <input 
-    type="text" 
-    id="f-job" 
-    placeholder="Enter your job role"
-  >
-</div>
+              <label for="f-job">Job Role</label>
+              <input type="text" id="f-job" placeholder="Enter your job role" autocomplete="organization-title"/>
               <span class="field-err" id="err-job">Please type your job role.</span>
             </div>
+          </div>
+          <div class="consent-wrap">
+            <label class="consent-box" for="f-consent">
+              <input type="checkbox" id="f-consent"/>
+              <span>I agree that ErgoCare may store my details, answers, voice recordings and wearable readings to create my screening report. I am 18 or older (or have a parent's or guardian's permission). <a href="#" onclick="toggleConsentDetails(event)">What is stored and why?</a></span>
+            </label>
+            <div class="consent-details" id="consent-details" hidden>
+              <p><strong>What we store:</strong> name, email, phone, age, job role; your 40 answers; voice clips and transcripts (voice mode only); wearable readings - heart rate, skin response and posture - once per second (only if you use the wearable).</p>
+              <p><strong>Why:</strong> only to calculate your ergonomic screening report. Anonymised results may be used to improve ErgoCare.</p>
+              <p><strong>Who can see it:</strong> you, and administrators who sign in to the protected admin panel.</p>
+              <p><strong>Your choice:</strong> you can ask an administrator to delete all your data at any time. ErgoCare is a screening tool, <strong>not a medical diagnosis</strong>.</p>
+            </div>
+            <span class="field-err" id="err-consent">Please tick the box to give your consent before starting.</span>
           </div>
           <button class="btn-submit" onclick="submitRegistration()">
             Register &amp; Begin Assessment
@@ -831,6 +954,7 @@ footer{color:#74877f !important}
           <div class="astat"><div class="astat-num" id="astat-total">0</div><div class="astat-label">Total Clients</div></div>
           <div class="astat"><div class="astat-num" id="astat-avg">—</div><div class="astat-label">Avg Overall Risk</div></div>
           <div class="astat"><div class="astat-num" id="astat-high" style="color:#dc2626">0</div><div class="astat-label">High Risk Clients</div></div>
+          <div class="astat" title="Hidden stress or posture blind spot found by the wearable"><div class="astat-num" id="astat-mismatch" style="color:#d97706">0</div><div class="astat-label">⌚ Mismatch Alerts</div></div>
         </div>
         <div class="admin-fp-panel">
           <div class="admin-header">
@@ -935,10 +1059,13 @@ function showView(name) {
 /* ════════════════════════════════════════════════════
    ADMIN AUTH
 ════════════════════════════════════════════════════ */
-const ADMIN_USERS = [
-  { username: 'culturedpotato04', pass: '12345678' },
-]
+// Admin login is checked by the server (POST /api/admin/login). No usernames,
+// passwords or tokens live in this page any more - it is public on GitHub.
 let adminLoggedIn = false
+let adminToken = null
+const ADMIN_TOKEN_KEY = 'ergocare:admin-token'
+function saveAdminToken(t) { adminToken = t; try { t ? sessionStorage.setItem(ADMIN_TOKEN_KEY, t) : sessionStorage.removeItem(ADMIN_TOKEN_KEY) } catch (e) {} }
+function loadAdminToken() { try { return sessionStorage.getItem(ADMIN_TOKEN_KEY) } catch (e) { return null } }
 
 function openAdminLogin() {
   document.getElementById('overlay-admin-login').classList.remove('hidden')
@@ -950,22 +1077,35 @@ function openAdminLogin() {
 function closeAdminLogin() {
   document.getElementById('overlay-admin-login').classList.add('hidden')
 }
-function attemptAdminLogin() {
+async function attemptAdminLogin() {
   const username = document.getElementById('al-username').value.trim()
   const pass  = document.getElementById('al-pass').value
-  if (ADMIN_USERS.some(u => u.username === username && u.pass === pass)) {
+  const err = document.getElementById('admin-login-err')
+  const btn = document.querySelector('.btn-admin-login')
+  err.classList.remove('show')
+  if (btn) { btn.disabled = true; btn.textContent = 'Signing in…' }
+  try {
+    const r = await fetch(`${API}/api/admin/login`, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+                                                      body: JSON.stringify({ username, password: pass }) })
+    const body = await r.json().catch(() => ({}))
+    if (!r.ok) throw new Error(body.detail || `HTTP ${r.status}`)
+    saveAdminToken(body.token)
     adminLoggedIn = true
     closeAdminLogin()
     showAdminDashboard()
     renderClients('','inline')
     renderClients('','admin')
     updateCounts()
-  } else {
-    document.getElementById('admin-login-err').classList.add('show')
+  } catch (e) {
+    err.textContent = e instanceof TypeError ? 'Server not reachable - is the backend running?' : e.message
+    err.classList.add('show')
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Sign In' }
   }
 }
 function adminLogout() {
   adminLoggedIn = false
+  saveAdminToken(null)
   showAdminLocked()
   renderClients('','inline') // re-lock inline panel
 }
@@ -982,7 +1122,7 @@ async function showAdminDashboard() {
 
   // Fetch all sessions from backend and merge into local clients list
   try {
-    const sessions = await apiReq('/api/sessions/admin')
+    const sessions = await apiReqAdmin('/api/sessions/admin')   // was apiReq: no token, always refused
     sessions.forEach(sess => {
       // Only add if not already in local list (match by backendSessionId)
       const exists = clients.find(c => c.backendSessionId === sess.id)
@@ -996,6 +1136,9 @@ async function showAdminDashboard() {
           age:   sess.client_age   || '—',
           job:   sess.client_job   || '—',
           registeredAt: new Date(sess.created_at).toLocaleString('en-IN'),
+          mode: sess.input_mode,
+          answers: (sess.answers || []).map(a => ({ qId: a.question_id, answer: a.typed_answer || a.transcript || '',
+                                                    transcript: a.transcript, audio_url: a.audio_url })),
           scores: sess.overall_risk != null ? {
             overallRisk:         sess.overall_risk,
             postureRisk:         sess.posture_risk,
@@ -1003,6 +1146,11 @@ async function showAdminDashboard() {
             workloadStress:      sess.workload_stress,
             musculoskeletalRisk: sess.musculoskeletal_risk,
             recoveryRisk:        sess.recovery_risk,
+            _report: sess.report_json ? {           // the report the server saved (incl. wearable section)
+              level: sess.report_json.level, topFactors: sess.report_json.top_factors || [],
+              actionPlan: sess.report_json.action_plan || [], detailedFindings: sess.report_json.detailed_findings || [],
+              positiveHabits: sess.report_json.positive_habits || [], wearable: sess.report_json.wearable || null,
+            } : undefined,
           } : null
         })
       }
@@ -1052,15 +1200,16 @@ async function deleteClient(localId, backendSessionId, clientName) {
   const idx = clients.findIndex(c => String(c.id) === String(localId))
   if (idx > -1) clients.splice(idx, 1)
 
-  // Delete from backend (requires X-Admin-Token header)
+  // Delete from backend (admin login required)
   if (backendSessionId && !String(backendSessionId).startsWith('offline')) {
     try {
-      await fetch(`${API}/api/sessions/${backendSessionId}`, {
+      const r = await fetch(`${API}/api/sessions/${backendSessionId}`, {
         method: 'DELETE',
-        headers: { 'X-Admin-Token': ADMIN_TOKEN }
+        headers: { 'Authorization': `Bearer ${adminToken}` }
       })
-      console.log('Backend session deleted:', backendSessionId)
-    } catch(e) { console.warn('Backend delete failed (data removed locally):', e) }
+      if (r.status === 401) { adminLogout(); openAdminLogin(); alert('Your admin login expired - please sign in again.'); return }
+      if (!r.ok && r.status !== 404) throw new Error(`HTTP ${r.status}`)
+    } catch(e) { alert(`Could not delete "${clientName}" from the server: ${e.message}`); return }
   }
 
   // Revoke object URLs for audio blobs
@@ -1083,6 +1232,9 @@ function updateCounts() {
 
 function updateAdminStats() {
   const n = clients.length
+  const mm = document.getElementById('astat-mismatch')
+  if (mm) mm.textContent = clients.filter(c => (clientWearable(c)?.insights || [])
+    .some(i => i.type === 'hidden_stress' || i.type === 'posture_blind_spot')).length
   document.getElementById('astat-total').textContent = n
   const scored = clients.filter(c=>c.scores)
   if (scored.length) {
@@ -1214,11 +1366,18 @@ function renderClients(q, panel) {
       return `<div class="score-pill" style="background:${bg};color:${col}">${lbl} ${r.toFixed(0)}%</div>`
     })() : '<div class="score-pill" style="background:#f1f5f9;color:#94a3b8">Pending</div>'
     const hasReport = !!c.scores
+    const w = clientWearable(c)
+    const wearPill = w?.available ? (() => {
+      const lv = w.combined.level, col = lv==='High'?'#dc2626':lv==='Moderate'?'#d97706':'#059669'
+      const flags = (w.insights || []).filter(i => i.severity === 'warning').map(i => i.title)
+      return `<div class="score-pill" style="background:#fff7ed;color:${col};margin-top:4px" title="ErgoCare Index: answers + wearable">⌚ Index ${w.combined.index.toFixed(0)}%</div>`
+        + (flags.length ? `<div class="score-pill mismatch-pill" title="${escH(flags.join(', '))}">⚠ ${escH(flags[0])}${flags.length>1?` +${flags.length-1}`:''}</div>` : '')
+    })() : ''
     const deleteBtn = adminLoggedIn
       ? `<button onclick="event.stopPropagation();deleteClient('${escH(String(c.id))}','${escH(c.backendSessionId||'')}','${escH(c.name)}')"
            style="margin-top:6px;padding:3px 10px;border-radius:999px;border:1px solid #fca5a5;background:#fef2f2;color:#dc2626;font-size:.68rem;font-weight:700;cursor:pointer;display:block;width:100%;text-align:center;"
            title="Delete this client's data">🗑 Delete</button>` : ''
-    return `<div class="client-card" onclick="openClientReport(${c.id})" style="cursor:pointer;" title="${hasReport?'Click to view full report':'Click to view registration details'}">
+    return `<div class="client-card" onclick="openClientReport('${escH(String(c.id))}')" style="cursor:pointer;" title="${hasReport?'Click to view full report':'Click to view registration details'}">
       <div class="client-avatar">${escH(initials)}</div>
       <div>
         <div class="client-name">${escH(c.name)}</div>
@@ -1227,6 +1386,7 @@ function renderClients(q, panel) {
       </div>
       <div class="client-meta">
         ${riskPill}
+        ${wearPill}
         <div style="font-size:.7rem;color:var(--color-primary);margin-top:4px;font-weight:600;">${hasReport?'View Report →':'View Details →'}</div>
         ${deleteBtn}
       </div>
@@ -1237,8 +1397,37 @@ function renderClients(q, panel) {
 /* ════════════════════════════════════════════════════
    CLIENT REPORT MODAL — full report + audio playback
 ════════════════════════════════════════════════════ */
+// Wearable section of a client's saved report (local session or loaded from the server)
+function clientWearable(c) { return c?.scores?._report?.wearable || null }
+
+function adminBodySignalsHTML(w) {
+  if (!w?.used) return ''
+  const head = '<div style="font-size:.8rem;font-weight:700;color:#374151;margin:0 0 10px;text-transform:uppercase;letter-spacing:.05em;">⌚ Body Signals (wearable)</div>'
+  if (!w.available) return head + `<div style="background:#f8fafc;border-radius:10px;padding:12px 16px;color:#475569;font-size:.85rem;margin-bottom:1.5rem;">${escH(w.reason || 'Wearable data could not be scored.')}</div>`
+  const c = w.combined, p = w.posture, st = w.stress, still = w.stillness
+  const col = c.level==='High'?'#dc2626':c.level==='Moderate'?'#d97706':'#059669'
+  const pct = v => v == null ? '—' : `${Math.round(v)}%`
+  const alerts = (p?.alerts||0) + (st?.alerts||0) + (still?.alerts||0)
+  const stat = (k, v) => `<div style="background:#f8fafc;border-radius:10px;padding:10px 12px;"><div style="font-size:.68rem;color:#64748b;text-transform:uppercase;letter-spacing:.05em;font-weight:700;">${k}</div><div style="font-size:1.15rem;font-weight:800;color:#0f172a;">${v}</div></div>`
+  const insights = (w.insights || []).map(i => `<div style="background:${i.severity==='warning'?'#fff7ed':'#eff6ff'};border-left:4px solid ${i.severity==='warning'?'#f59e0b':'#3b82f6'};border-radius:8px;padding:10px 14px;margin-bottom:8px;font-size:.85rem;color:#1f2937;"><strong>${i.severity==='warning'?'⚠':'ℹ'} ${escH(i.title)}:</strong> ${escH(i.message)}</div>`).join('')
+  return head + `
+    <div style="display:flex;flex-wrap:wrap;align-items:center;gap:18px;border:1.5px solid #e2e8f0;border-radius:12px;padding:14px 18px;margin-bottom:10px;">
+      <div><div style="font-size:.7rem;color:#64748b;font-weight:700;text-transform:uppercase;">ErgoCare Index</div><div style="font-size:2rem;font-weight:900;color:${col};line-height:1.1;">${c.index.toFixed(0)}% <span style="font-size:.85rem;">${escH(c.level)}</span></div></div>
+      <div style="font-size:.85rem;color:#475569;">Questionnaire <b>${c.questionnaire.toFixed(0)}%</b> × 60% &nbsp;+&nbsp; Body signals <b>${c.objective.toFixed(0)}%</b> × 40%</div>
+    </div>
+    ${insights}
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;margin-bottom:1.5rem;">
+      ${stat('Avg heart rate', st?.avg_bpm ? `${Math.round(st.avg_bpm)} BPM` : '—')}
+      ${stat('Time stressed', st ? pct(st.pct_time_high + st.pct_time_elevated) : '—')}
+      ${stat('Peak skin response', st?.peak_gsr_rise_pct != null ? `${st.peak_gsr_rise_pct > 0 ? '+' : ''}${Math.round(st.peak_gsr_rise_pct)}%` : '—')}
+      ${stat('Time slouching', p ? pct(p.pct_time_bad) : '—')}
+      ${stat('Longest still', fmtDur(still.longest_still_s))}
+      ${stat('Warnings shown', alerts)}
+    </div>`
+}
+
 function openClientReport(clientId) {
-  const c = clients.find(x => x.id === clientId)
+  const c = clients.find(x => String(x.id) === String(clientId))
   if (!c) return
 
   // Get modal element — reuse or create
@@ -1254,7 +1443,7 @@ function openClientReport(clientId) {
 
   const scores  = c.scores || null
   const report  = (scores && scores._report) ? scores._report : (scores ? buildReport(scores) : null)
-  const audios  = getAudioForClient(clientId)  // local blobs from this session
+  const audios  = getAudioForClient(c.id)  // local blobs from this session
   const answers = c.answers || []
   const mode    = c.mode || 'typed'
 
@@ -1372,7 +1561,7 @@ function openClientReport(clientId) {
         <div style="background:${lvMeta.bg};border:2px solid ${lvMeta.color}30;border-radius:14px;padding:16px 20px;margin-bottom:1.5rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
           <div>
             <div style="font-size:1.5rem;font-weight:900;color:${lvMeta.color};font-family:var(--font-display);">${lvMeta.emoji} ${lvMeta.label} — ${scores.overallRisk.toFixed(0)}%</div>
-            <div style="font-size:.8rem;color:#64748b;margin-top:4px;">${(scores.percentile||50)}th population percentile · NIOSH/RULA-aligned weighted composite</div>
+            <div style="font-size:.8rem;color:#64748b;margin-top:4px;">Weighted composite of 5 questionnaire domains</div>
           </div>
           ${c.backendSessionId&&!String(c.backendSessionId).startsWith('offline')?`<button onclick="window.open('${API}/api/sessions/${escH(c.backendSessionId)}/report.pdf','_blank')" style="background:${lvMeta.color};color:#fff;border:none;border-radius:10px;padding:10px 20px;font-weight:700;cursor:pointer;font-size:.88rem;box-shadow:0 4px 12px ${lvMeta.color}40;">⬇ PDF Report</button>`:''}
         </div>
@@ -1388,6 +1577,8 @@ function openClientReport(clientId) {
         </div>
 
         ${painSubHTML}
+
+        ${adminBodySignalsHTML(report?.wearable)}
 
         ${report ? `
         <!-- Report sections -->
@@ -1439,14 +1630,24 @@ document.addEventListener('keydown', e => { if(e.key==='Escape') closeClientRepo
 function exportCSV() {
   if (!adminLoggedIn) { openAdminLogin(); return }
   if (!clients.length) { alert('No clients to export yet.'); return }
-  const hdrs = ['Name','Email','Phone','Age','Job','Registered','Session ID','Overall Risk','Posture','Eye Strain','Workload','Body Discomfort','Recovery']
+  const hdrs = ['Name','Email','Phone','Age','Job','Registered','Session ID','Overall Risk','Posture','Eye Strain','Workload','Body Discomfort','Recovery',
+                'Wearable Used','ErgoCare Index','Body Signals Score','Avg Heart Rate','Time Stressed %','Peak Skin Response %','Time Slouching %','Avg Lean deg','Longest Still s','Hidden Stress','Posture Blind Spot']
+  const f1 = v => v == null ? '' : Number(v).toFixed(1)
+  // Cells starting with = + - @ would run as formulas in Excel - prefix them with '
+  const cell = v => { let t = String(v ?? ''); if (/^[=+\-@\t\r]/.test(t)) t = "'" + t; return `"${t.replace(/"/g,'""')}"` }
   const rows = clients.map(c => {
-    const s = c.scores
+    const s = c.scores, w = clientWearable(c), ok = w?.available
+    const kinds = new Set((w?.insights || []).map(i => i.type))
     return [c.name,c.email,c.phone||'',c.age,c.job,c.registeredAt,c.backendSessionId||'offline',
       s?s.overallRisk.toFixed(1):'',s?s.postureRisk.toFixed(1):'',
       s?s.eyeStrain.toFixed(1):'',s?s.workloadStress.toFixed(1):'',
-      s?s.musculoskeletalRisk.toFixed(1):'',s?s.recoveryRisk.toFixed(1):''
-    ].map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')
+      s?s.musculoskeletalRisk.toFixed(1):'',s?s.recoveryRisk.toFixed(1):'',
+      w?.used ? (ok ? 'yes' : 'no data') : 'no',
+      ok ? f1(w.combined.index) : '', ok ? f1(w.objective_score) : '', ok ? f1(w.stress?.avg_bpm) : '',
+      ok && w.stress ? f1(w.stress.pct_time_high + w.stress.pct_time_elevated) : '', ok ? f1(w.stress?.peak_gsr_rise_pct) : '',
+      ok ? f1(w.posture?.pct_time_bad) : '', ok ? f1(w.posture?.avg_angle) : '', ok ? w.stillness.longest_still_s : '',
+      ok ? (kinds.has('hidden_stress') ? 'yes' : 'no') : '', ok ? (kinds.has('posture_blind_spot') ? 'yes' : 'no') : '',
+    ].map(cell).join(',')
   })
   const csv = [hdrs.join(','), ...rows].join('\n')
   const blob = new Blob([csv],{type:'text/csv'})
@@ -1460,6 +1661,8 @@ function exportCSV() {
 let currentClient = null
 let currentClientId = null
 
+const CONSENT_VERSION = '2026-10-v1'   // must match app/models/consent.py
+function toggleConsentDetails(e) { e.preventDefault(); const d = document.getElementById('consent-details'); d.hidden = !d.hidden }
 async function submitRegistration() {
   const name  = document.getElementById('f-name').value.trim()
   const email = document.getElementById('f-email').value.trim()
@@ -1477,6 +1680,8 @@ async function submitRegistration() {
   phone.length<7 ? fail('err-phone') : pass('err-phone')
   isNaN(ageV)||ageV<16||ageV>100 ? fail('err-age') : pass('err-age')
   !job ? fail('err-job') : pass('err-job')
+  const consent = document.getElementById('f-consent').checked
+  !consent ? fail('err-consent') : pass('err-consent')
 
   const banner = document.getElementById('reg-err-banner')
   if (!valid) { banner.textContent='Please fix the errors above.'; banner.classList.add('show'); return }
@@ -1497,6 +1702,8 @@ async function submitRegistration() {
         client_phone: phone,
         client_age:   ageV,
         client_job:   job,
+        consent:         true,              // the server refuses sessions without consent
+        consent_version: CONSENT_VERSION,
       })
     })
     state.backendSessionId = sess.id
@@ -1567,7 +1774,7 @@ const questions = [
   { id:26, text:'Which best describes your physical activity on a typical workday?', options:['Light movement such as walking between buildings','Structured activity like yoga or a gym session','Mostly seated with minimal movement','Vigorous daily exercise routine'], category:'movement', riskMap:{'light movement such as walking between buildings':35,'structured activity like yoga or a gym session':10,'mostly seated with minimal movement':100,'vigorous daily exercise routine':5} },
   { id:27, text:'How much water do you typically consume throughout your working hours?', options:['Less than 1 litre','1-2 litres','More than 2 litres'], category:'recovery', reverse:true },
   { id:28, text:'How much time do you spend commuting daily in total?', options:['Under 30 minutes','30-60 minutes','1-2 hours','Over 2 hours'], category:'recovery' },
-  { id:29, text:'How physically draining do you find your daily commute?', options:['Not draining at all','Mildly tiring','Moderately exhausting','Severely fatiguing'], category:'recovery' },
+  { id:29, text:'How physically draining do you find your daily commute?', options:['Not draining at all','Mildly tiring','Moderately exhausting','Severely fatiguing, it impacts my workday'], category:'recovery' },
   { id:30, text:'How often do you have difficulty falling asleep due to work-related thoughts?', options:['Never','Rarely','Sometimes','Often'], category:'recovery' },
   { id:31, text:'Rate any stiffness or aching in your neck after long screen sessions (0–5)', options:['0','1','2','3','4','5'], category:'pain' },
   { id:32, text:'How often does turning your head feel restricted or painful?', options:['Always','Often','Sometimes','Rarely','Never'], category:'pain', reverse:true },
@@ -1583,6 +1790,47 @@ const questions = [
 const categoryLabels = { workload:'Workload stress', eyes:'Eye strain', posture:'Posture setup', movement:'Movement habits', recovery:'Recovery', pain:'Body discomfort' }
 
 /* ════════════════════════════════════════════════════
+   LANGUAGE — English / हिन्दी / ಕನ್ನಡ
+   Only what people read is translated (public/i18n.js). Answers are saved as
+   the English option, so scores, reports and the admin panel are unchanged.
+════════════════════════════════════════════════════ */
+const I18N = window.ERGO_I18N || { langs: { en: { name: 'English', speech: 'en-IN' } }, ui: {}, questions: {}, options: {} }
+const UI_EN = {
+  chooseLang: 'Choose your language',
+  typeAnswers: 'Type Answers', typeAnswersSub: 'Select options or write a custom answer for every question. Quick and precise.',
+  speakAnswers: 'Speak Answers', speakAnswersSub: 'Record each answer with live transcript. Natural and conversational.',
+  questionOf: 'Question {n} of {total}', voiceSession: 'Voice session', typedSession: 'Typed session', startOver: 'Start Over',
+  previous: '← Previous', saveContinue: 'Save & Continue →', generateReport: 'Generate Report →', saving: 'Saving…',
+  yourAnswer: 'Your answer', typePlaceholder: 'Type your answer or select one above.',
+  record: '🎙 Record Answer', stopRecording: '⏹ Stop Recording', listening: 'Listening…', oneClip: 'One clip per question.',
+  transcript: 'Transcript', transcriptPlaceholder: 'Transcript appears here, or type it manually.',
+  understoodAs: 'Understood as:', tapToChange: 'tap another option to change',
+  matchedAI: 'matched by the AI language model', matchedKeywords: 'matched by keywords',
+  couldntMatch: "Couldn't match your answer to an option — please tap the closest one.",
+  pickOption: 'Please tap an option before continuing.',
+  answersSaved: '{n} answers saved',
+  noticeVoice: 'Voice mode records one clip per question.', noticeTyped: 'Type an answer or select an option.',
+  recordingSaved: '✅ Recording saved. Check the transcript and the option we understood, then click Continue.',
+}
+function loadLang() { try { const l = localStorage.getItem('ergocare:lang'); return I18N.langs[l] ? l : 'en' } catch (e) { return 'en' } }
+function tr(key, vars = {}) {
+  const table = (I18N.ui[state.lang] || {})
+  let text = table[key] ?? UI_EN[key] ?? key
+  for (const [k, v] of Object.entries(vars)) text = text.replace(`{${k}}`, v)
+  return text
+}
+const qText = q => (I18N.questions[state.lang] || {})[q.id] || q.text
+const optLabel = o => (I18N.options[state.lang] || {})[o] || o
+const catLabel = c => ((I18N.ui[state.lang] || {}).categories || {})[c] || categoryLabels[c]
+function setLang(code) {
+  if (!I18N.langs[code]) return
+  state.lang = code
+  try { localStorage.setItem('ergocare:lang', code) } catch (e) {}
+  document.documentElement.lang = code
+  render()
+}
+
+/* ════════════════════════════════════════════════════
    APP STATE
 ════════════════════════════════════════════════════ */
 const state = {
@@ -1590,11 +1838,12 @@ const state = {
   selectedOption:'', freeText:'', transcript:'',
   recording:false, recorder:null, recognition:null, audioChunks:[],
   notice:'', saving:false, errorMessage:null,
-  answers:[], scores:null, report:null, sessionId:null, backendSessionId:null,
+  answers:[], scores:null, report:null, sensorHistory:null, match:null, sessionId:null, backendSessionId:null,
+  lang:'en',
 }
+state.lang = loadLang(); document.documentElement.lang = state.lang
 const API = window.__ERGO_API__ || 'http://127.0.0.1:8000'
 const API_BASE = API   // alias used in modal audio src URLs
-const ADMIN_TOKEN = 'ec-admin-cp04-2026'  // must match backend ADMIN_TOKEN env var
 const _fetchWithTimeout = async (url, options = {}) => {
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), 60000);
@@ -1606,7 +1855,16 @@ const _fetchWithTimeout = async (url, options = {}) => {
   return response;
 };
 async function apiReq(path,opts={}){ const r=await _fetchWithTimeout(API+path,{headers:{'Content-Type':'application/json'},...opts}); if(!r.ok) throw new Error(`${r.status}`); return r.json() }
-async function apiReqAdmin(path,opts={}){ const r=await _fetchWithTimeout(API+path,{headers:{'Content-Type':'application/json','X-Admin-Token':ADMIN_TOKEN},...opts}); if(!r.ok) throw new Error(`${r.status}`); return r.json() }
+async function apiReqAdmin(path,opts={}){
+  const r=await _fetchWithTimeout(API+path,{headers:{'Content-Type':'application/json','Authorization':`Bearer ${adminToken}`},...opts})
+  if(r.status===401){ adminLogout(); throw new Error('Admin login required') }
+  if(!r.ok) throw new Error(`${r.status}`)
+  return r.json()
+}
+// Keep the admin signed in across page reloads in this tab (the token expires on the server)
+;(async()=>{ const t=loadAdminToken(); if(!t) return
+  try{ const r=await fetch(`${API}/api/admin/me`,{headers:{'Authorization':`Bearer ${t}`}})
+       if(r.ok){ adminToken=t; adminLoggedIn=true } else saveAdminToken(null) }catch(e){} })()
 function esc(s){ return String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;') }
 const app = () => document.getElementById('app')
 
@@ -1721,8 +1979,6 @@ function calcScores(answers) {
     recoveryRisk        * 0.12
   )
 
-  // Percentile bands (calibrated against WHO occupational health data)
-  const getPercentile = v => v >= 85 ? 95 : v >= 70 ? 82 : v >= 55 ? 68 : v >= 40 ? 50 : v >= 25 ? 32 : 15
 
   // Severity classification (clinical thresholds)
   const classify = v => v >= 75 ? 'Severe' : v >= 55 ? 'High' : v >= 35 ? 'Moderate' : v >= 18 ? 'Low' : 'Minimal'
@@ -1741,7 +1997,6 @@ function calcScores(answers) {
     postureRisk, eyeStrain, workloadStress,
     musculoskeletalRisk, recoveryRisk, overallRisk,
     painSubdomains,
-    percentile: getPercentile(overallRisk),
     classify,
     // Individual category severity
     severities: {
@@ -1822,6 +2077,8 @@ async function startAssessment(mode){
           client_phone: cl.phone || '',
           client_age:   cl.age   || 0,
           client_job:   cl.job   || '',
+          consent:         true,            // given on the registration form
+          consent_version: CONSENT_VERSION,
         })
       })
       state.backendSessionId = sess.id
@@ -1833,10 +2090,12 @@ async function startAssessment(mode){
   }
   state.mode=mode; state.idx=0; state.answers=[]
   state.selectedOption=''; state.freeText=''; state.transcript=''
-  state.notice=mode==='voice'?'Voice mode records one clip per question.':'Type an answer or select an option.'
-  state.screen='assessment'; state.saving=false; render()
+  state.notice=mode==='voice'?tr('noticeVoice'):tr('noticeTyped')
+  state.saving=false
+  if(state.backendSessionId){ wearReset(); state.screen='wearable'; render(); wearStartPolling() }   // wearable needs the backend
+  else { state.screen='assessment'; render() }
 }
-function canContinue(){ if(state.saving||state.recording)return false; if(state.mode==='typed')return!!(state.freeText.trim()||state.selectedOption); return!!(state.transcript.trim()||state.freeText.trim()||state.selectedOption) }
+function canContinue(){ if(state.saving||state.recording)return false; if(state.lang!=='en')return !!state.selectedOption; if(state.mode==='typed')return!!(state.freeText.trim()||state.selectedOption); return!!(state.transcript.trim()||state.freeText.trim()||state.selectedOption) }
 async function saveAnswer(){
   if(!canContinue())return
   const q=questions[state.idx]
@@ -1849,7 +2108,10 @@ async function saveAnswer(){
     storeAudio(currentClientId, q.id, blob, mimeType, ans)
   }
 
-  state.answers=state.answers.filter(a=>a.qId!==q.id).concat({qId:q.id,answer:ans,transcript:state.mode==='voice'?ans:null})
+  // voice, and Hindi/Kannada: save the English option confirmed on screen (+ what was said as the transcript)
+  const chosen=(state.mode==='voice'||state.lang!=='en')?(state.selectedOption||null):ans
+  const said=(state.mode==='voice'||state.lang!=='en')?ans:null
+  state.answers=state.answers.filter(a=>a.qId!==q.id).concat({qId:q.id,answer:chosen||ans,transcript:said})
   state.saving=true; render()
 
   try{
@@ -1870,21 +2132,28 @@ async function saveAnswer(){
       }
 
       // Save answer text + audio URL reference to backend
-      await apiReq(`/api/sessions/${state.backendSessionId}/answers`,{method:'POST',body:JSON.stringify({question_id:q.id,question_text:q.text,typed_answer:state.mode==='typed'?ans:null,transcript:state.mode==='voice'?ans:null,audio_url:audioUrl})})
+      await apiReq(`/api/sessions/${state.backendSessionId}/answers`,{method:'POST',body:JSON.stringify({question_id:q.id,question_text:q.text,typed_answer:chosen,transcript:said,audio_url:audioUrl})})
     }
   }catch(e){ console.warn('Save answer failed (offline mode):', e) }
 
   if(state.idx===questions.length-1){ await finishSession() }
-  else{ state.idx++; state.selectedOption=''; state.freeText=''; state.transcript=''; state.audioChunks=[]; state.notice=''; state.saving=false; render() }
+  else{ state.idx++; state.selectedOption=''; state.freeText=''; state.transcript=''; state.audioChunks=[]; state.notice=''; state.match=null; state.saving=false; render() }
 }
 async function finishSession(){
+  wearStopPolling(); paintAlerts([])   // backend stops recording sensor data on /complete
   renderLoading('Analysing your answers and generating your personalised ergonomic report…')
   try{
     if(state.backendSessionId){
       const result=await apiReq(`/api/sessions/${state.backendSessionId}/complete`,{method:'POST'})
       const s=result.scores,r=result.report
       state.scores={postureRisk:s.posture_risk,eyeStrain:s.eye_strain,workloadStress:s.workload_stress,musculoskeletalRisk:s.musculoskeletal_risk,recoveryRisk:s.recovery_risk,overallRisk:s.overall_risk}
-      state.report={level:r.level,topFactors:r.top_factors,actionPlan:r.action_plan,detailedFindings:r.detailed_findings||[],positiveHabits:r.positive_habits||[]}
+      state.report={level:r.level,topFactors:r.top_factors,actionPlan:r.action_plan,detailedFindings:r.detailed_findings||[],positiveHabits:r.positive_habits||[],wearable:r.wearable||null}
+      // Body-signal graphs for the report (the wearable section itself came with /complete)
+      state.sensorHistory=null
+      if(r.wearable?.available){
+        try{ state.sensorHistory=await apiReq(`/api/sessions/${state.backendSessionId}/sensors/history?max_points=400`) }
+        catch(e){ console.warn('Sensor history unavailable:', e) }
+      }
     }else throw new Error('offline')
   }catch(e){
     // Offline fallback — score locally
@@ -1893,7 +2162,7 @@ async function finishSession(){
   }
   // ── CRITICAL FIX ──────────────────────────────────────────────────────────
   // The backend /complete endpoint returns only the 5 domain scores.
-  // It never returns painSubdomains, percentile, or severities.
+  // It never returns painSubdomains or severities.
   // Without this fix: pd = {} → all painVals = 0 → "all zeros" warning always
   // shown even when the user gave real pain answers on Q31-38.
   // Solution: always recompute the full score object locally from the saved
@@ -1901,8 +2170,7 @@ async function finishSession(){
   const _local = calcScores(state.answers)
   // painSubdomains: always take from local (backend never provides it)
   state.scores.painSubdomains = _local.painSubdomains
-  // percentile & severities: only fill if not already set by backend
-  if (!state.scores.percentile)  state.scores.percentile  = _local.percentile
+  // severities: only fill if not already set by backend
   if (!state.scores.severities)  state.scores.severities  = _local.severities
   // If offline path was used, report may be missing topFactors/detailedFindings
   // generated from pain data — rebuild from merged scores
@@ -1927,10 +2195,277 @@ async function finishSession(){
   state.screen='results'; state.saving=false; render()
 }
 function resetApp(){
-  Object.assign(state,{screen:'landing',mode:null,idx:0,selectedOption:'',freeText:'',transcript:'',recording:false,recorder:null,recognition:null,audioChunks:[],notice:'',saving:false,errorMessage:null,answers:[],scores:null,report:null,sessionId:null,backendSessionId:null})
+  if(wear.active&&state.backendSessionId) wearFetch(`/api/sessions/${state.backendSessionId}/device`,{method:'DELETE'}).catch(()=>{})
+  wearReset()
+  Object.assign(state,{screen:'landing',mode:null,idx:0,selectedOption:'',freeText:'',transcript:'',recording:false,recorder:null,recognition:null,audioChunks:[],notice:'',saving:false,errorMessage:null,answers:[],scores:null,report:null,sensorHistory:null,match:null,sessionId:null,backendSessionId:null})
   document.getElementById('sub-register').style.display=''
   document.getElementById('sub-app').style.display='none'
   render()
+}
+
+/* ════════════════════════════════════════════════════
+   WEARABLE — connect, 60 s baseline, live panel, on-screen warnings
+   ESP32 → firmware/usb_bridge.py → backend → polled here once per second.
+   The live panel and alert banners are painted in place (never via render()),
+   so typing, option clicks and voice recording are never interrupted.
+   All thresholds/warnings come from the backend (app/domain/sensors.py).
+════════════════════════════════════════════════════ */
+const BASELINE_SECONDS = 60
+const BR_CIRC = 2 * Math.PI * 52
+const wear = {
+  deviceId: null,      // wearable in use (auto-detected)
+  active: false,       // linked to this session and streaming
+  used: false,         // a baseline was recorded this session (report shows body signals)
+  live: null,          // latest poll result
+  baseline: null,      // personal baseline returned by the backend
+  baselineEndsAt: 0,
+  starting: false, finishing: false, inFlight: false,
+  error: null,
+  timer: null,
+}
+
+async function wearFetch(path, opts = {}) {
+  const ctl = new AbortController()
+  const t = setTimeout(() => ctl.abort(), 4000)          // a live poll must never hang
+  try {
+    const r = await fetch(API + path, { headers: { 'Content-Type': 'application/json' }, ...opts, signal: ctl.signal })
+    const body = r.status === 204 ? null : await r.json().catch(() => null)
+    if (!r.ok) throw new Error(body?.detail || `HTTP ${r.status}`)
+    return body
+  } finally { clearTimeout(t) }
+}
+
+function wearStartPolling() { wearStopPolling(); wearTick(); wear.timer = setInterval(wearTick, 1000) }
+function wearStopPolling() { if (wear.timer) { clearInterval(wear.timer); wear.timer = null } }
+
+function wearReset() {
+  wearStopPolling()
+  Object.assign(wear, { deviceId: null, active: false, used: false, live: null, baseline: null, baselineEndsAt: 0,
+                        starting: false, finishing: false, error: null })
+  paintAlerts([])
+}
+
+async function wearTick() {
+  if (!wear.inFlight) {
+    wear.inFlight = true
+    try {
+      if (state.screen === 'wearable') {
+        if (!wear.deviceId) {
+          const found = (await wearFetch('/api/devices')).find(d => d.connected)
+          wear.deviceId = found ? found.device_id : null
+        }
+        wear.live = wear.deviceId ? await wearFetch(`/api/devices/${encodeURIComponent(wear.deviceId)}/latest`) : null
+        if (wear.live && !wear.live.connected) wear.deviceId = null     // look again next second
+      } else if (wear.active && state.backendSessionId) {
+        wear.live = await wearFetch(`/api/sessions/${state.backendSessionId}/sensors/latest`)
+      }
+    } catch (e) {
+      wear.live = { connected: false, unreachable: true }
+    } finally { wear.inFlight = false }
+  }
+  paintWear()
+}
+
+async function wearStartBaseline() {
+  if (wear.starting || !wear.deviceId || !state.backendSessionId) return
+  wear.starting = true; wear.error = null
+  try {
+    await wearFetch(`/api/sessions/${state.backendSessionId}/device`, { method: 'POST', body: JSON.stringify({ device_id: wear.deviceId }) })
+    await wearFetch(`/api/sessions/${state.backendSessionId}/baseline/start`, { method: 'POST' })
+    Object.assign(wear, { active: true, used: true, baseline: null, finishing: false,
+                          baselineEndsAt: Date.now() + BASELINE_SECONDS * 1000 })
+    state.screen = 'baseline'
+  } catch (e) {
+    wear.error = `Could not start the baseline: ${e.message}`
+    state.screen = 'wearable'
+  } finally { wear.starting = false }
+  render()
+  if (!wear.timer) wearStartPolling()
+}
+
+async function wearFinishBaseline() {
+  wear.finishing = true
+  try {
+    wear.baseline = await wearFetch(`/api/sessions/${state.backendSessionId}/baseline/finish`, { method: 'POST' })
+    state.screen = 'baseline-done'
+  } catch (e) {
+    wear.error = `Baseline failed: ${e.message}`
+    state.screen = 'wearable'
+  }
+  wear.finishing = false
+  render()
+}
+
+function wearSkip() {
+  if (wear.active && state.backendSessionId) {
+    wearFetch(`/api/sessions/${state.backendSessionId}/device`, { method: 'DELETE' }).catch(() => {})
+  }
+  wearReset()
+  state.screen = 'assessment'; render()
+}
+
+const signed = n => { const v = Math.round(n); return v > 0 ? `+${v}` : v === 0 ? '±0' : String(v) }
+const fmtDur = s => s < 60 ? `${s}s` : `${Math.floor(s / 60)}m ${String(s % 60).padStart(2, '0')}s`
+const postureTone = a => a > 20 ? 'bad' : a > 10 ? 'warn' : 'good'
+const TONE_COLOR = { good: '#10b981', warn: '#f59e0b', bad: '#dc2626' }
+
+function wearTilesHTML(live) {
+  const r = live?.reading, d = live?.derived || {}, st = live?.streaks || {}
+  if (!live?.connected || !r) {
+    const why = live?.unreachable ? 'The ErgoCare server is not reachable.'
+      : 'No readings yet - check the USB cable and that usb_bridge.py is running.'
+    return `<div class="live-tile" style="grid-column:1/-1"><span class="lt-label">Waiting for the wearable</span><span class="lt-sub">${why}</span></div>`
+  }
+  const tile = (tone, label, value, sub, extra = '') =>
+    `<div class="live-tile ${tone}"><span class="lt-label">${label}</span><span class="lt-value">${value}</span><span class="lt-sub">${sub}</span>${extra}</div>`
+
+  let heart
+  if (!r.pulse_ok) heart = tile('bad', '❤️ Heart rate', '--', 'Pulse sensor error - reconnecting')
+  else if (!r.finger) heart = tile('warn', '❤️ Heart rate', '--', 'Rest a fingertip on the sensor')
+  else if (!d.bpm) heart = tile('', '❤️ Heart rate', '…', 'Reading your pulse - hold still')
+  else heart = tile('good', '❤️ Heart rate', `${Math.round(d.bpm)}<small> BPM</small>`,
+                    d.bpm_change != null ? `${signed(d.bpm_change)} vs your resting rate` : 'Live')
+
+  let stress
+  if (!r.gsr_contact) stress = tile('warn', '💧 Stress (GSR)', '--', 'Touch both electrodes')
+  else if (d.stress_level) stress = tile({ calm: 'good', elevated: 'warn', high: 'bad' }[d.stress_level], '💧 Stress (GSR)',
+                                         d.stress_level[0].toUpperCase() + d.stress_level.slice(1),
+                                         d.gsr_change_pct != null ? `Skin response ${signed(d.gsr_change_pct)}% vs baseline` : 'Heart-rate based')
+  else stress = tile('good', '💧 Stress (GSR)', Math.round(r.gsr_raw), 'Skin response (raw)')
+
+  let posture
+  if (!r.mpu_ok) posture = tile('bad', '🧍 Posture', '--', 'Motion sensor error')
+  else {
+    const ang = d.posture_angle ?? r.tilt ?? 0, tone = postureTone(ang)
+    posture = tile(tone, '🧍 Posture', `${Math.round(ang)}°`,
+                   ang > 20 ? 'Slouching - sit up' : ang > 10 ? 'Leaning slightly' : 'Upright',
+                   `<div class="posture-bar"><span style="width:${Math.min(100, ang / 45 * 100)}%;background:${TONE_COLOR[tone]}"></span></div>`)
+  }
+
+  const still = st.still_s || 0
+  const move = tile(still >= 120 ? 'warn' : '', '🏃 Movement', r.moving ? 'Moving' : 'Still',
+                    still ? `Still for ${fmtDur(still)}` : r.moving ? 'Moving now' : 'Not moving')
+  return heart + stress + posture + move
+}
+
+function wearPanelHTML(live) {
+  const connected = !!live?.connected, r = live?.reading, d = live?.derived || {}, st = live?.streaks || {}
+  const head = `<div class="live-panel-head"><span>Live body signals</span><span class="wear-status ${connected ? 'on' : ''}"><span class="dot"></span>${connected ? 'Live' : 'Offline'}</span></div>`
+  if (!connected || !r) return head + `<div class="lp-hint">Wearable not sending data.</div>`
+  const ang = d.posture_angle ?? 0, tone = postureTone(ang), lvl = d.stress_level || 'unknown'
+  const hints = (live.warnings || []).filter(w => w.type === 'sensor').map(w => `<div class="lp-hint">${esc(w.message)}</div>`).join('')
+  return head +
+    `<div class="lp-row"><span class="lp-k">❤️ Heart</span><span class="lp-v">${d.bpm ? `${Math.round(d.bpm)} BPM${d.bpm_change != null ? ` <small>(${signed(d.bpm_change)})</small>` : ''}` : '--'}</span></div>` +
+    `<div class="lp-row"><span class="lp-k">💧 Stress</span><span class="stress-pill ${lvl}">${lvl === 'unknown' ? '--' : lvl}</span></div>` +
+    `<div class="lp-row"><span class="lp-k">🧍 Posture</span><span class="lp-v" style="color:${TONE_COLOR[tone]}">${Math.round(ang)}°</span></div>` +
+    `<div class="posture-bar"><span style="width:${Math.min(100, ang / 45 * 100)}%;background:${TONE_COLOR[tone]}"></span></div>` +
+    `<div class="lp-row"><span class="lp-k">🏃 Still for</span><span class="lp-v">${fmtDur(st.still_s || 0)}</span></div>` + hints
+}
+
+// Warning banners (these replace a hardware buzzer). Keyed by type so a
+// warning that stays active is updated in place instead of flashing.
+const ALERT_ICONS = { posture: '🧍', stress: '💨', still: '🤸', disconnected: '🔌' }
+function paintAlerts(warnings) {
+  let box = document.getElementById('sensor-alerts')
+  if (!box) {
+    box = document.createElement('div')
+    box.id = 'sensor-alerts'
+    box.setAttribute('role', 'status')
+    box.setAttribute('aria-live', 'polite')
+    document.body.appendChild(box)
+  }
+  const show = warnings.filter(w => ALERT_ICONS[w.type])
+  const keep = new Set(show.map(w => w.type))
+  box.querySelectorAll('.s-alert:not(.leaving)').forEach(el => {
+    if (!keep.has(el.dataset.type)) { el.classList.add('leaving'); setTimeout(() => el.remove(), 300) }
+  })
+  show.forEach(w => {
+    let el = box.querySelector(`.s-alert[data-type="${w.type}"]:not(.leaving)`)
+    if (!el) { el = document.createElement('div'); el.dataset.type = w.type; box.appendChild(el) }
+    el.className = `s-alert ${w.severity === 'danger' ? 'danger' : 'warning'}`
+    el.innerHTML = `<span class="sa-ic">${ALERT_ICONS[w.type]}</span><span>${esc(w.message)}</span>`
+  })
+}
+
+function paintWear() {
+  const live = wear.live
+  const tiles = document.getElementById('wear-live')
+  if (tiles) tiles.innerHTML = wearTilesHTML(live)
+
+  if (state.screen === 'wearable') {
+    const connected = !!live?.connected, r = live?.reading
+    const status = document.getElementById('wear-status')
+    if (status) {
+      status.className = 'wear-status' + (connected ? ' on' : '')
+      status.innerHTML = `<span class="dot"></span>${connected ? `Connected · ${esc(wear.deviceId || '')}`
+        : live?.unreachable ? 'Server not reachable' : 'Searching for wearable…'}`
+    }
+    const check = document.getElementById('wear-check')
+    if (check) check.innerHTML = [
+      [connected, 'Wearable connected', 'Plug the ESP32 into USB and run usb_bridge.py'],
+      [connected && r?.finger, 'Fingertip on the pulse sensor', 'Rest it gently - do not press'],
+      [connected && r?.gsr_contact, 'GSR electrodes touched', 'Hold both electrodes with your other hand'],
+      [connected && r?.mpu_ok, 'Posture sensor ready', 'Clip it to the back of your collar'],
+    ].map(([ok, label, hint]) => `<li class="${ok ? 'ok' : ''}"><span class="ic">${ok ? '✓' : '•'}</span><span>${label}<small>${hint}</small></span></li>`).join('')
+    const btn = document.getElementById('btn-baseline')
+    if (btn) btn.disabled = !connected || wear.starting
+  }
+
+  if (state.screen === 'baseline') {
+    const left = Math.max(0, Math.ceil((wear.baselineEndsAt - Date.now()) / 1000))
+    const num = document.getElementById('br-left'); if (num) num.textContent = left
+    const arc = document.getElementById('br-arc'); if (arc) arc.style.strokeDashoffset = String(BR_CIRC * left / BASELINE_SECONDS)
+    if (left === 0 && !wear.finishing) wearFinishBaseline()
+  }
+
+  const panel = document.getElementById('live-panel')
+  if (panel) panel.innerHTML = wearPanelHTML(live)
+
+  const onQuestions = state.screen === 'assessment' && wear.active
+  const warnings = live?.unreachable
+    ? [{ type: 'disconnected', severity: 'warning', message: 'Cannot reach the ErgoCare server - body signals paused.' }]
+    : (live?.warnings || [])
+  paintAlerts(onQuestions ? warnings : [])
+}
+
+/* ════════════════════════════════════════════════════
+   ANSWER MATCHING — "Understood as: <option>"
+   Free-form spoken/typed answers are matched to an option by the backend
+   (rules + MiniLM sentence embeddings, app/domain/answer_matcher.py).
+   Voice mode pre-selects the match; the person can tap another option.
+════════════════════════════════════════════════════ */
+let matchTimer = null, matchSeq = 0
+function scheduleMatch(text) { clearTimeout(matchTimer); matchTimer = setTimeout(() => runMatch(text), 450) }
+async function runMatch(text) {
+  const q = questions[state.idx], seq = ++matchSeq
+  const t = (text || '').trim()
+  if (!t || !state.backendSessionId || q.options.some(o => o.toLowerCase() === t.toLowerCase() || optLabel(o) === t)) {
+    state.match = null; paintMatch(); return
+  }
+  try {
+    const r = await wearFetch(`/api/questions/${q.id}/match`, { method: 'POST',
+      body: JSON.stringify({ text: t, lang: state.lang, labels: q.options.map(optLabel) }) })
+    if (seq !== matchSeq || questions[state.idx].id !== q.id) return          // an older request
+    state.match = { qid: q.id, ...r }
+    if (r.option && (state.mode === 'voice' || state.lang !== 'en')) state.selectedOption = r.option
+    paintMatch()
+    const nb = document.querySelector('[data-action="next"]'); if (nb) nb.disabled = !canContinue()
+  } catch (e) { /* matcher unavailable: the person simply taps an option */ }
+}
+function paintMatch() {
+  const q = questions[state.idx], m = state.match?.qid === q.id ? state.match : null
+  const suggested = state.mode === 'typed' && m?.option && !state.selectedOption ? m.option : null
+  document.querySelectorAll('.option-btn').forEach(b => {
+    b.classList.toggle('selected', b.dataset.option === state.selectedOption)
+    b.classList.toggle('suggested', b.dataset.option === suggested)
+  })
+  const el = document.getElementById('match-note'); if (!el) return
+  if (!m) { el.innerHTML = ''; el.className = 'match-note'; return }
+  const how = m.method === 'semantic' ? tr('matchedAI') : tr('matchedKeywords')
+  el.className = 'match-note ' + (m.option ? 'ok' : 'none')
+  el.innerHTML = m.option
+    ? `🤖 ${esc(tr('understoodAs'))} <b lang="${state.lang}">${esc(optLabel(m.option))}</b> <small>· ${esc(how)} · ${esc(tr('tapToChange'))}</small>`
+    : `🤔 ${esc(tr('couldntMatch'))}`
 }
 
 /* ════════════════════════════════════════════════════
@@ -2009,7 +2544,7 @@ function startSpeechRecog() {
     const recog = new R()
     recog.continuous = true
     recog.interimResults = true
-    recog.lang = 'en-IN'
+    recog.lang = (I18N.langs[state.lang] || {}).speech || 'en-IN'   // en-IN / hi-IN / kn-IN
     recog.maxAlternatives = 1
 
     let finalTranscript = ''
@@ -2020,6 +2555,7 @@ function startSpeechRecog() {
         else interim += ev.results[i][0].transcript
       }
       state.transcript = (finalTranscript + interim).trim()
+      scheduleMatch(state.transcript)
       // Update textarea live without full re-render (avoids focus loss)
       const ta = document.querySelector('textarea[data-field="transcript"]')
       if (ta) ta.value = state.transcript
@@ -2051,8 +2587,9 @@ function stopRecording() {
     state.recorder.stop()
   }
   state.recording = false
-  state.notice = '✅ Recording saved. Check the transcript below and edit if needed, then click Continue.'
+  state.notice = tr('recordingSaved')
   render()
+  runMatch(state.transcript)
 }
 
 /* ════════════════════════════════════════════════════
@@ -2063,13 +2600,58 @@ function renderLoading(msg){
 }
 function renderLanding(){
   const nm=currentClient?.name||'there'
-  app().innerHTML=`<main class="shell landing"><section class="intro"><div class="intro-eyebrow">🌿 Workplace Wellness Platform</div><h1>Your <span>ergonomic</span><br>health matters.</h1><p>Hello, ${esc(nm.split(' ')[0])}! Complete a quick assessment — choose to type or speak your answers — and receive a personalised ergonomic risk report.</p>${state.errorMessage?`<div class="error-banner">${esc(state.errorMessage)}</div>`:''}<div class="mode-grid"><button class="mode-card" data-action="start-typed"><div class="mode-icon">Aa</div><div><strong>Type Answers</strong><small>Select options or write a custom answer for every question. Quick and precise.</small></div></button><button class="mode-card accent" data-action="start-voice"><div class="mode-icon">🎙</div><div><strong>Speak Answers</strong><small>Record each answer with live transcript. Natural and conversational.</small></div></button></div></section><section class="product-visual"><div class="phone-3d"><div class="phone-notch"></div><svg class="ph-risk-ring" width="110" height="110" viewBox="0 0 110 110"><circle cx="55" cy="55" r="44" fill="none" stroke="#e4eaef" stroke-width="9"/><circle cx="55" cy="55" r="44" fill="none" stroke="#0a9396" stroke-width="9" stroke-dasharray="276.5" stroke-dashoffset="76" stroke-linecap="round" transform="rotate(-90 55 55)"/><text x="55" y="50" text-anchor="middle" font-family="Playfair Display,serif" font-size="18" font-weight="800" fill="#0a9396">72%</text><text x="55" y="65" text-anchor="middle" font-size="9" fill="#8ea5b8">Overall Risk</text></svg><div class="ph-section">Category Scores</div><div class="ph-cat"><span class="ph-cat-label">Posture</span><span class="ph-cat-val" style="color:#e9c46a">68%</span></div><div class="ph-bar"><span style="width:68%;background:linear-gradient(90deg,#0a9396,#e9c46a)"></span></div><div class="ph-cat"><span class="ph-cat-label">Eye Strain</span><span class="ph-cat-val" style="color:#ee6c4d">82%</span></div><div class="ph-bar"><span style="width:82%;background:linear-gradient(90deg,#e9c46a,#ee6c4d)"></span></div><div class="ph-cat"><span class="ph-cat-label">Recovery</span><span class="ph-cat-val" style="color:#0a9396">45%</span></div><div class="ph-bar"><span style="width:45%;background:#0a9396"></span></div><div class="ph-cat"><span class="ph-cat-label">Body Discomfort</span><span class="ph-cat-val" style="color:#ee6c4d">76%</span></div><div class="ph-bar"><span style="width:76%;background:linear-gradient(90deg,#ee6c4d,#c0392b)"></span></div></div></section></main>`
+  app().innerHTML=`<main class="shell landing"><section class="intro"><div class="intro-eyebrow">🌿 Workplace Wellness Platform</div><h1>Your <span>ergonomic</span><br>health matters.</h1><p>Hello, ${esc(nm.split(' ')[0])}! Complete a quick assessment — choose to type or speak your answers — and receive a personalised ergonomic risk report.</p>${state.errorMessage?`<div class="error-banner">${esc(state.errorMessage)}</div>`:''}<div class="lang-picker" role="group" aria-label="${esc(tr('chooseLang'))}"><span>🌐 ${esc(tr('chooseLang'))}</span>${Object.entries(I18N.langs).map(([code,l])=>`<button class="lang-btn ${state.lang===code?'active':''}" data-action="lang-${code}" lang="${code}" aria-pressed="${state.lang===code}">${esc(l.name)}</button>`).join('')}</div><div class="mode-grid"><button class="mode-card" data-action="start-typed"><div class="mode-icon">Aa</div><div><strong>${esc(tr('typeAnswers'))}</strong><small>${esc(tr('typeAnswersSub'))}</small></div></button><button class="mode-card accent" data-action="start-voice"><div class="mode-icon">🎙</div><div><strong>${esc(tr('speakAnswers'))}</strong><small>${esc(tr('speakAnswersSub'))}</small></div></button></div></section><section class="product-visual"><div class="phone-3d"><div class="phone-notch"></div><svg class="ph-risk-ring" width="110" height="110" viewBox="0 0 110 110"><circle cx="55" cy="55" r="44" fill="none" stroke="#e4eaef" stroke-width="9"/><circle cx="55" cy="55" r="44" fill="none" stroke="#0a9396" stroke-width="9" stroke-dasharray="276.5" stroke-dashoffset="76" stroke-linecap="round" transform="rotate(-90 55 55)"/><text x="55" y="50" text-anchor="middle" font-family="Playfair Display,serif" font-size="18" font-weight="800" fill="#0a9396">72%</text><text x="55" y="65" text-anchor="middle" font-size="9" fill="#8ea5b8">Overall Risk</text></svg><div class="ph-section">Category Scores</div><div class="ph-cat"><span class="ph-cat-label">Posture</span><span class="ph-cat-val" style="color:#e9c46a">68%</span></div><div class="ph-bar"><span style="width:68%;background:linear-gradient(90deg,#0a9396,#e9c46a)"></span></div><div class="ph-cat"><span class="ph-cat-label">Eye Strain</span><span class="ph-cat-val" style="color:#ee6c4d">82%</span></div><div class="ph-bar"><span style="width:82%;background:linear-gradient(90deg,#e9c46a,#ee6c4d)"></span></div><div class="ph-cat"><span class="ph-cat-label">Recovery</span><span class="ph-cat-val" style="color:#0a9396">45%</span></div><div class="ph-bar"><span style="width:45%;background:#0a9396"></span></div><div class="ph-cat"><span class="ph-cat-label">Body Discomfort</span><span class="ph-cat-val" style="color:#ee6c4d">76%</span></div><div class="ph-bar"><span style="width:76%;background:linear-gradient(90deg,#ee6c4d,#c0392b)"></span></div></div></section></main>`
+}
+function renderWearable(){
+  app().innerHTML=`<main class="shell"><header class="topbar"><div><div class="topbar-eyebrow">Wearable · step 1 of 2</div><h1>Connect your ErgoCare wearable</h1></div><button class="btn-ghost" data-action="reset">Start Over</button></header>
+  <section class="wear-grid">
+    <div class="wear-card">
+      <div id="wear-status" class="wear-status"><span class="dot"></span>Searching for wearable…</div>
+      <p class="lead">While you answer, the wearable measures what your body shows: <strong>heart rate</strong>, <strong>skin response</strong> (a stress signal) and <strong>posture</strong>. Your answers and your body signals are combined in one report.</p>
+      <ul class="wear-check" id="wear-check"></ul>
+      ${wear.error?`<div class="error-banner">${esc(wear.error)}</div>`:''}
+      <div class="wear-actions">
+        <button class="btn-primary" id="btn-baseline" data-action="wear-baseline" disabled>Start ${BASELINE_SECONDS}-second baseline →</button>
+        <button class="btn-ghost" data-action="wear-skip">Continue without wearable</button>
+      </div>
+    </div>
+    <div class="wear-card"><h2 style="font-size:1.15rem">Live readings</h2><div class="live-tiles" id="wear-live"></div></div>
+  </section></main>`
+}
+function renderBaseline(){
+  const left=Math.max(0,Math.ceil((wear.baselineEndsAt-Date.now())/1000))
+  app().innerHTML=`<main class="shell"><header class="topbar"><div><div class="topbar-eyebrow">Wearable · step 2 of 2</div><h1>Relax for ${BASELINE_SECONDS} seconds</h1></div><button class="btn-ghost" data-action="wear-skip">Skip wearable</button></header>
+  <section class="wear-grid">
+    <div class="wear-card" style="text-align:center">
+      <div class="baseline-ring"><svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="52" fill="none" stroke="#e4eaef" stroke-width="9"/><circle id="br-arc" cx="60" cy="60" r="52" fill="none" stroke="var(--teal)" stroke-width="9" stroke-linecap="round" stroke-dasharray="${BR_CIRC}" stroke-dashoffset="${BR_CIRC*left/BASELINE_SECONDS}" style="transition:stroke-dashoffset 1s linear"/></svg><div class="br-num"><div><b id="br-left">${left}</b><div class="lt-sub">seconds left</div></div></div></div>
+      <p class="lead">Sit <strong>upright</strong>, breathe normally and keep your fingers on the sensors. This records your personal resting heart rate and skin response — and your posture right now becomes “upright”.</p>
+    </div>
+    <div class="wear-card"><h2 style="font-size:1.15rem">Live readings</h2><div class="live-tiles" id="wear-live"></div></div>
+  </section></main>`
+}
+function renderBaselineDone(){
+  const b=wear.baseline||{}
+  const issues=(b.issues||[]).map(i=>`<li>${esc(i)}</li>`).join('')
+  app().innerHTML=`<main class="shell"><header class="topbar"><div><div class="topbar-eyebrow">Baseline recorded</div><h1>Your personal normal</h1></div><button class="btn-ghost" data-action="reset">Start Over</button></header>
+  <section class="wear-card" style="max-width:780px">
+    <p class="lead">From now on your stress and posture are compared with <strong>your own</strong> resting values — not with an average person.</p>
+    <div class="baseline-result">
+      <div class="live-tile ${b.bpm?'good':'warn'}"><span class="lt-label">❤️ Resting heart rate</span><span class="lt-value">${b.bpm?`${Math.round(b.bpm)}<small> BPM</small>`:'--'}</span><span class="lt-sub">${b.pulse_readings||0} good readings</span></div>
+      <div class="live-tile ${b.gsr?'good':'warn'}"><span class="lt-label">💧 Resting skin response</span><span class="lt-value">${b.gsr?Math.round(b.gsr):'--'}</span><span class="lt-sub">${b.gsr_readings||0} good readings</span></div>
+      <div class="live-tile good"><span class="lt-label">🧍 Upright posture</span><span class="lt-value">Set</span><span class="lt-sub">Leaning over 20° will be flagged</span></div>
+    </div>
+    ${issues?`<div class="notice"><strong>Some signals were weak:</strong><ul style="margin:6px 0 0 18px">${issues}</ul>You can continue, or redo the baseline for better stress detection.</div>`:''}
+    <div class="wear-actions">
+      <button class="btn-primary" data-action="wear-begin">Begin questions →</button>
+      <button class="btn-ghost" data-action="wear-redo">Redo baseline</button>
+    </div>
+  </section></main>`
 }
 function renderAssessment(){
   const q=questions[state.idx]; const prog=Math.round(((state.idx+1)/questions.length)*100)
   const cl=currentClient||{name:'User',email:'—',age:'—',job:'—'}
-  const ansBlock=state.mode==='typed'?`<label class="answer-field"><span>Your answer</span><textarea data-field="typed" placeholder="Type your answer or select one above." ${state.saving?'disabled':''}>${esc(state.freeText)}</textarea></label>`:`<div class="voice-tools"><button class="btn-record ${state.recording?'recording':''}" data-action="record" ${state.saving?'disabled':''}>${state.recording?'⏹ Stop Recording':'🎙 Record Answer'}</button><span>${state.recording?'Listening…':'One clip per question.'}</span></div><label class="answer-field"><span>Transcript</span><textarea data-field="transcript" placeholder="Transcript appears here, or type it manually." ${state.saving?'disabled':''}>${esc(state.transcript)}</textarea></label>`
-  app().innerHTML=`<main class="shell assessment"><header class="topbar"><div><div class="topbar-eyebrow">${state.mode==='voice'?'Voice session':'Typed session'}</div><h1>Question ${q.id} of ${questions.length}</h1></div><button class="btn-ghost" data-action="reset">Start Over</button></header><section class="q-layout"><aside class="progress-panel"><div class="progress-ring-wrap"><div class="p-ring" style="--p:${prog}"><span>${prog}%</span></div></div><div class="p-cat-label">${categoryLabels[q.category]}</div><div class="client-pill"><div class="cp-name">${esc(cl.name)}</div><div class="cp-sub">${esc(cl.job)} · Age ${esc(String(cl.age))}</div><div class="cp-sub">${esc(cl.email)}</div></div><div class="saved-note">${state.answers.length} answers saved</div></aside><section class="q-card"><p class="q-text">${esc(q.text)}</p><div class="option-grid">${q.options.map(o=>`<button class="option-btn ${state.selectedOption===o?'selected':''}" data-option="${esc(o)}" ${state.saving?'disabled':''}>${esc(o)}</button>`).join('')}</div>${ansBlock}${state.notice?`<p class="notice">${esc(state.notice)}</p>`:''} ${state.saving?`<p class="notice saving">⏳ Saving…</p>`:''}<div class="q-actions"><button class="btn-ghost" data-action="previous" ${state.idx===0||state.saving?'disabled':''}>← Previous</button><button class="btn-primary" data-action="next" ${canContinue()&&!state.saving?'':'disabled'}>${state.saving?'Saving…':state.idx===questions.length-1?'Generate Report →':'Save & Continue →'}</button></div></section></section></main>`
+  const ansBlock=state.mode==='typed'?`<label class="answer-field"><span>${esc(tr('yourAnswer'))}</span><textarea data-field="typed" placeholder="${esc(tr('typePlaceholder'))}" ${state.saving?'disabled':''}>${esc(state.freeText)}</textarea></label>`:`<div class="voice-tools"><button class="btn-record ${state.recording?'recording':''}" data-action="record" ${state.saving?'disabled':''}>${esc(state.recording?tr('stopRecording'):tr('record'))}</button><span>${esc(state.recording?tr('listening'):tr('oneClip'))}</span></div><label class="answer-field"><span>${esc(tr('transcript'))}</span><textarea data-field="transcript" placeholder="${esc(tr('transcriptPlaceholder'))}" ${state.saving?'disabled':''}>${esc(state.transcript)}</textarea></label>`
+  app().innerHTML=`<main class="shell assessment"><header class="topbar"><div><div class="topbar-eyebrow">${esc(state.mode==='voice'?tr('voiceSession'):tr('typedSession'))}</div><h1>${esc(tr('questionOf',{n:q.id,total:questions.length}))}</h1></div><button class="btn-ghost" data-action="reset">${esc(tr('startOver'))}</button></header><section class="q-layout"><aside class="progress-panel"><div class="progress-ring-wrap"><div class="p-ring" style="--p:${prog}"><span>${prog}%</span></div></div><div class="p-cat-label">${esc(catLabel(q.category))}</div><div class="client-pill"><div class="cp-name">${esc(cl.name)}</div><div class="cp-sub">${esc(cl.job)} · Age ${esc(String(cl.age))}</div><div class="cp-sub">${esc(cl.email)}</div></div>${wear.active?'<div class="live-panel" id="live-panel"></div>':''}<div class="saved-note">${esc(tr('answersSaved',{n:state.answers.length}))}</div></aside><section class="q-card"><p class="q-text" lang="${state.lang}">${esc(qText(q))}</p><div class="option-grid">${q.options.map(o=>`<button class="option-btn ${state.selectedOption===o?'selected':''}" data-option="${esc(o)}" lang="${state.lang}" ${state.saving?'disabled':''}>${esc(optLabel(o))}</button>`).join('')}</div><div class="match-note" id="match-note" aria-live="polite"></div>${ansBlock}${state.notice?`<p class="notice">${esc(state.notice)}</p>`:''} ${state.saving?`<p class="notice saving">⏳ ${esc(tr('saving'))}</p>`:''}<div class="q-actions"><button class="btn-ghost" data-action="previous" ${state.idx===0||state.saving?'disabled':''}>${esc(tr('previous'))}</button><button class="btn-primary" data-action="next" ${canContinue()&&!state.saving?'':'disabled'}>${esc(state.saving?tr('saving'):state.idx===questions.length-1?tr('generateReport'):tr('saveContinue'))}</button></div></section></section></main>`
 }
 /* ─── Clinical chart styles injected once ─── */
 (function injectChartStyles(){
@@ -2117,11 +2699,6 @@ function renderAssessment(){
   .doctor-box h3 { font-family:var(--font-display); font-size:1.05rem; font-weight:600; color:#1e3a5f; display:flex; align-items:center; gap:8px; }
   .doctor-box p { font-size:.88rem; line-height:1.7; color:#374151; font-weight:300; }
   /* (ICD styles removed) */
-  /* Percentile bar */
-  .percentile-wrap { margin-top:12px; }
-  .pct-track { height:10px; background:#e4eaef; border-radius:999px; overflow:hidden; position:relative; }
-  .pct-fill { height:100%; border-radius:inherit; transition:width 1.2s cubic-bezier(.4,0,.2,1); }
-  .pct-labels { display:flex; justify-content:space-between; margin-top:4px; font-size:.72rem; color:var(--muted); }
   @media(max-width:760px){ .chart-grid-2{grid-template-columns:1fr} }
   `
   document.head.appendChild(s)
@@ -2161,7 +2738,6 @@ function renderResults() {
 
   const ap = report.actionPlan || [], tf = report.topFactors || []
   const df = report.detailedFindings || [], ph = report.positiveHabits || []
-  const pct = scores.percentile || 50
   const pd = scores.painSubdomains || {}
 
   // (ICD-10 codes removed)
@@ -2182,12 +2758,8 @@ function renderResults() {
             </div>
           </div>
           <h1 class="hero-title" style="color:${lvMeta.color};">Overall Risk Score: ${scores.overallRisk.toFixed(1)}%</h1>
+          ${report.wearable?.available?`<a class="idx-chip" href="#body-signals">⭐ ErgoCare Index <b>${report.wearable.combined.index.toFixed(0)}%</b> · ${report.wearable.combined.level} <small>answers + body signals</small></a>`:''}
           <p class="hero-tagline">${lvMeta.tag}</p>
-          <div class="percentile-wrap" style="max-width:340px;">
-            <div style="font-size:.78rem;color:var(--muted);margin-bottom:5px;font-weight:500;">Population Percentile — higher = more risk than peers</div>
-            <div class="pct-track"><div class="pct-fill" id="pct-fill" style="width:0%;background:${lvMeta.color}"></div></div>
-            <div class="pct-labels"><span>0th</span><span style="font-weight:600;color:${lvMeta.color}">${pct}th percentile</span><span>100th</span></div>
-          </div>
           <div class="hero-actions">
             ${state.backendSessionId?`<button class="btn-download" data-action="download-pdf" style="background:${lvMeta.color};">⬇ Download PDF Report</button>`:''}
             <button class="btn-secondary" data-action="reset">New Session</button>
@@ -2199,9 +2771,8 @@ function renderResults() {
             <circle cx="60" cy="60" r="54" fill="none" stroke="${lvMeta.color}" stroke-width="10"
               stroke-linecap="round" stroke-dasharray="${circ}" stroke-dashoffset="${circ}"
               class="ring-animate" style="--t:${offset};" transform="rotate(-90 60 60)"/>
-            <text x="60" y="52" text-anchor="middle" font-family="Playfair Display,serif" font-size="20" font-weight="800" fill="${lvMeta.color}">${scores.overallRisk.toFixed(0)}%</text>
-            <text x="60" y="66" text-anchor="middle" font-size="7.5" fill="#8ea5b8">Overall Risk</text>
-            <text x="60" y="76" text-anchor="middle" font-size="7" fill="#8ea5b8">${pct}th percentile</text>
+            <text x="60" y="56" text-anchor="middle" font-family="Playfair Display,serif" font-size="20" font-weight="800" fill="${lvMeta.color}">${scores.overallRisk.toFixed(0)}%</text>
+            <text x="60" y="72" text-anchor="middle" font-size="7.5" fill="#8ea5b8">Overall Risk</text>
           </svg>
           <p class="ring-caption">Weighted composite of 5<br>clinical ergonomic domains</p>
         </div>
@@ -2210,13 +2781,18 @@ function renderResults() {
 
     <div class="results-body">
 
+      <div class="screening-note" role="note">ⓘ <strong>ErgoCare is a screening tool, not a medical diagnosis.</strong> If you have persistent pain, numbness, tingling or severe headaches, please see a doctor or physiotherapist.</div>
+
+      ${bodySignalsHTML(report.wearable)}
+
       <!-- ── DOCTOR SUMMARY BOX ── -->
       <section>
-        <div class="section-head"><h2>🩺 Clinical Summary for Healthcare Provider</h2><p>Structured summary for occupational health physician, physiotherapist, or GP referral.</p></div>
+        <div class="section-head"><h2>🩺 Summary to Share with Your Doctor or Physiotherapist</h2><p>Structured summary for occupational health physician, physiotherapist, or GP referral.</p></div>
         <div class="doctor-box">
-          <h3>📋 Patient: ${esc(cl.name)} &nbsp;|&nbsp; Age: ${esc(String(cl.age))} &nbsp;|&nbsp; Occupation: ${esc(cl.job)}</h3>
+          <h3>📋 Name: ${esc(cl.name)} &nbsp;|&nbsp; Age: ${esc(String(cl.age))} &nbsp;|&nbsp; Occupation: ${esc(cl.job)}</h3>
           <p><strong>Assessment date:</strong> ${new Date().toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'})} &nbsp;|&nbsp; <strong>Tool:</strong> ErgoCare AI Ergonomic Risk Assessment (40-item validated instrument) &nbsp;|&nbsp; <strong>Scoring:</strong> NIOSH/RULA-aligned weighted composite</p>
-          <p><strong>Overall Ergonomic Risk Index:</strong> <span style="font-weight:700;color:${lvMeta.color}">${scores.overallRisk.toFixed(1)}% (${report.level} Risk — ${pct}th population percentile)</span></p>
+          <p><strong>Overall Ergonomic Risk Index:</strong> <span style="font-weight:700;color:${lvMeta.color}">${scores.overallRisk.toFixed(1)}% (${report.level} Risk)</span></p>
+          ${report.wearable?.available?`<p><strong>ErgoCare Index (answers + wearable):</strong> <span style="font-weight:700">${report.wearable.combined.index.toFixed(1)}% (${report.wearable.combined.level})</span> · questionnaire ${report.wearable.combined.questionnaire.toFixed(0)}% × 60% + body signals ${report.wearable.combined.objective.toFixed(0)}% × 40%${(report.wearable.insights||[]).length?' · '+report.wearable.insights.map(i=>esc(i.title)).join(', '):''}</p>`:''}
           <p><strong>Domain scores:</strong> Musculoskeletal ${scores.musculoskeletalRisk}% · Workload ${scores.workloadStress}% · Posture ${scores.postureRisk}% · Visual Fatigue ${scores.eyeStrain}% · Recovery ${scores.recoveryRisk}%</p>
           ${pd.neck||pd.lower_back||pd.wrist ? `<p><strong>Pain sub-domains:</strong> Cervical ${pd.neck||0}% · Upper back ${pd.upper_back||0}% · Shoulder ${pd.shoulder||0}% · Lumbar ${pd.lower_back||0}% · Wrist/hand ${pd.wrist||0}% · Forearm ${pd.forearm||0}%</p>` : ''}
           <p style="font-size:.82rem;color:#6b7280;margin-top:4px;">This screening tool does not replace clinical examination. Scores ≥70% in any domain warrant formal clinical review.</p>
@@ -2278,7 +2854,7 @@ function renderResults() {
                 <td colspan="1"><strong>COMPOSITE SCORE</strong></td>
                 <td><strong style="color:${lvMeta.color}">${scores.overallRisk}%</strong></td>
                 <td><span class="sev-pill" style="background:${lvMeta.color}15;color:${lvMeta.color}">${report.level} Risk</span></td>
-                <td style="font-size:.82rem;color:var(--muted)">${pct}th population percentile</td>
+                <td style="font-size:.82rem;color:var(--muted)">Weighted composite of 5 domains</td>
               </tr>
             </tbody>
           </table>
@@ -2351,14 +2927,106 @@ function renderResults() {
     </div>
   </div>`
 
-  // ── Animate percentile bar ──
-  setTimeout(() => {
-    const pf = document.getElementById('pct-fill')
-    if (pf) pf.style.width = pct + '%'
-  }, 400)
 
   // ── Render all four charts ──
   setTimeout(() => { buildCharts(scores, catData, pd) }, 200)
+  if (report.wearable?.available) setTimeout(() => buildBodyCharts(state.sensorHistory), 250)
+}
+
+/* ─── Body signals (wearable) section of the report ─── */
+function bodySignalsHTML(w) {
+  if (!w?.used) return ''
+  const head = `<div class="section-head"><h2>⌚ Body Signals — what your body showed</h2><p>Measured by the ErgoCare wearable while you answered, compared with your own ${BASELINE_SECONDS}-second resting baseline.</p></div>`
+  if (!w.available) return `<section id="body-signals">${head}<div class="notice">${esc(w.reason || 'Wearable data could not be scored.')}</div></section>`
+
+  const c = w.combined, p = w.posture, s = w.stress, st = w.stillness, cov = w.coverage || {}
+  const lvColor = { Low: '#059669', Moderate: '#d97706', High: '#dc2626' }[c.level]
+  const qShare = c.questionnaire * c.weights.questionnaire, oShare = c.objective * c.weights.objective
+  const pct = v => v == null ? '--' : `${Math.round(v)}%`
+  const alerts = (p?.alerts || 0) + (s?.alerts || 0) + (st?.alerts || 0)
+  const card = (k, v, sub) => `<div class="bs-card"><span class="bs-k">${k}</span><span class="bs-v">${v}</span><span class="bs-s">${sub}</span></div>`
+
+  const cards = [
+    card('❤️ Average heart rate', s?.avg_bpm ? `${Math.round(s.avg_bpm)} BPM` : '--',
+         s?.avg_bpm_change != null ? `${signed(s.avg_bpm_change)} vs your resting rate` : 'no pulse data'),
+    card('💧 Time stressed', s ? pct(s.pct_time_high + s.pct_time_elevated) : '--',
+         s ? `high ${pct(s.pct_time_high)} · elevated ${pct(s.pct_time_elevated)}` : 'no skin-response data'),
+    card('📈 Peak skin response', s?.peak_gsr_rise_pct != null ? `${signed(s.peak_gsr_rise_pct)}%` : '--', 'rise above your baseline'),
+    card('🧍 Time slouching', p ? pct(p.pct_time_bad) : '--', 'leaning more than 20°'),
+    card('📐 Average / max lean', p ? `${Math.round(p.avg_angle)}° / ${Math.round(p.max_angle)}°` : '--',
+         p ? `Typical posture: RULA-style band ${p.rula_style_score} (${esc(p.rula_label)})` : ''),
+    card('🪑 Longest time still', fmtDur(st.longest_still_s), `${pct(st.pct_time_still)} of the time not moving`),
+    card('🔔 On-screen warnings', alerts, `posture ${p?.alerts || 0} · stress ${s?.alerts || 0} · movement ${st.alerts}`),
+    card('⏱️ Time analysed', fmtDur(w.duration_s), `sensor contact: pulse ${pct(cov.pulse_pct)} · skin ${pct(cov.gsr_pct)}`),
+  ].join('')
+
+  const insights = (w.insights || []).map(i => `<div class="insight-card ${i.severity}"><h4>${i.severity === 'warning' ? '⚠️' : 'ℹ️'} ${esc(i.title)}</h4><p>${esc(i.message)}</p></div>`).join('')
+
+  return `<section id="body-signals" class="body-section">${head}
+    <div class="idx-card">
+      <div><div class="bs-k" style="margin-bottom:4px">⭐ ErgoCare Index</div><div class="idx-num" style="color:${lvColor}">${Math.round(c.index)}%</div><div class="cat-badge" style="background:${lvColor}15;color:${lvColor};display:inline-block;margin-top:8px">${c.level} risk</div></div>
+      <div>
+        <p style="font-weight:600">Your answers and your body signals, combined.</p>
+        <div class="idx-split" role="img" aria-label="Questionnaire contributes ${Math.round(qShare)} points, body signals ${Math.round(oShare)} points">
+          <span style="width:${qShare}%;background:var(--teal)"></span><span style="width:${oShare}%;background:#f59e0b"></span>
+        </div>
+        <div class="idx-legend"><span>▮ <b>${Math.round(c.questionnaire)}%</b> questionnaire × 60%</span><span style="color:#b45309">▮ <b>${Math.round(c.objective)}%</b> body signals × 40%</span></div>
+      </div>
+    </div>
+    ${insights ? `<div class="insight-grid">${insights}</div>` : ''}
+    <div class="body-stats">${cards}</div>
+    <div class="chart-grid-2">
+      <div class="chart-card"><h3>Heart rate &amp; skin response</h3><p class="chart-sub">Grey area = resting baseline. Skin response above +30% (dashed) counts as high stress.</p><div class="chart-canvas-wrap" style="height:260px"><canvas id="chart-body-signals"></canvas></div></div>
+      <div class="chart-card"><h3>Posture over time</h3><p class="chart-sub">Forward lean in degrees. Red above the 20° line = slouching.</p><div class="chart-canvas-wrap" style="height:260px"><canvas id="chart-body-posture"></canvas></div></div>
+    </div>
+    <p class="method-note">${esc(w.method || '')}</p>
+  </section>`
+}
+
+function buildBodyCharts(hist) {
+  if (typeof Chart === 'undefined' || !hist?.points?.length) return
+  window._bodyCharts?.forEach(ch => ch.destroy())
+  const pts = hist.points, end = hist.baseline_end_t
+  const mmss = v => `${Math.floor(v / 60)}:${String(Math.round(v % 60)).padStart(2, '0')}`
+  const xy = key => pts.map(p => ({ x: p.t, y: p[key] }))
+  const shade = {                                    // grey box over the baseline period
+    id: 'baselineShade',
+    beforeDatasetsDraw(chart) {
+      if (end == null) return
+      const { ctx, chartArea: a, scales: { x } } = chart
+      const xe = Math.min(x.getPixelForValue(end), a.right)
+      if (xe <= a.left) return
+      ctx.save(); ctx.fillStyle = 'rgba(148,163,184,.16)'; ctx.fillRect(a.left, a.top, xe - a.left, a.bottom - a.top)
+      ctx.fillStyle = '#64748b'; ctx.font = '11px DM Sans, sans-serif'; ctx.fillText('Baseline', a.left + 6, a.top + 14); ctx.restore()
+    },
+  }
+  const xAxis = { type: 'linear', min: 0, max: pts[pts.length - 1].t, ticks: { callback: mmss, maxTicksLimit: 8, color: '#64748b' }, grid: { color: '#eef2f6' } }
+  const common = { responsive: true, maintainAspectRatio: false, animation: false, interaction: { mode: 'index', intersect: false },
+                   elements: { point: { radius: 0 } }, plugins: { legend: { position: 'bottom', labels: { boxWidth: 12 } },
+                   tooltip: { callbacks: { title: items => mmss(items[0].parsed.x) } } } }
+  const charts = []
+  const c1 = document.getElementById('chart-body-signals')
+  if (c1) charts.push(new Chart(c1, {
+    type: 'line', plugins: [shade], options: { ...common,
+      scales: { x: xAxis, y: { position: 'left', title: { display: true, text: 'BPM' }, grid: { color: '#eef2f6' } },
+                y1: { position: 'right', title: { display: true, text: 'Skin response %' }, grid: { drawOnChartArea: false } } } },
+    data: { datasets: [
+      { label: 'Heart rate (BPM)', data: xy('bpm'), borderColor: '#dc2626', borderWidth: 1.6, yAxisID: 'y', spanGaps: false },
+      { label: 'Skin response vs baseline (%)', data: xy('gsr_change_pct'), borderColor: '#2563eb', borderWidth: 1.6, yAxisID: 'y1', spanGaps: false },
+      { label: 'High stress (+30%)', data: [{ x: 0, y: 30 }, { x: pts[pts.length - 1].t, y: 30 }], borderColor: '#94a3b8', borderDash: [5, 4], borderWidth: 1, yAxisID: 'y1' },
+    ] },
+  }))
+  const c2 = document.getElementById('chart-body-posture')
+  if (c2) charts.push(new Chart(c2, {
+    type: 'line', plugins: [shade], options: { ...common,
+      scales: { x: xAxis, y: { min: 0, suggestedMax: 35, title: { display: true, text: 'Forward lean (°)' }, grid: { color: '#eef2f6' } } } },
+    data: { datasets: [
+      { label: 'Forward lean (°)', data: xy('posture_angle'), borderColor: '#0a9396', borderWidth: 1.8, spanGaps: false,
+        segment: { borderColor: ctx => (ctx.p0.parsed.y > 20 || ctx.p1.parsed.y > 20) ? '#dc2626' : '#0a9396' } },
+      { label: 'Slouch threshold (20°)', data: [{ x: 0, y: 20 }, { x: pts[pts.length - 1].t, y: 20 }], borderColor: '#dc2626', borderDash: [5, 4], borderWidth: 1 },
+    ] },
+  }))
+  window._bodyCharts = charts
 }
 
 function buildCharts(scores, catData, pd) {
@@ -2551,9 +3219,14 @@ function buildCharts(scores, catData, pd) {
   }
 }
 function render(){
-  if(state.screen==='landing'){renderLanding();return}
-  if(state.screen==='assessment'){renderAssessment();return}
-  if(state.screen==='results'){renderResults();return}
+  if(state.screen==='landing')renderLanding()
+  else if(state.screen==='wearable')renderWearable()
+  else if(state.screen==='baseline')renderBaseline()
+  else if(state.screen==='baseline-done')renderBaselineDone()
+  else if(state.screen==='assessment')renderAssessment()
+  else if(state.screen==='results')renderResults()
+  paintWear()   // refill live tiles / panel / alerts from the last reading
+  if(state.screen==='assessment')paintMatch()
 }
 
 /* ════════════════════════════════════════════════════
@@ -2561,21 +3234,25 @@ function render(){
 ════════════════════════════════════════════════════ */
 document.getElementById('app').addEventListener('click',e=>{
   const t=e.target.closest('[data-action]'), o=e.target.closest('[data-option]')
-  if(o){state.selectedOption=o.dataset.option||'';if(state.mode==='typed')state.freeText=state.selectedOption;if(state.mode==='voice'&&!state.transcript.trim())state.transcript=state.selectedOption;render();return}
+  if(o){state.selectedOption=o.dataset.option||'';state.match=null;if(state.mode==='typed')state.freeText=optLabel(state.selectedOption);if(state.mode==='voice'&&!state.transcript.trim())state.transcript=optLabel(state.selectedOption);render();return}
   if(!t)return
   const a=t.dataset.action
   if(a==='start-typed')startAssessment('typed')
   if(a==='start-voice')startAssessment('voice')
   if(a==='reset')resetApp()
-  if(a==='previous'){if(state.idx>0){state.idx--;state.selectedOption='';state.freeText='';state.transcript='';render()}}
+  if(a==='previous'){if(state.idx>0){state.idx--;state.selectedOption='';state.freeText='';state.transcript='';state.match=null;render()}}
   if(a==='next')saveAnswer()
   if(a==='record')toggleRecording()
+  if(a.startsWith('lang-'))setLang(a.slice(5))
+  if(a==='wear-baseline'||a==='wear-redo')wearStartBaseline()
+  if(a==='wear-skip')wearSkip()
+  if(a==='wear-begin'){state.screen='assessment';render()}
   if(a==='download-pdf'&&state.backendSessionId)window.open(`${API}/api/sessions/${state.backendSessionId}/report.pdf`,'_blank')
 })
 document.getElementById('app').addEventListener('input',e=>{
   const t=e.target
-  if(t.dataset.field==='typed')state.freeText=t.value
-  if(t.dataset.field==='transcript')state.transcript=t.value
+  if(t.dataset.field==='typed'){state.freeText=t.value;scheduleMatch(t.value)}
+  if(t.dataset.field==='transcript'){state.transcript=t.value;scheduleMatch(t.value)}
   const nb=document.querySelector('[data-action="next"]')
   if(nb)nb.disabled=!canContinue()
 })

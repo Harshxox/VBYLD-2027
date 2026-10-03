@@ -63,8 +63,17 @@ async function startAssessment(mode: InputMode): Promise<void> {
   state.errorMessage = null
   renderLoadingScreen('Starting your assessment…')
 
+  const clientInfo = {
+    name: (document.querySelector('#reg-name') as HTMLInputElement)?.value || undefined,
+    email: (document.querySelector('#reg-email') as HTMLInputElement)?.value || undefined,
+    phone: (document.querySelector('#reg-phone') as HTMLInputElement)?.value || undefined,
+    age: parseInt((document.querySelector('#reg-age') as HTMLInputElement)?.value || '0') || undefined,
+    job: (document.querySelector('#reg-job') as HTMLInputElement)?.value || undefined,
+    consent: (document.querySelector('#reg-consent') as HTMLInputElement)?.checked ?? true,
+  }
+
   try {
-    const backendSession = await apiCreateSession(mode)
+    const backendSession = await apiCreateSession(mode, clientInfo)
     state.backendSessionId = backendSession.id
 
     // Build a local session shell (scores/report come from backend on completion)
@@ -235,7 +244,9 @@ function moveToPreviousQuestion(): void {
     ? (previous?.typedAnswer ?? '')
     : (previous?.transcript ?? '')
   state.transcript = previous?.transcript ?? ''
-  state.audioChunks = []
+  if (!previous?.audioUrl) {
+    state.audioChunks = []
+  }
   render()
 }
 
@@ -285,7 +296,10 @@ function startSpeechRecognition(): void {
   const recognition = new Recognition()
   recognition.continuous = true
   recognition.interimResults = true
-  recognition.lang = 'en-IN'
+  
+  const langMap: Record<string, string> = { en: 'en-IN', hi: 'hi-IN', kn: 'kn-IN' }
+  recognition.lang = langMap[document.documentElement.lang || 'en'] || 'en-IN'
+
   recognition.onresult = (event) => {
     state.transcript = Array.from(event.results)
       .map((result) => result[0].transcript)

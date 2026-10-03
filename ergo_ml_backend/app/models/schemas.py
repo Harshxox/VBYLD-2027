@@ -1,7 +1,7 @@
 from __future__ import annotations
 from datetime import datetime
 from typing import Optional, List, Any, Dict
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 
 
 # ── Answers ───────────────────────────────────────────────────────────────────
@@ -45,6 +45,7 @@ class ReportData(BaseModel):
     category_breakdown:   Dict[str, Any]
     detailed_findings:    List[str]
     positive_habits:      List[str]
+    wearable:             Optional[Dict[str, Any]] = None   # body signals + ErgoCare Index (sensor_scoring.py)
 
 
 # ── Sessions ──────────────────────────────────────────────────────────────────
@@ -60,6 +61,8 @@ class SessionCreate(BaseModel):
     client_phone: Optional[str] = None
     client_age:   Optional[int] = None
     client_job:   Optional[str] = None
+    consent:         bool = False            # must be True - enforced by the server
+    consent_version: Optional[str] = None
 
 class AudioFileOut(BaseModel):
     id:          int
@@ -96,3 +99,38 @@ class CompleteSessionOut(BaseModel):
     session_id: str
     scores:     RiskScores
     report:     ReportData
+
+
+# ── Wearable sensors ──────────────────────────────────────────────────────────
+
+class SensorReadingIn(BaseModel):
+    """
+    One reading from the ESP32 (firmware/ergocare_wearable), sent once per second
+    over Wi-Fi or via firmware/usb_bridge.py. Defaults keep older firmware working.
+    """
+    device_id:   Optional[str] = None   # the URL's device_id is authoritative
+    seq:         int   = 0
+    uptime_ms:   int   = 0
+    bpm:         float = 0
+    bpm_avg:     float = 0
+    finger:      bool  = False
+    ir:          int   = 0
+    gsr_raw:     float = 0
+    gsr_mv:      float = 0
+    gsr_contact: bool  = False
+    tilt:        float = 0
+    ax:          float = 0
+    ay:          float = 0
+    az:          float = 0
+    gyro:        float = 0
+    acc_std:     float = 0
+    moving:      bool  = False
+    pulse_ok:    bool  = True
+    mpu_ok:      bool  = True
+    wifi:        bool  = False
+    age_ms:      int   = 0      # set by usb_bridge when delivering buffered readings
+
+DEVICE_ID_PATTERN = r"^[A-Za-z0-9_-]{1,32}$"
+
+class DeviceLinkIn(BaseModel):
+    device_id: str = Field(pattern=DEVICE_ID_PATTERN)

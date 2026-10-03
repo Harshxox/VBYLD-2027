@@ -25,6 +25,21 @@ export function escapeHtml(value: string): string {
 // ── Loading ───────────────────────────────────────────────────────────────────
 
 export function renderLoading(message: string): string {
+  if (message.includes('report')) {
+    return `
+      <div class="loading-screen" style="justify-content: flex-start; padding-top: 60px;">
+        <div style="max-width: 800px; width: 100%; display: grid; gap: 30px;">
+          <div style="height: 40px; width: 40%; background: #e2e8f0; border-radius: 8px; animation: pulse 1.5s infinite"></div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <div style="height: 200px; background: #e2e8f0; border-radius: 12px; animation: pulse 1.5s infinite 0.2s"></div>
+            <div style="height: 200px; background: #e2e8f0; border-radius: 12px; animation: pulse 1.5s infinite 0.4s"></div>
+          </div>
+          <div style="height: 120px; background: #e2e8f0; border-radius: 12px; animation: pulse 1.5s infinite 0.6s"></div>
+          <p class="loader-msg" style="text-align: center; margin-top: 20px;">${escapeHtml(message)}</p>
+        </div>
+      </div>
+    `
+  }
   return `
     <div class="loading-screen">
       <div class="loader-wrap">
