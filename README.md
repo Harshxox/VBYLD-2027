@@ -2,9 +2,11 @@
 
 **Posture and stress screening that combines what people *say* with what their *body shows*.**
 
-ErgoCare pairs a 40-question ergonomic assessment (typed or spoken, in **English, हिन्दी or ಕನ್ನಡ**) with a low-cost ESP32 wearable that measures **heart rate, skin response (a stress signal) and posture** while the person answers. Both are combined into one report — the **ErgoCare Index** — that also flags where answers and body disagree, e.g. *"You reported low stress, but your body showed stress responses for 48% of the session."*
+ErgoCare pairs a 40-question ergonomic assessment (typed or spoken, in **English, हिन्दी or ಕನ್ನಡ**) with a low-cost ESP32 wearable that measures **heart rate, skin response (a stress signal) and posture** while the person answers. Both are combined into one report — the **ErgoCare Index** — that also flags where answers and body disagree, e.g. *"You reported low stress, but your body showed stress responses for 59% of the session."*
 
 > ErgoCare is a **screening tool, not a medical diagnosis.**
+
+Built for **Hack for Social Cause · VBYLD 2027** — theme *Healthcare, Wellbeing & Service Delivery*.
 
 **Team Upright** — Harshdeep Sharma (Team Lead · Hardware & Firmware) · Alex Jilson (Backend & AI) · Shrayana KS (Frontend, UX & Languages)
 
@@ -13,14 +15,18 @@ ErgoCare pairs a 40-question ergonomic assessment (typed or spoken, in **English
 | [Setup](#setup) · [Environment variables](#environment-variables) | Install and run on a laptop, every setting explained |
 | [Technical Design Document](docs/TECHNICAL_DESIGN.md) | Architecture diagrams, API, data model, scoring rules, AI matcher, security |
 | [Test cases and results](docs/TEST_CASES.md) | 9 automated suites + end-to-end replay, incl. **500-answer** and **500-participant** tests |
-| [Sample data](sample_data/README.md) | Simulated wearable session, answer sets, 100 voice-answer test cases |
+| [Sample data](sample_data/README.md) | Simulated wearable session, answer sets, 100 + 500 voice-answer test cases, 500 simulated participants |
 | [LICENSE](LICENSE) · [Third-party notices](THIRD_PARTY_NOTICES.md) | MIT |
 
-| Connect the wearable | Live posture warning |
+**Tested at a glance** — AI answer matcher: **492 / 500** answers in English, Hindi and Kannada (98.4%; 87.8% on its first, unseen run) · **500 / 500** simulated participants pass every scoring-rule check · 9 automated test suites + an end-to-end replay, all passing ([results](docs/TEST_CASES.md)).
+
+| Connect the wearable | Live posture warning while answering |
 |---|---|
 | ![Connect wearable](docs/screenshots/wearable-connect.png) | ![Posture warning](docs/screenshots/posture-warning.png) |
-| **Report: body signals + ErgoCare Index** | **Questions in Kannada, voice understood** |
+| **Report: ErgoCare Index, "Hidden stress" and "Posture blind spot"** | **Kannada question, spoken answer understood** |
 | ![Body signals report](docs/screenshots/body-signals-report.png) | ![Kannada question](docs/screenshots/kannada-question.png) |
+
+<sub>Screenshots from the current app; the wearable data in them comes from the built-in demo simulator (DEMO-01), not a real person.</sub>
 
 ---
 
@@ -31,7 +37,7 @@ ErgoCare pairs a 40-question ergonomic assessment (typed or spoken, in **English
 | 🧍 | **Live posture tracking** — forward lean measured by an MPU6050 on the collar; on-screen warning after 10 s of slouching |
 | 💧 | **Stress from the body** — skin response (GSR) and heart rate (MAX30102) compared with *your own* 60-second resting baseline |
 | 📝 | **40-question assessment** across workload, eyes, posture, movement, pain and recovery — typed or spoken |
-| 🗣 | **Understands spoken answers** — "my eyes are really tired by evening" → *Very tired*, shown as "Understood as…" for the person to confirm |
+| 🗣 | **Understands spoken answers** — "my eyes are really tired by evening" → *Very tired*; Hindi or Kannada in their own script or in English letters ("Ek Ghanta" → *1 hour*), shown as "Understood as…" for the person to confirm |
 | 🌐 | **English, Hindi, Kannada** — questions, options and voice input |
 | ⭐ | **ErgoCare Index** = 60% questionnaire + 40% body signals, plus **Hidden stress** / **Posture blind spot** insights |
 | 📄 | **Report and PDF** with heart-rate, skin-response and posture graphs |
@@ -53,6 +59,7 @@ flowchart LR
   W[Web app] <-- "answers, live readings, warnings" --> API
   API --> R[Report + PDF]
 ```
+Full architecture, sequence and data-model diagrams: [Technical Design Document](docs/TECHNICAL_DESIGN.md) (PNG copies in [`docs/diagrams/`](docs/diagrams/)).
 
 1. **Connect** — the app finds the wearable and checks finger / electrode / sensor contact.
 2. **60-second baseline** — resting heart rate and skin response are recorded; the current posture becomes "upright".
@@ -92,8 +99,8 @@ The held-out set scored 70%, then 85%, the first times it was run; the general f
 
 **1. Get the code**
 ```bat
-git clone <this-repository-url>
-cd ErgoCare
+git clone https://github.com/Harshxox/VBYLD-2027.git
+cd VBYLD-2027
 ```
 
 **2. Backend (FastAPI)**
@@ -205,7 +212,7 @@ Power the GSR module from **3.3 V** so its output never exceeds the ESP32's 3.3 
 
 ## Testing
 
-Latest results (26 Oct 2026) — details and how to run each one in [docs/TEST_CASES.md](docs/TEST_CASES.md):
+Latest results (26 Oct 2026, re-run on a fresh copy of this repository) — details and how to run each one in [docs/TEST_CASES.md](docs/TEST_CASES.md):
 
 | Suite | Result |
 |---|---|
@@ -244,16 +251,16 @@ ergo_ml_backend/app/
   api/routes/              sessions, answers, reports (PDF), sensors, questions, admin
   domain/                  scoring, wearable scoring, answer matcher, Hindi/Kannada glossary
   models/                  database tables
-ergo_ml_backend/scripts/   test suites (verify_*.py, smoke_wearable.py, eval_matcher.py)
-sample_data/               sample wearable session, answer sets, voice test cases, replay test
-docs/                      TECHNICAL_DESIGN.md, TEST_CASES.md, submission kit, screenshots
+ergo_ml_backend/scripts/   test suites (verify_*.py, smoke_wearable.py, eval_matcher*.py, eval_500_participants.py)
+sample_data/               sample session, answer sets, 100 + 500 voice answers, 500 participants, replay test
+docs/                      TECHNICAL_DESIGN.md, TEST_CASES.md, diagrams/, screenshots/, submission kit
 ```
 
 ## Limitations and next steps
 
 - Low-cost sensors, not medical devices; thresholds are sensible defaults, **not yet validated** against clinical measurements. Next: a pilot comparing ErgoCare with physiotherapist assessments.
 - Scoring rules are hand-set; a trained model needs labelled outcome data from a larger pilot.
-- Hindi/Kannada translations need native-speaker review; results page and PDF are English only.
+- Hindi/Kannada translations and voice matching need native-speaker review (all 500-answer tests are synthetic); the PDF prints Hindi/Kannada answers, but report headings are in English.
 - Voice recognition uses the browser (needs internet); on-device speech recognition is future work.
 
 ## License

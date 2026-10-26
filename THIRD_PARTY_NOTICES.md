@@ -2,6 +2,8 @@
 
 ErgoCare's own code is MIT-licensed (see [LICENSE](LICENSE)). It uses or bundles the following, each under its own license.
 
+> ErgoCare is a screening tool, not a medical device and not a diagnosis. Its scores have not been clinically validated.
+
 ## Bundled in this repository
 
 | Component | Where | License |
