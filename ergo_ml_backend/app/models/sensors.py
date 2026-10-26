@@ -13,12 +13,18 @@ class SensorLink(Base):
     """Which wearable is attached to which assessment session, plus its baseline."""
     __tablename__ = "sensor_links"
 
-    session_id          = Column(String, ForeignKey("assessment_sessions.id"), primary_key=True)
+    session_id          = Column(String, ForeignKey("assessment_sessions.id", ondelete="CASCADE"), primary_key=True)
     device_id           = Column(String, nullable=False, index=True)
     active              = Column(Boolean, nullable=False, default=True)   # still receiving readings
     linked_at           = Column(DateTime, default=now_utc)
     baseline_started_at = Column(DateTime, nullable=True)
     baseline            = Column(JSON, nullable=True)   # personal "normal": bpm, gsr, tilt
+
+    __table_args__ = (
+        # ingest_reading() runs once per second per device and looks the link up by
+        # device_id + active; without this it is a full scan of every link ever made.
+        Index("ix_sensor_links_device_active", "device_id", "active"),
+    )
 
 
 class SensorReading(Base):
@@ -26,7 +32,7 @@ class SensorReading(Base):
     __tablename__ = "sensor_readings"
 
     id          = Column(Integer, primary_key=True, autoincrement=True)
-    session_id  = Column(String, ForeignKey("assessment_sessions.id"), nullable=False)
+    session_id  = Column(String, ForeignKey("assessment_sessions.id", ondelete="CASCADE"), nullable=False)
     device_id   = Column(String, nullable=False)
     received_at = Column(DateTime, default=now_utc, nullable=False)
     seq         = Column(Integer)

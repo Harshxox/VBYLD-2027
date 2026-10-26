@@ -1,11 +1,13 @@
 """
 ErgoCare AI Backend — v3
 """
+import math
 import os
 import app.config  # noqa: F401 - loads ergo_ml_backend/.env before settings are read
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
+from fastapi.responses import JSONResponse
 from contextlib import asynccontextmanager
 
 from app.db.database import create_db_tables
@@ -41,18 +43,51 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# IMPORTANT for production: set ALLOWED_ORIGINS env var in Render/Vercel dashboard
-# e.g. ALLOWED_ORIGINS=https://your-app.vercel.app
-# Leaving it as "*" allows any website to call this API — fine for local dev only.
-_raw_origins = os.getenv("ALLOWED_ORIGINS", "*")
-_allow_origins = [o.strip() for o in _raw_origins.split(",")] if _raw_origins != "*" else ["*"]
+# CORS — set ALLOWED_ORIGINS to the web app's exact origin(s) in production, e.g.
+#   ALLOWED_ORIGINS=https://your-app.vercel.app
+#
+# A bare "*" is NOT safe here even though it looks permissive-and-therefore-harmless.
+# Starlette decides whether to echo the requesting origin by
+# `not allow_all_origins or allow_credentials`; with allow_credentials=True that is
+# always true, so a preflight from https://evil.example comes back with
+# `Access-Control-Allow-Origin: https://evil.example` and credentials allowed. Combined
+# with allow_credentials it is full cross-origin access from any website.
+#
+# So: "*" is accepted only for local development (loopback origins), and anywhere else
+# it is a hard startup error rather than a silent wide-open API.
+_local_dev = {"http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:8000",
+              "http://127.0.0.1:8000", "http://localhost:4173", "http://127.0.0.1:4173"}
+
+
+def _parse_origins() -> list[str]:
+    raw = (os.getenv("ALLOWED_ORIGINS") or "").strip()
+    if not raw:
+        if os.getenv("RENDER") or os.getenv("PRODUCTION"):
+            raise RuntimeError(
+                "ALLOWED_ORIGINS must be set to your web app's exact origin in production "
+                "(comma-separated). Refusing to start with an open CORS policy."
+            )
+        return sorted(_local_dev)
+    origins = [o.strip().rstrip("/") for o in raw.split(",") if o.strip()]
+    if not origins:
+        raise RuntimeError("ALLOWED_ORIGINS is set but empty - give at least one origin.")
+    if "*" in origins:
+        raise RuntimeError(
+            'ALLOWED_ORIGINS="*" is not permitted with credentials. '
+            "List the exact web app origin instead."
+        )
+    return origins
+
+
+_allow_origins = _parse_origins()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=_allow_origins,   # Bug H fix: set ALLOWED_ORIGINS env var in production
+    allow_origins=_allow_origins,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type", "X-Session-Token",
+                   "X-Admin-Token", "X-Device-Token"],
 )
 
 app.include_router(sessions.router, prefix="/api/sessions", tags=["Sessions"])
@@ -63,8 +98,40 @@ app.include_router(sensors.devices_router, prefix="/api/devices", tags=["Wearabl
 app.include_router(questions.router, prefix="/api/questions", tags=["Questions"])
 app.include_router(admin.router,     prefix="/api/admin",     tags=["Admin"])
 
-# Serve audio files directly — admin panel plays them via <audio src="...">
-app.mount("/uploads/audio", StaticFiles(directory=AUDIO_DIR), name="audio")
+# Audio is NO LONGER served from a public static mount. Every clip is streamed by
+# GET /api/sessions/{id}/audio/{file_name}, which requires the session's access
+# token or an admin token - a recording is personal health data, not a static file.
+# The admin panel's <audio src="..."> requests carry the admin bearer token.
+
+
+def _json_safe(value):
+    """
+    Replace non-finite floats with their string form, recursively.
+
+    This exists because of a 500-on-500: Python's json module happily *decodes*
+    a literal NaN or Infinity from a request body, and Pydantic echoes the
+    offending value back inside the validation error. Starlette's JSONResponse
+    serialises with allow_nan=False, so rendering that error raised
+    ValueError("Out of range float values are not JSON compliant") and the
+    request crashed instead of returning 422. Sanitising the error payload turns
+    a client mistake into the correct 422 and keeps NaN out of every response.
+    """
+    if isinstance(value, float):
+        return value if math.isfinite(value) else repr(value)
+    if isinstance(value, dict):
+        return {str(k): _json_safe(v) for k, v in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_json_safe(v) for v in value]
+    if isinstance(value, (str, int, bool, type(None))):
+        return value
+    # Pydantic puts the original exception instance in the error context
+    # (ctx={"error": ValueError(...)}), which JSONResponse cannot render.
+    return repr(value)
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_error_handler(request: Request, exc: RequestValidationError):
+    return JSONResponse(status_code=422, content={"detail": _json_safe(exc.errors())})
 
 
 @app.get("/")

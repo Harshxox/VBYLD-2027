@@ -100,6 +100,42 @@ HOLDOUT = [
 ]
 
 
+# Hindi and Kannada, in their own script and romanised (what a browser set to
+# English writes for Hindi speech: "Ek Ghanta."). The rules layer handles these.
+INDIC = [
+    (1, "Ek Ghanta.", "1 hour"),
+    (1, "do ghante se zyada", "More than 2 hours"),
+    (1, "aadha ghanta", "Less than 30 minutes"),
+    (1, "dedh ghanta", "1-2 hours"),
+    (1, "एक घंटा", "1 hour"),
+    (1, "दो घंटे से ज़्यादा", "More than 2 hours"),
+    (1, "ondu gante", "1 hour"),
+    (1, "eradu gantegintha hechchu", "More than 2 hours"),
+    (1, "ಎರಡು ಗಂಟೆಗಿಂತ ಹೆಚ್ಚು", "More than 2 hours"),
+    (2, "aankhein bahut thak jaati hain", "Very tired"),
+    (2, "thodi thak jaati hain", "Slightly tired"),
+    (2, "kannu tumba sustagutte", "Very tired"),
+    (2, "शाम तक आँखें बहुत थक जाती हैं", "Very tired"),
+    (4, "kabhi kabhi", "Once in a while"),
+    (4, "roz", "Every Day"),
+    (4, "kabhi nahi", "Never"),
+    (4, "kelavomme", "Once in a while"),
+    (4, "कभी कभी", "Once in a while"),
+    (11, "halka dard", "Mild"),
+    (27, "do litre se zyada", "More than 2 litres"),
+    (31, "teen", "3"),
+    (31, "char", "4"),
+    (31, "mooru", "3"),
+    (31, "ಮೂರು", "3"),
+    (34, "haan", "Yes"),
+    (34, "nahi", "No"),
+    (34, "shayad", "Maybe"),
+    (34, "houdu", "Yes"),
+    (34, "illa", "No"),
+    (34, "हाँ", "Yes"),
+]
+
+
 def evaluate(label: str, fn, cases=None) -> float:
     cases = cases or CASES
     ok, wrong = 0, []
@@ -129,6 +165,8 @@ def main() -> None:
              lambda q, s: next((o for o in q["options"] if o.lower() == s.strip().lower()), None))
     evaluate("Rules only (no ML model)", lambda q, s: M.match_answer(q, s, use_semantic=False).option)
     evaluate("HELD-OUT - rules only", lambda q, s: M.match_answer(q, s, use_semantic=False).option, HOLDOUT)
+    evaluate("HINDI / KANNADA (script + romanised) - rules only",
+             lambda q, s: M.match_answer(q, s, use_semantic=False).option, INDIC)
     for name in args.models:
         M.MODEL_NAME = name
         M.semantic = M._Semantic()

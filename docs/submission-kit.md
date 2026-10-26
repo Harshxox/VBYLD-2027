@@ -17,28 +17,32 @@ Registration & submission window closes **15 October 2026**; state rounds run 16
 
 ## 2. Deck outline (7 slides)
 
+The portal asks for Problem Definition on slides 1–2, Solution Overview on slides 3–4,
+Impact & Scalability on slide 5, and Team & Implementation plus AI-use disclosure on
+slides 6–7. Use the official IIT Bombay template from the submission page when available.
+
 | # | Slide | What goes on it |
 |---|---|---|
-| 1 | **Problem** | Young people and screen workers sit 6–10 h/day; posture pain and stress build up unnoticed. People under-report stress and don't notice slouching. Existing checks need a physiotherapist and are not in local languages. |
-| 2 | **Solution** | "What you say + what your body shows." 40-question screening (typed or spoken, EN/HI/KN) + a ≈ ₹1,000–1,700 wearable (heart rate, skin response, posture) → one ErgoCare Index. Screenshot: report with insights. |
-| 3 | **Live demo** | Photo/GIF: wearable on a person, live panel, red "Sit up straight" warning, "Hidden stress" card. |
-| 4 | **How it works** | Architecture diagram (README). Personal 60 s baseline; transparent scoring table; MiniLM sentence-embedding model for spoken answers (70–85% on unseen phrasing, person confirms on screen). |
-| 5 | **Social impact** | Low cost, runs on one laptop without Wi-Fi, 3 languages + voice (low literacy / typing barriers), usable by NSS volunteers or college health centres, consent + privacy by design. Who: students, BPO/IT workers, anyone at a screen. |
-| 6 | **Validation (honest)** | What you actually measured: pilot size, % with hidden stress / posture blind spot, matcher accuracy table, sensor checks. State plainly: screening tool, not diagnosis; thresholds to be validated with physiotherapists. |
-| 7 | **Roadmap + team** | Clinical validation pilot → trained risk model from pilot data → regional-language reports → on-device voice → camp/college rollout. Team names and roles. |
+| 1 | **Problem & local context** | Define one specific group and setting the team has observed (for example, students in a college computer lab). Describe the ergonomic screening gap using your own interviews/observations; do not invent prevalence figures. |
+| 2 | **Who is affected & why current approaches miss them** | Name the intended users and local barriers to noticing or discussing discomfort. Distinguish the problem you observed from assumptions that still need validation. |
+| 3 | **Solution: ErgoCare** | “What you report + what optional body signals show.” A 40-question screening in English, Hindi or Kannada; typed or spoken answers; optional ESP32 wearable; personalised, rule-based guidance. |
+| 4 | **Working prototype & technical design** | Show the real flow and report. Optional wearable: ESP32, pulse, skin response and posture; a personal 60-second baseline. Questionnaire and sensor scores combine 60:40 when wearable data is available. MiniLM helps match free-form answers to options; it does not predict health risk. |
+| 5 | **Impact, scale & evidence so far** | Indicative wearable parts cost: approximately ₹1,000–1,700 (replace with the team’s actual bill of materials). Report the held-out English answer-matcher result accurately: 17/20 examples (85%)—not clinical accuracy. No clinical validation or measured health outcomes yet. Propose a consent-based pilot and metrics such as usability, completion, language matching and physiotherapist review. |
+| 6 | **Implementation & team** | Give each member’s real role. Show a staged plan: usability and language review → small supervised pilot → review with qualified health professionals → iterate before any wider deployment. |
+| 7 | **AI-use disclosure & next step** | State the AI tools actually used, what they helped create, and the team’s honest estimate of AI-assisted/generated work in the final submission. Name what remains rule-based and unvalidated; end with a concrete pilot or partnership ask. |
 
 ## 3. Demo video script (~4 min)
 
 | Time | Shot | Say |
 |---|---|---|
-| 0:00–0:30 | Person slouched at a laptop | The problem, in one sentence each: pain, stress, nobody notices, checks are expensive and English-only. |
-| 0:30–0:50 | Wearable close-up | "₹1,500 of sensors: pulse, skin response, posture." |
-| 0:50–1:20 | Register (consent box), choose हिन्दी / ಕನ್ನಡ, connect screen turning green | Consent and language first; checklist shows every sensor is working. |
-| 1:20–1:50 | 60 s baseline (speed up) | "Everything is compared with *your own* resting values." |
-| 1:50–2:40 | Answer questions by voice; slouch → red warning; mental maths → stress rises | "Understood as…" confirmation; live warnings instead of a buzzer. |
-| 2:40–3:30 | Report: ErgoCare Index, Hidden stress / Posture blind spot, graphs, PDF | "Answers said low stress; the body disagreed." |
-| 3:30–3:50 | Admin panel + CSV | How a college health centre would use it. |
-| 3:50–4:10 | Impact + roadmap | Cost, languages, offline, next step: validation pilot. |
+| 0:00–0:25 | Team on camera; show intended setting | Introduce the team, local user group and observed problem. |
+| 0:25–0:50 | Show registration and consent; choose a language | Explain what information is collected, why consent matters and that this is screening—not diagnosis. |
+| 0:50–1:20 | Show wearable and sensor checklist | Name the pulse, skin-response and posture sensors. State that hardware cost is an estimate unless you have the actual bill. |
+| 1:20–1:40 | Start baseline (briefly time-lapse the real 60 seconds) | Explain that readings are compared with the participant’s own baseline, not a population norm. |
+| 1:40–2:35 | Answer several questions; show voice confirmation and live posture warning | Demonstrate typed fallback, spoken-answer matching and participant confirmation. Do not stage a health result as real pilot data. |
+| 2:35–3:15 | Show the completed report and optional wearable insights | Explain the transparent score and practical next steps. Clearly call any sample screen values illustrative. |
+| 3:15–3:40 | Show architecture or code repository briefly | Point out the working pieces and distinguish rule-based screening from MiniLM answer matching. |
+| 3:40–4:00 | Team together; show one pilot metric and next milestone | Share only measured evidence; state that clinical validation is future work and ask for a supervised pilot partner. |
 
 Record at 1080p (Windows: Win + Alt + R, or OBS). Keep the file under 80 MB (HandBrake "Fast 720p30" if needed).
 
@@ -46,7 +50,7 @@ Record at 1080p (Windows: Win + Alt + R, or OBS). Keep the file under 80 MB (Han
 
 **Night before**
 - Charge laptop; pack USB cable **and a spare**; tape/hot-glue the jumper wires.
-- Run `start_demo.bat`, do one full session, then `scripts\verify_wearable.py` → 25/25.
+- Run `start_demo.bat`, do one full session, then `scripts\verify_wearable.py` → 35/35 while someone wears the band and leans forward when asked (22/23 with no band connected).
 - Have the demo video on the laptop **and** a phone, in case everything fails.
 
 **At the table (5 min before)**
@@ -66,11 +70,11 @@ Record at 1080p (Windows: Win + Alt + R, or OBS). Keep the file under 80 MB (Han
 
 | Question | Answer |
 |---|---|
-| Is this AI/ML? | Yes for understanding spoken answers (MiniLM sentence embeddings, measured 70–85% on unseen phrasing). The risk scores are transparent expert rules on purpose — explainable, and we have no labelled outcome data yet to train a model. |
+| Is this AI/ML? | MiniLM helps match free-form answers to questionnaire options; on the documented held-out English set it matched 17 of 20 examples (85%). Risk scoring uses transparent prototype rules, not a trained clinical prediction model. |
 | How accurate is the stress / posture measurement? | The sensors measure real physiological changes relative to each person's own baseline. They are low-cost, not medical grade; our next step is a validation pilot against physiotherapist assessment. |
-| Why is it a social cause? | Cheap, offline, voice + regional languages, runs by a volunteer — preventive screening for people who never see an ergonomist. |
+| Why is it a social cause? | It explores a lower-cost, multilingual route to preventive ergonomic screening that could be piloted through colleges or community health programmes. The hardware cost is an estimate; impact and access still need field validation. |
 | What about privacy? | Server-enforced consent, protected admin login, delete-on-request, nothing sensitive in the code. |
 | How will it scale? | One laptop + one band per camp; web backend already deployable (Render/Vercel); bands can be shared after cleaning. |
-| What did you test? | Show `verify_wearable.py` (25/25), `eval_matcher.py` table, and your pilot numbers. |
+| What did you test? | Show `verify_wearable.py` (35/35 with the band worn), `eval_matcher.py` table, and your pilot numbers. |
 
 Avoid claims you cannot show on screen (e.g. "clinically validated", "99% accurate", participant numbers without the data).

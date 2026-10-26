@@ -12,6 +12,8 @@ Sensor facts verified on the prototype (see firmware/):
 """
 from __future__ import annotations
 
+import math
+import os
 import statistics
 import threading
 import time
@@ -33,6 +35,13 @@ BASELINE_SECONDS     = 60
 BASELINE_SKIP_S      = 2      # ignore readings while posture calibration settles
 BASELINE_MIN_READINGS = 10
 MIN_VALID_GSR        = 50     # below this the electrodes are not being touched
+
+# Readings are stored at 1 Hz per device and were previously kept forever, so an
+# abandoned session ingested indefinitely. Reports only ever use the baseline
+# window and the assessment itself, so old rows are pruned. Set
+# SENSOR_RETENTION_S=0 to keep everything (e.g. for offline analysis).
+SENSOR_RETENTION_S = int(os.getenv("SENSOR_RETENTION_S", str(6 * 3600)))
+SENSOR_PRUNE_EVERY = 300     # only run the DELETE every N ingested readings
 
 STRESS_LEVELS = ["calm", "elevated", "high"]
 
@@ -243,3 +252,58 @@ def history_points(readings: List[dict], baseline: Optional[dict],
         end = baseline_started_at + timedelta(seconds=BASELINE_SECONDS)
         baseline_end_t = round((end - t0).total_seconds(), 1)
     return {"total_readings": total, "baseline_end_t": baseline_end_t, "points": points}
+
+
+# ── Retention ────────────────────────────────────────────────────────────────
+
+def sanitize_reading(reading: Optional[dict]) -> Optional[dict]:
+    """
+    Replace any non-finite number with None.
+
+    Python's json decoder accepts NaN and Infinity, and Pydantic's float type
+    passes them through. The value was then stored verbatim in the in-memory
+    registry and echoed back by /latest and /sensors/latest - but Starlette
+    serialises with allow_nan=False, so a single NaN turned every one of those
+    responses into HTTP 500. It could also be persisted into sensor_links.baseline
+    as the literal token NaN, which is not valid JSON per RFC 8259.
+    """
+    if not reading:
+        return reading
+    clean = {}
+    for key, value in reading.items():
+        if isinstance(value, float) and not math.isfinite(value):
+            clean[key] = None
+        elif isinstance(value, dict):
+            clean[key] = sanitize_reading(value)
+        else:
+            clean[key] = value
+    return clean
+
+
+_prune_counter = 0
+
+
+def prune_readings(db, session_id: str) -> int:
+    """
+    Drop readings older than SENSOR_RETENTION_S for one session.
+
+    Runs at most once every SENSOR_PRUNE_EVERY calls so the 1 Hz ingest path does
+    not pay for a DELETE on every reading. Assumes the caller is inside the same
+    transaction as the INSERT.
+    """
+    global _prune_counter
+    if SENSOR_RETENTION_S <= 0:
+        return 0
+    _prune_counter += 1
+    if _prune_counter % SENSOR_PRUNE_EVERY != 1:
+        return 0
+
+    from app.models.assessment import now_utc          # local imports avoid a cycle
+    from app.models.sensors import SensorReading
+
+    cutoff = now_utc() - timedelta(seconds=SENSOR_RETENTION_S)
+    deleted = (db.query(SensorReading)
+                 .filter(SensorReading.session_id == session_id,
+                         SensorReading.received_at < cutoff)
+                 .delete(synchronize_session=False))
+    return deleted or 0

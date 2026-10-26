@@ -21,12 +21,23 @@ Run either this OR usb_bridge.py, not both (the app connects to the first device
 import argparse
 import json
 import math
+import os
 import random
 import sys
 import threading
 import time
 import urllib.error
 import urllib.request
+
+# Read DEVICE_INGEST_TOKEN from ergo_ml_backend/.env so the sender and the server
+# can never drift apart. Real environment variables still win.
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                "..", "ergo_ml_backend"))
+try:
+    from app.config import load_env
+    load_env()
+except Exception:                      # running without the backend checked out
+    pass
 
 DEVICE_ID = "DEMO-01"
 
@@ -75,9 +86,12 @@ class Body:
         self.tilt_zero = self.tilt
 
 
-def post(backend: str, reading: dict):
+def post(backend: str, reading: dict, token: str = ""):
+    headers = {"Content-Type": "application/json"}
+    if token:
+        headers["X-Device-Token"] = token
     req = urllib.request.Request(f"{backend}/api/devices/{DEVICE_ID}/readings", method="POST",
-                                 data=json.dumps(reading).encode(), headers={"Content-Type": "application/json"})
+                                 data=json.dumps(reading).encode(), headers=headers)
     with urllib.request.urlopen(req, timeout=3) as resp:
         return json.loads(resp.read() or b"{}")
 
@@ -102,6 +116,8 @@ def read_keys(body: Body, stop: threading.Event):
 def main():
     ap = argparse.ArgumentParser(description="ErgoCare demo-mode wearable simulator")
     ap.add_argument("--backend", default="http://127.0.0.1:8000")
+    ap.add_argument("--token", default=os.getenv("DEVICE_INGEST_TOKEN", ""),
+                    help="X-Device-Token (default: $DEVICE_INGEST_TOKEN)")
     args = ap.parse_args()
     backend = args.backend.rstrip("/")
 
@@ -113,7 +129,7 @@ def main():
     while not stop.is_set():
         r = body.step()
         try:
-            reply = post(backend, r)
+            reply = post(backend, r, args.token)
             if reply.get("calibrate"):
                 body.calibrate()
             if ok_before is False:
@@ -122,6 +138,14 @@ def main():
             state = (f"{'SLOUCHING' if body.slouch else 'upright  '} | {'STRESSED' if body.stressed else 'calm    '} | "
                      f"{'finger on ' if body.finger else 'finger OFF'} | HR {r['bpm']:5.1f} | GSR {r['gsr_raw']:4d} | tilt {r['tilt']:4.1f}")
             print(f"\r#{r['seq']:<5} {state}   ", end="", flush=True)
+        except urllib.error.HTTPError as exc:
+            if exc.code in (401, 403):
+                raise SystemExit(
+                    f"\n[backend] HTTP {exc.code}: this backend wants a device token.\n"
+                    f"          Pass the same value as DEVICE_INGEST_TOKEN in the backend .env:\n"
+                    f"              python demo_simulator.py --token <value>\n"
+                ) from None
+            raise
         except (urllib.error.URLError, TimeoutError, ConnectionError) as exc:
             if ok_before is not False:
                 print(f"\n[backend] not reachable at {backend} ({getattr(exc, 'reason', exc)}) - retrying...")

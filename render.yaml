@@ -16,6 +16,10 @@ services:
         sync: false
       - key: ADMIN_SECRET
         generateValue: true
+      # Same value as DEVICE_TOKEN in firmware/ergocare_wearable/secrets.h - without it
+      # anyone who knows a device id can post fake readings to this public server
+      - key: DEVICE_INGEST_TOKEN
+        sync: false
       - key: AUDIO_UPLOAD_DIR
         value: /opt/render/project/src/uploads/audio
       - key: ALLOWED_ORIGINS

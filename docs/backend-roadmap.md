@@ -1,5 +1,7 @@
 # Backend Roadmap
 
+> **Superseded.** Early planning notes from before the build — several items here (XGBoost, Whisper, RAG, Postgres) were never implemented. The system as built is described in [TECHNICAL_DESIGN.md](TECHNICAL_DESIGN.md).
+
 This is the suggested backend plan for turning the current ErgoCare AI frontend prototype into a full product.
 
 ## 1. Backend Stack

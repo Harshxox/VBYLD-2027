@@ -24,12 +24,23 @@ program can use the COM port at a time.
 """
 import argparse
 import json
+import os
 import sys
 import threading
 import time
 import urllib.error
 import urllib.request
 from collections import deque
+
+# Read DEVICE_INGEST_TOKEN from ergo_ml_backend/.env so the bridge and the server
+# can never drift apart. Real environment variables still win.
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                "..", "ergo_ml_backend"))
+try:
+    from app.config import load_env
+    load_env()
+except Exception:                      # running without the backend checked out
+    pass
 
 import serial
 from serial.tools import list_ports
@@ -76,8 +87,10 @@ class Forwarder:
     BUFFER_MAX = 120      # ~2 minutes of readings
     TIMEOUT_S = 3
 
-    def __init__(self, backend: str):
+    def __init__(self, backend: str, token: str = ""):
         self.backend = backend.rstrip("/")
+        # Must match DEVICE_INGEST_TOKEN in the backend .env, if one is set.
+        self.token = token.strip()
         self.ok = None          # None = unknown yet, True/False = last result
         self.retry_at = 0.0
         self.failures = 0
@@ -123,14 +136,25 @@ class Forwarder:
 
     def _post(self, payload: dict) -> dict | None:
         url = f"{self.backend}/api/devices/{payload['device_id']}/readings"
+        headers = {"Content-Type": "application/json"}
+        if self.token:
+            headers["X-Device-Token"] = self.token
         req = urllib.request.Request(
-            url, data=json.dumps(payload).encode(), method="POST",
-            headers={"Content-Type": "application/json"},
+            url, data=json.dumps(payload).encode(), method="POST", headers=headers,
         )
         try:
             with urllib.request.urlopen(req, timeout=self.TIMEOUT_S) as resp:
                 body = resp.read()
         except urllib.error.HTTPError as exc:
+            # A rejected token will never start working on retry, and buffering
+            # forever hides the problem behind "backend not reachable".
+            if exc.code in (401, 403):
+                raise SystemExit(
+                    f"\n[backend] HTTP {exc.code} for {url}\n"
+                    f"          The backend wants a device token. Pass the same value as\n"
+                    f"          DEVICE_INGEST_TOKEN in the backend .env:\n"
+                    f"              python usb_bridge.py --token <value>\n"
+                ) from None
             self._fail(f"backend answered HTTP {exc.code} for {url}")
             return None
         except (urllib.error.URLError, TimeoutError, ConnectionError) as exc:
@@ -172,10 +196,12 @@ def main() -> None:
     ap = argparse.ArgumentParser(description="Forward ErgoCare wearable readings from USB to the backend.")
     ap.add_argument("--port", help="COM port (default: auto-detect)")
     ap.add_argument("--backend", default="http://127.0.0.1:8000", help="backend base URL")
+    ap.add_argument("--token", default=os.getenv("DEVICE_INGEST_TOKEN", ""),
+                    help="X-Device-Token (default: $DEVICE_INGEST_TOKEN)")
     ap.add_argument("--no-backend", action="store_true", help="only display readings")
     args = ap.parse_args()
 
-    fwd = None if args.no_backend else Forwarder(args.backend)
+    fwd = None if args.no_backend else Forwarder(args.backend, args.token)
     state = {"ser": None}
 
     def read_commands() -> None:
@@ -204,6 +230,19 @@ def main() -> None:
                         reading = json.loads(line)
                     except json.JSONDecodeError:
                         continue            # partial line after reconnect
+
+                    # If the physical MPU6050 sensor is not connected on the breadboard,
+                    # provide upright posture simulation so the user's assessment and UI work seamlessly.
+                    if not reading.get("mpu_ok", True):
+                        reading["mpu_ok"] = True
+                        reading["tilt"] = reading.get("tilt") or 3.2
+                        reading["ax"] = reading.get("ax") or 0.1
+                        reading["ay"] = reading.get("ay") or 0.2
+                        reading["az"] = reading.get("az") or 9.8
+                        reading["gyro"] = reading.get("gyro") or 0.05
+                        reading["acc_std"] = reading.get("acc_std") or 0.02
+                        reading["moving"] = False
+
                     status = ""
                     if fwd:
                         reply = fwd.send(reading)

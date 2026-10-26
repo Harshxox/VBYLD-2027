@@ -1,12 +1,19 @@
 """
 Reports route — v3
-POST /{session_id}/complete  → score + build report, persist, return
-GET  /{session_id}/report    → JSON report
-GET  /{session_id}/report.pdf → PDF download with client name, audio list, full data
+POST /{session_id}/complete    → score + build report, persist, return
+GET  /{session_id}/report      → JSON report
+GET  /{session_id}/report.pdf  → PDF download with client name, audio list, full data
+
+v4.1 — the JSON report and the PDF both contain the participant's name, email,
+phone and every answer, so both now require the session access token
+(X-Session-Token) or an admin token.
 """
 import io
+import re
+import urllib.parse
 from datetime import datetime, timezone
-from fastapi import APIRouter, Depends, HTTPException
+from typing import Optional
+from fastapi import APIRouter, Depends, Header, HTTPException
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
@@ -17,8 +24,30 @@ from app.models.sensors import SensorLink, SensorReading
 from app.domain.sensor_scoring import score_session
 from app.domain.sensors import POSTURE_BAD_DEG, history_points
 from app.domain.scoring import calculate_scores, build_report
+from app.security import require_session_access, session_token_matches
+from app.api.routes.pdf_fonts import mark_script_runs, register_fonts
 
 router = APIRouter()
+
+
+def _load_session(db: Session, session_id: str, caller: str,
+                  presented: Optional[str]) -> AssessmentSession:
+    """
+    Fetch a session and confirm the caller may read it.
+
+    `caller` is "session:<token>" when an X-Session-Token header was supplied, or
+    an admin identity from a valid admin token. A session token only unlocks the
+    session it was minted for.
+    """
+    session = db.query(AssessmentSession).filter(AssessmentSession.id == session_id).first()
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+    if caller.startswith("session:") and not session_token_matches(session.access_token, presented):
+        raise HTTPException(
+            status_code=403,
+            detail="That access token belongs to a different session.",
+        )
+    return session
 
 
 def _answers_as_dicts(session: AssessmentSession) -> list:
@@ -42,16 +71,19 @@ def _wearable_section(session_id: str, scores: RiskScores, db: Session):
 # ── Complete session → score + report ────────────────────────────────────────
 
 @router.post("/{session_id}/complete", response_model=CompleteSessionOut)
-def complete_session(session_id: str, db: Session = Depends(get_db)):
-    session = db.query(AssessmentSession).filter(AssessmentSession.id == session_id).first()
-    if not session:
-        raise HTTPException(status_code=404, detail="Session not found")
+def complete_session(
+    session_id: str,
+    db: Session = Depends(get_db),
+    x_session_token: Optional[str] = Header(default=None),
+    caller: str = Depends(require_session_access),
+):
+    session = _load_session(db, session_id, caller, x_session_token)
     if not session.answers:
         raise HTTPException(status_code=422, detail="No answers — cannot score empty session")
 
     answers = _answers_as_dicts(session)
     scores, ml = calculate_scores(answers)
-    report: ReportData = build_report(scores, ml)
+    report: ReportData = build_report(scores, ml, answers)
 
     # Wearable: objective body-signal score, ErgoCare Index and answer/body mismatches
     wearable = _wearable_section(session_id, scores, db)
@@ -80,10 +112,13 @@ def complete_session(session_id: str, db: Session = Depends(get_db)):
 # ── Get JSON report ───────────────────────────────────────────────────────────
 
 @router.get("/{session_id}/report")
-def get_report(session_id: str, db: Session = Depends(get_db)):
-    session = db.query(AssessmentSession).filter(AssessmentSession.id == session_id).first()
-    if not session:
-        raise HTTPException(status_code=404, detail="Session not found")
+def get_report(
+    session_id: str,
+    db: Session = Depends(get_db),
+    x_session_token: Optional[str] = Header(default=None),
+    caller: str = Depends(require_session_access),
+):
+    session = _load_session(db, session_id, caller, x_session_token)
     if not session.completed_at or not session.report_json:
         raise HTTPException(status_code=409, detail="Session not yet completed")
     return {
@@ -119,7 +154,7 @@ def get_report(session_id: str, db: Session = Depends(get_db)):
             {
                 "question_id": af.question_id,
                 "file_name":   af.file_name,
-                "audio_url":   f"/uploads/audio/{session_id}/{af.file_name}",
+                "audio_url":   f"/api/sessions/{session_id}/audio/{af.file_name}",
                 "size_bytes":  af.size_bytes,
             }
             for af in session.audio_files
@@ -130,10 +165,13 @@ def get_report(session_id: str, db: Session = Depends(get_db)):
 # ── Download PDF ──────────────────────────────────────────────────────────────
 
 @router.get("/{session_id}/report.pdf")
-def download_report_pdf(session_id: str, db: Session = Depends(get_db)):
-    session = db.query(AssessmentSession).filter(AssessmentSession.id == session_id).first()
-    if not session:
-        raise HTTPException(status_code=404, detail="Session not found")
+def download_report_pdf(
+    session_id: str,
+    db: Session = Depends(get_db),
+    x_session_token: Optional[str] = Header(default=None),
+    caller: str = Depends(require_session_access),
+):
+    session = _load_session(db, session_id, caller, x_session_token)
     if not session.completed_at or not session.report_json:
         raise HTTPException(status_code=409, detail="Session not yet completed")
 
@@ -148,12 +186,39 @@ def download_report_pdf(session_id: str, db: Session = Depends(get_db)):
                                  link.baseline_started_at if link else None, max_points=300)
 
     pdf_bytes = _generate_pdf(session, history)
-    safe = (session.client_name or "client").replace(" ", "-").lower()
     return StreamingResponse(
         io.BytesIO(pdf_bytes),
         media_type="application/pdf",
-        headers={"Content-Disposition": f'attachment; filename="ergocare-{safe}-{session_id[:8]}.pdf"'},
+        headers={"Content-Disposition": _pdf_disposition(session)},
     )
+
+
+def _pdf_disposition(session) -> str:
+    """
+    Build a Content-Disposition that survives any name a participant types.
+
+    Starlette encodes header values as latin-1, so a name like "Rahul" written
+    in Devanagari raised UnicodeEncodeError and turned every PDF download into a
+    500 - on a product whose whole point is Hindi and Kannada support. RFC 5987
+    carries the real name in filename*, with a plain ASCII filename= fallback for
+    older clients.
+
+    Quotes, backslashes and CR/LF are stripped: they would either break out of the
+    quoted-string or inject extra headers.
+    """
+    def clean(value: str) -> str:
+        value = "".join(ch for ch in value if ch.isprintable())
+        return value.replace('"', "").replace("\\", "").replace("\r", "").replace("\n", "").strip()
+
+    stem = clean(session.client_name or "") or "client"
+    ascii_stem = re.sub(r"[^A-Za-z0-9._-]+", "-", stem).strip("-.")[:40].lower() or "client"
+    filename = f"ergocare-{ascii_stem}-{session.id[:8]}.pdf"
+
+    disposition = f'attachment; filename="{filename}"'
+    if stem != ascii_stem:
+        quoted = urllib.parse.quote(stem, safe="")
+        disposition += f"; filename*=UTF-8''{quoted}"
+    return disposition
 
 
 # ── PDF generator ─────────────────────────────────────────────────────────────
@@ -228,6 +293,10 @@ def _generate_pdf(session: AssessmentSession, history=None) -> bytes:
         from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
     except ImportError:
         raise HTTPException(status_code=500, detail="reportlab not installed — run: pip install reportlab")
+
+    # Embed the Devanagari/Kannada fonts so Hindi and Kannada answers render as
+    # text instead of empty boxes. Falls back to Helvetica-only if unavailable.
+    register_fonts()
 
     report = session.report_json
     W = A4[0] - 40 * mm
@@ -307,10 +376,12 @@ def _generate_pdf(session: AssessmentSession, history=None) -> bytes:
     # ── Client info ───────────────────────────────────────────────────────────
     if session.client_name:
         story.append(Paragraph("Client Information", sec_s))
+        # These four are participant-supplied: escape them and give any Indic
+        # script a font that has the glyphs.
         cdata = [
-            ["Name",    session.client_name  or "—", "Email",   session.client_email or "—"],
-            ["Phone",   session.client_phone or "—", "Age",     str(session.client_age or "—")],
-            ["Job Role",session.client_job   or "—", "Session", session.id[:12] + "…"],
+            ["Name",    mark_script_runs(session.client_name  or "—"), "Email",   mark_script_runs(session.client_email or "—")],
+            ["Phone",   mark_script_runs(session.client_phone or "—"), "Age",     str(session.client_age or "—")],
+            ["Job Role",mark_script_runs(session.client_job   or "—"), "Session", session.id[:12] + "…"],
         ]
         ctbl = Table([[Paragraph(str(v), small_s if i%2==0 else body_s) for i,v in enumerate(row)] for row in cdata],
                      colWidths=[25*mm, W/2-25*mm-2*mm, 22*mm, W/2-22*mm-2*mm])
@@ -368,7 +439,7 @@ def _generate_pdf(session: AssessmentSession, history=None) -> bytes:
     if wearable.get("used"):
         story.append(Paragraph("Body Signals (ErgoCare Wearable)", sec_s))
         if not wearable.get("available"):
-            story.append(Paragraph(wearable.get("reason") or "Wearable data could not be scored.", body_s))
+            story.append(Paragraph(mark_script_runs(wearable.get("reason") or "Wearable data could not be scored."), body_s))
         else:
             post, stress, still = wearable.get("posture"), wearable.get("stress"), wearable["stillness"]
             cov = wearable.get("coverage", {})
@@ -441,7 +512,7 @@ def _generate_pdf(session: AssessmentSession, history=None) -> bytes:
                                          [("Lean angle", series("posture_angle"), colors.HexColor("#0a9396"))],
                                          ch_w, ch_h, 0, max(35, max(ang_vals) + 5),
                                          threshold=(POSTURE_BAD_DEG, f"slouch ({POSTURE_BAD_DEG}°)"), shade_until=shade))
-            story.append(Paragraph(wearable.get("method", ""), small_s))
+            story.append(Paragraph(mark_script_runs(wearable.get("method", "")), small_s))
         story.append(Spacer(1, 6))
 
     # ── Top factors ───────────────────────────────────────────────────────────
@@ -469,7 +540,7 @@ def _generate_pdf(session: AssessmentSession, history=None) -> bytes:
     if report.get("action_plan"):
         story.append(Paragraph("Prioritised Action Plan", sec_s))
         for i, a in enumerate(report["action_plan"], 1):
-            story.append(Paragraph(f"{i}.  {a}", bullet_s))
+            story.append(Paragraph(f"{i}.  {mark_script_runs(a)}", bullet_s))
         story.append(Spacer(1, 8))
 
     # ── All 40 Q&A answers ────────────────────────────────────────────────────
@@ -478,9 +549,13 @@ def _generate_pdf(session: AssessmentSession, history=None) -> bytes:
         story.append(Paragraph("All 40 Answers", sec_s))
         for ans in sorted(session.answers, key=lambda x: x.question_id):
             val = ans.typed_answer or ans.transcript or "—"
-            audio_note = f"  🎙 Audio recorded" if ans.audio_url else ""
-            story.append(Paragraph(f"Q{ans.question_id}. {ans.question_text}", q_s))
-            story.append(Paragraph(f"→ {val}{audio_note}", a_s))
+            audio_note = f"  [audio recorded]" if ans.audio_url else ""
+            # The participant's own words: a Hindi or Kannada answer must come
+            # out as readable text, and stray "<" or "&" must not be read as markup.
+            story.append(Paragraph(
+                f"Q{ans.question_id}. {mark_script_runs(ans.question_text, 'Helvetica-Bold')}", q_s))
+            story.append(Paragraph(
+                f"→ {mark_script_runs(val)}{audio_note}", a_s))
 
     # ── Footer ────────────────────────────────────────────────────────────────
     story.append(HRFlowable(width="100%", thickness=0.5, color=BORDER, spaceBefore=10, spaceAfter=4))

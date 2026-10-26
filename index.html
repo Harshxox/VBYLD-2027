@@ -395,6 +395,7 @@ p,li{text-wrap:pretty}
 .mode-card small{display:block;color:var(--muted);font-size:.85rem;line-height:1.5;font-weight:300}
 .product-visual{display:grid;place-items:center}
 .phone-3d{width:min(300px,100%);min-height:540px;border:8px solid #1a2536;border-radius:36px;background:linear-gradient(160deg,#f9fbfc,#eef4f8);box-shadow:var(--shadow-lg),8px 16px 40px rgba(0,0,0,.25),-4px -4px 20px rgba(255,255,255,.6);padding:20px;transform:perspective(900px) rotateY(-14deg) rotateX(4deg);transition:transform 600ms ease;position:relative;overflow:hidden}
+.phone-3d::after{content:'Illustrative preview · sample values';position:absolute;bottom:14px;left:50%;transform:translateX(-50%);padding:6px 10px;border:1px solid rgba(10,147,150,.18);border-radius:999px;background:rgba(10,147,150,.1);color:var(--teal-dark);font-size:.64rem;font-weight:600;white-space:nowrap}
 .phone-3d:hover{transform:perspective(900px) rotateY(-4deg) rotateX(1deg)}
 .phone-notch{width:72px;height:5px;background:#2d3a4a;border-radius:999px;margin:0 auto 20px}
 .ph-risk-ring{display:flex;align-items:center;justify-content:center;margin:0 auto 16px}
@@ -567,22 +568,10 @@ html,body{
 body{line-height:1.65}
 *{box-sizing:border-box}
 .dark,.dark-mode,[data-theme="dark"]{background:transparent !important;color:inherit !important}
-main,.container,.wrapper{width:min(1160px,calc(100% - 26px));margin-inline:auto}
-section,.card,.panel,.box,form,.report-container,.assessment-container,.result-container,.modal-content,.admin-container,.dashboard-card{
-  background:linear-gradient(180deg,#ffffff 0%, #fbfefd 100%) !important;
-  color:var(--text) !important;
-  border:1px solid var(--line) !important;
-  border-radius:var(--radius) !important;
-  box-shadow:var(--shadow) !important;
-}
-header,.hero,.intro,.banner,.top-section{
-  background:linear-gradient(135deg,#edf7f2 0%, #fff4eb 100%) !important;
-  color:var(--text) !important;
-  border:1px solid #dbe9e3 !important;
-  border-radius:28px !important;
-  box-shadow:0 16px 36px rgba(58,139,116,.10) !important;
-}
-h1,h2,h3,h4,h5,h6{color:#16342d !important}
+/* Element-wide !important rules for section/header/button used to repaint every
+   header as a floating card and every button dark green (hiding card text).
+   Components now keep their own styles. */
+h1,h2,h3,h4,h5,h6{color:#16342d}
 p,li,label,small,span,div{color:inherit}
 .muted,.subtitle,.helper-text,.subtext{color:var(--muted) !important}
 input,select,textarea{
@@ -597,16 +586,6 @@ input:focus,select:focus,textarea:focus{
   border-color:#88bbaa !important;
   box-shadow:0 0 0 4px rgba(184,224,210,.35) !important;
 }
-button,.btn{
-  background:linear-gradient(135deg,var(--primary),var(--primary-dark)) !important;
-  color:#fff !important;
-  border:none !important;
-  border-radius:14px !important;
-  padding:12px 18px !important;
-  font-weight:700 !important;
-  box-shadow:0 10px 24px rgba(58,139,116,.18) !important;
-}
-button.secondary,.btn.secondary{background:#edf5f1 !important;color:#244940 !important;border:1px solid #d7e5df !important;box-shadow:none !important}
 .report-header,.pdf-header,.summary-header{
   background:linear-gradient(135deg,#f2faf6 0%, #fff7f0 100%) !important;
   border-bottom:1px solid #dde9e4 !important;
@@ -720,7 +699,7 @@ footer{color:#74877f !important}
 /* A site-wide "button{...!important}" rule painted every option dark green, so the
    selected answer was invisible. Options: light; selected: filled + tick; suggested: amber outline. */
 .option-btn{background:#f9fafc !important;color:var(--ink) !important;border:1.5px solid var(--line) !important;box-shadow:none !important;font-weight:500 !important}
-.option-btn:hover:not(:disabled){background:#f0faf8 !important;border-color:var(--teal) !important}
+.option-btn:hover:not(:disabled):not(.selected){background:#f0faf8 !important;border-color:var(--teal) !important}
 .option-btn.selected{background:linear-gradient(135deg,var(--teal-dark),var(--teal)) !important;color:#fff !important;border-color:transparent !important;box-shadow:0 8px 20px rgba(10,147,150,.28) !important;font-weight:700 !important}
 .option-btn.selected::before{content:"✓  "}
 .option-btn.suggested{outline:2px dashed #f59e0b;outline-offset:2px}
@@ -750,6 +729,37 @@ footer{color:#74877f !important}
 .match-note small{color:var(--muted);font-weight:400}
 @media(max-width:960px){.wear-grid{grid-template-columns:1fr}}
 @media(max-width:640px){.wear-card{padding:20px}.baseline-result{grid-template-columns:1fr}#sensor-alerts{top:64px}}
+
+/* ─── Polish ─── */
+/* .hidden only worked on overlays, and display:grid beat the [hidden] attribute,
+   so the "?" chip and the consent details showed before they should. */
+.hidden,[hidden]{display:none !important}
+.admin-search input{border:none !important;padding:0 !important;box-shadow:none !important;background:transparent !important}
+/* The assessment had its own second logo bar under the site header. */
+#sub-app>nav.nav{display:none !important}
+#bg-canvas{opacity:.28}
+.site-header{box-shadow:0 1px 0 rgba(255,255,255,.6),0 6px 24px rgba(10,30,50,.04)}
+.nav-btn.active{box-shadow:0 4px 14px rgba(1,105,111,.25)}
+/* Hero: the claim + what makes ErgoCare different, at a glance */
+.hero{padding-top:var(--space-16)}
+.hero-stats{gap:var(--space-6)}
+.hero-pillars{display:flex;flex-wrap:wrap;justify-content:center;gap:10px}
+.hero-pillar{display:inline-flex;align-items:center;gap:8px;padding:8px 14px;border-radius:999px;background:#fff;border:1px solid var(--line);font-size:.86rem;font-weight:600;color:var(--ink);box-shadow:var(--shadow-sm)}
+.hero-pillar i{font-style:normal;font-size:1rem}
+/* Landing: mode cards are buttons - keep them readable white cards */
+.mode-card{color:var(--ink);background:#fff}
+.mode-card .mode-icon{font-weight:800;color:var(--teal-dark)}
+/* Results hero: headline number + how it was made */
+.hero-split{display:flex;flex-wrap:wrap;gap:10px;margin-top:-4px}
+.hero-split span{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;background:#fff;border:1px solid var(--line);font-size:.85rem;color:var(--muted)}
+.hero-split b{color:var(--ink);font-variant-numeric:tabular-nums}
+@media(max-width:640px){
+  .header-nav .nav-btn span{display:inline}
+  .header-nav{gap:6px}
+  .nav-btn{padding:6px 10px;font-size:.8rem}
+  .user-chip span{display:none}
+  .hero-stats{gap:var(--space-5);padding:var(--space-5)}
+}
 </style>
 
 </head>
@@ -813,13 +823,19 @@ footer{color:#74877f !important}
     <div id="sub-register">
       <!-- Hero -->
       <section class="hero">
-        <div class="hero-badge"><span class="hero-badge-dot"></span>Ergonomic Risk Assessment</div>
-        <h1>Your wellbeing,<br><em>assessed with care.</em></h1>
-        <p>Register below, complete the 40-question assessment, and receive your personalised ergonomic risk report instantly.</p>
+        <div class="hero-badge"><span class="hero-badge-dot"></span>Preventive Ergonomic Wellbeing</div>
+        <h1>See the strain<br><em>work can hide.</em></h1>
+        <p>A 40-question screening in English, Hindi and Kannada. Combine what you <strong>say</strong> with what your <strong>body shows</strong> — heart rate, skin response and posture — for practical next steps. Not a medical diagnosis.</p>
+        <div class="hero-pillars">
+          <span class="hero-pillar"><i>🗣</i>Speak or type</span>
+          <span class="hero-pillar"><i>⌚</i>Optional wearable</span>
+          <span class="hero-pillar"><i>🔐</i>Consent first</span>
+        </div>
         <div class="hero-stats">
-          <div class="stat-item"><div class="stat-num" id="stat-registered">0</div><div class="stat-label">Registered</div></div>
           <div class="stat-item"><div class="stat-num">40</div><div class="stat-label">Questions</div></div>
-          <div class="stat-item"><div class="stat-num">AI</div><div class="stat-label">Powered</div></div>
+          <div class="stat-item"><div class="stat-num">3</div><div class="stat-label">Languages</div></div>
+          <div class="stat-item"><div class="stat-num">3</div><div class="stat-label">Body signals</div></div>
+          <div class="stat-item"><div class="stat-num">60 s</div><div class="stat-label">Baseline</div></div>
         </div>
       </section>
 
@@ -828,8 +844,8 @@ footer{color:#74877f !important}
         <!-- Registration Form -->
         <div class="register-card">
           <div class="card-header">
-            <h2>Client Registration</h2>
-            <p>Fill in your details to begin. Used only for your screening report.</p>
+            <h2>Participant Registration</h2>
+            <p>Add the details needed to create your screening session.</p>
           </div>
           <div class="reg-err-banner" id="reg-err-banner"></div>
           <div class="form-grid">
@@ -1708,9 +1724,11 @@ async function submitRegistration() {
     })
     state.backendSessionId = sess.id
     state.sessionId = sess.id
+    state.sessionToken = sess.access_token || null
   } catch(e) {
     // Backend unreachable — continue in offline mode
     state.backendSessionId = null
+    state.sessionToken = null
     state.sessionId = 'offline-' + Date.now()
     console.warn('Backend unavailable, running offline:', e)
   }
@@ -1750,34 +1768,34 @@ const questions = [
   { id:2,  text:'At the end of a workday, how tired do your eyes usually feel?', options:['Not tired','Slightly tired','Moderately tired','Very tired'], category:'eyes' },
   { id:3,  text:'How many hours do you work on a laptop without an external keyboard or mouse?', options:['1-2','3-4','6-7','>8'], category:'posture' },
   { id:4,  text:'How often do long work sessions leave you feeling stiff?', options:['Never','Once in a while','Often','Every Day'], category:'pain' },
-  { id:5,  text:'How often do you stretch during work hours?', options:['Multiple times a day','Once a day','A few times a week','Never'], category:'movement', reverse:true },
+  { id:5,  text:'How often do you stretch during work hours?', options:['Multiple times a day','Once a day','A few times a week','Never'], category:'movement' },
   { id:6,  text:'Do you feel exhausted in a typical workday?', options:['Not exhausting','Mildly exhausting','Quite exhausting','Extremely exhausting'], category:'recovery' },
   { id:7,  text:'How often do work deadlines affect your posture or comfort?', options:['Never','Sometimes','Often','Always'], category:'workload' },
-  { id:8,  text:'How supportive is your chair for long hours of work?', options:['Very supportive','Somewhat supportive','Slightly supportive','Not supportive at all'], category:'posture', reverse:true },
+  { id:8,  text:'How supportive is your chair for long hours of work?', options:['Very supportive','Somewhat supportive','Slightly supportive','Not supportive at all'], category:'posture' },
   { id:9,  text:'Where is your screen usually placed while working?', options:['At eye level','Slightly below eye level','Far below eye level','I frequently change sometimes'], category:'posture' },
   { id:10, text:'How often do you use your phone during or between work sessions?', options:['Rarely','1-2 times a day','3-5 times a day','Very frequently'], category:'eyes' },
   { id:11, text:'How much physical discomfort do you feel by the end of the week?', options:['None','Mild','Moderate','Severe'], category:'pain' },
   { id:12, text:'How often do you feel wrist or finger strain while typing?', options:['Never','Rarely','Often','Very often'], category:'pain' },
   { id:13, text:'How often do you work in poor lighting conditions?', options:['Never','Occasionally','Frequently','Always'], category:'eyes' },
   { id:14, text:'How often do you feel your shoulders become tense while working?', options:['Never','Sometimes','Often','Everyday'], category:'pain' },
-  { id:15, text:'How frequently do you switch between sitting and standing while working?', options:['Very frequently','Sometimes','Rarely','Never'], category:'movement', reverse:true },
+  { id:15, text:'How frequently do you switch between sitting and standing while working?', options:['Very frequently','Sometimes','Rarely','Never'], category:'movement' },
   { id:16, text:'How often do you continue working even when you feel discomfort?', options:['Never','Sometimes','Often','Always'], category:'workload' },
-  { id:17, text:'How well does your body recover after a long day of work?', options:['Not at all','Slightly','Mostly','Completely'], category:'recovery', reverse:true },
+  { id:17, text:'How well does your body recover after a long day of work?', options:['Not at all','Slightly','Mostly','Completely'], category:'recovery', riskMap:{"Not at all":100,"Slightly":67,"Mostly":33,"Completely":0} },
   { id:18, text:'How often do you notice headaches after screen-heavy work?', options:['Never','Sometimes','Often','Always'], category:'eyes' },
-  { id:19, text:'How often do you adjust your sitting position during work?', options:['Never','Rarely','Sometimes','Often'], category:'posture', reverse:true },
+  { id:19, text:'How often do you adjust your sitting position during work?', options:['Never','Rarely','Sometimes','Often'], category:'posture', riskMap:{"Never":100,"Rarely":67,"Sometimes":33,"Often":0} },
   { id:20, text:'How often do you push through physical discomfort just to keep working?', options:['Never','Sometimes','Often','Always'], category:'workload' },
   { id:21, text:'How many hours per day do you spend in front of a screen across all devices?', options:['Less than 4 hours','4-6 hours','6-8 hours','More than 8 hours'], category:'eyes' },
   { id:22, text:'Does your workload leave you sufficient time for personal well-being?', options:['Yes, comfortably','Often','Rarely','Never'], category:'workload' },
   { id:23, text:'How confident are you that your work habits support your long-term health?', options:['Very confident','Somewhat confident','Uncertain','Not confident at all'], category:'recovery' },
-  { id:24, text:'How often do you consciously correct your posture while working?', options:['Never think about it','Only when I feel pain','Occasionally','Frequently throughout the day'], category:'posture', reverse:true },
+  { id:24, text:'How often do you consciously correct your posture while working?', options:['Never think about it','Only when I feel pain','Occasionally','Frequently throughout the day'], category:'posture', riskMap:{"Never think about it":100,"Only when I feel pain":67,"Occasionally":33,"Frequently throughout the day":0} },
   { id:25, text:'How often do you skip meals or eat at your desk due to workload?', options:['Never','1-2 times a week','3-4 times a week','Often'], category:'workload' },
   { id:26, text:'Which best describes your physical activity on a typical workday?', options:['Light movement such as walking between buildings','Structured activity like yoga or a gym session','Mostly seated with minimal movement','Vigorous daily exercise routine'], category:'movement', riskMap:{'light movement such as walking between buildings':35,'structured activity like yoga or a gym session':10,'mostly seated with minimal movement':100,'vigorous daily exercise routine':5} },
-  { id:27, text:'How much water do you typically consume throughout your working hours?', options:['Less than 1 litre','1-2 litres','More than 2 litres'], category:'recovery', reverse:true },
+  { id:27, text:'How much water do you typically consume throughout your working hours?', options:['Less than 1 litre','1-2 litres','More than 2 litres'], category:'recovery', riskMap:{"Less than 1 litre":100,"1-2 litres":50,"More than 2 litres":0} },
   { id:28, text:'How much time do you spend commuting daily in total?', options:['Under 30 minutes','30-60 minutes','1-2 hours','Over 2 hours'], category:'recovery' },
   { id:29, text:'How physically draining do you find your daily commute?', options:['Not draining at all','Mildly tiring','Moderately exhausting','Severely fatiguing, it impacts my workday'], category:'recovery' },
   { id:30, text:'How often do you have difficulty falling asleep due to work-related thoughts?', options:['Never','Rarely','Sometimes','Often'], category:'recovery' },
   { id:31, text:'Rate any stiffness or aching in your neck after long screen sessions (0–5)', options:['0','1','2','3','4','5'], category:'pain' },
-  { id:32, text:'How often does turning your head feel restricted or painful?', options:['Always','Often','Sometimes','Rarely','Never'], category:'pain', reverse:true },
+  { id:32, text:'How often does turning your head feel restricted or painful?', options:['Always','Often','Sometimes','Rarely','Never'], category:'pain', riskMap:{"Always":100,"Often":75,"Sometimes":50,"Rarely":25,"Never":0} },
   { id:33, text:'Rate heaviness or burning sensation across your upper back or shoulder blades (0–5)', options:['0','1','2','3','4','5'], category:'pain' },
   { id:34, text:'Do you experience pain or tightness when lifting your arms above shoulder height?', options:['Yes','No','Maybe'], category:'pain' },
   { id:35, text:'Rate the lower back pain after sitting continuously for more than an hour (0–5)', options:['0','1','2','3','4','5'], category:'pain' },
@@ -1802,7 +1820,7 @@ const UI_EN = {
   questionOf: 'Question {n} of {total}', voiceSession: 'Voice session', typedSession: 'Typed session', startOver: 'Start Over',
   previous: '← Previous', saveContinue: 'Save & Continue →', generateReport: 'Generate Report →', saving: 'Saving…',
   yourAnswer: 'Your answer', typePlaceholder: 'Type your answer or select one above.',
-  record: '🎙 Record Answer', stopRecording: '⏹ Stop Recording', listening: 'Listening…', oneClip: 'One clip per question.',
+  record: '🎙 Record Answer', stopRecording: '⏹ Stop Recording', listening: 'Listening…', oneClip: 'Speak in English, Hindi or Kannada.',
   transcript: 'Transcript', transcriptPlaceholder: 'Transcript appears here, or type it manually.',
   understoodAs: 'Understood as:', tapToChange: 'tap another option to change',
   matchedAI: 'matched by the AI language model', matchedKeywords: 'matched by keywords',
@@ -1839,6 +1857,7 @@ const state = {
   recording:false, recorder:null, recognition:null, audioChunks:[],
   notice:'', saving:false, errorMessage:null,
   answers:[], scores:null, report:null, sensorHistory:null, match:null, sessionId:null, backendSessionId:null,
+  sessionToken: null,
   lang:'en',
 }
 state.lang = loadLang(); document.documentElement.lang = state.lang
@@ -1854,7 +1873,19 @@ const _fetchWithTimeout = async (url, options = {}) => {
   clearTimeout(id);
   return response;
 };
-async function apiReq(path,opts={}){ const r=await _fetchWithTimeout(API+path,{headers:{'Content-Type':'application/json'},...opts}); if(!r.ok) throw new Error(`${r.status}`); return r.json() }
+async function apiReq(path,opts={}){
+  const headers = {
+    'Content-Type': 'application/json',
+    ...(state.sessionToken ? { 'X-Session-Token': state.sessionToken } : {}),
+    ...(opts.headers || {})
+  }
+  const r = await _fetchWithTimeout(API+path, { ...opts, headers })
+  if (!r.ok) {
+    const errBody = await r.json().catch(() => null)
+    throw new Error(errBody?.detail || `${r.status}`)
+  }
+  return r.json()
+}
 async function apiReqAdmin(path,opts={}){
   const r=await _fetchWithTimeout(API+path,{headers:{'Content-Type':'application/json','Authorization':`Bearer ${adminToken}`},...opts})
   if(r.status===401){ adminLogout(); throw new Error('Admin login required') }
@@ -1871,21 +1902,15 @@ const app = () => document.getElementById('app')
 /* ════════════════════════════════════════════════════
    SCORING
 ════════════════════════════════════════════════════ */
-/* ══════════════════════════════════════════════════════
-   PRECISION SCORING ENGINE v2 — 99% accuracy target
-   Evidence basis: NIOSH lifting equation adaptations,
-   RULA/REBA posture scoring, OSHA ergonomic guidelines,
-   CVS clinical criteria, APA workload stress indices.
-══════════════════════════════════════════════════════ */
+/* Prototype questionnaire scoring uses hand-set weights and illustrative risk bands. */
 
-// Per-question clinical weights (higher = more diagnostically significant)
+// Per-question weights - must equal ml_engine.get_weight() (scripts/verify_frontend_parity.py).
 const Q_WEIGHTS = {
-  1:0.8, 2:1.0, 3:1.2, 4:1.3, 5:1.1, 6:1.0, 7:0.9, 8:1.3,
-  9:1.4, 10:0.8, 11:1.2, 12:1.4, 13:0.9, 14:1.3, 15:1.0,
-  16:1.1, 17:1.2, 18:1.1, 19:1.0, 20:1.1, 21:1.0, 22:0.9,
-  23:0.8, 24:1.0, 25:0.9, 26:1.2, 27:0.9, 28:0.7, 29:0.8,
-  30:1.1, 31:1.5, 32:1.3, 33:1.4, 34:1.6, 35:1.6, 36:1.8,
-  37:1.4, 38:1.5, 39:1.3, 40:1.2
+  1:1.0, 2:1.0, 3:1.0, 4:1.2, 5:1.0, 6:1.0, 7:1.0, 8:1.0,
+  9:1.0, 10:1.0, 11:1.0, 12:1.75, 13:1.0, 14:1.35, 15:1.0, 16:1.2,
+  17:1.0, 18:1.3, 19:1.0, 20:1.15, 21:1.2, 22:1.0, 23:1.0, 24:1.0,
+  25:1.0, 26:1.0, 27:1.0, 28:1.0, 29:1.25, 30:1.3, 31:1.65, 32:1.0,
+  33:1.55, 34:1.4, 35:1.65, 36:1.5, 37:1.6, 38:1.45, 39:1.25, 40:1.0
 }
 
 // Sub-domain pain mapping for body-map chart
@@ -1901,27 +1926,21 @@ function optionRisk(q, answer) {
     const m = Object.entries(q.riskMap).find(([k]) => k.toLowerCase() === n)
     if (m) return m[1]
   }
-  // Binary yes/maybe/no — calibrated
-  if (n === 'yes')   return 100
-  if (n === 'maybe') return 58
-  if (n === 'no')    return 0
-  // Numeric 0-5 pain scale — normalise to 0-100, boosted upper end
-  const num = parseInt(n)
-  if (!isNaN(num) && q.options.every(o => !isNaN(parseInt(o)))) {
-    // Non-linear boost: higher pain scores get disproportionately more weight
-    return Math.round(Math.pow(num / 5, 0.75) * 100)
+  // Same rules as app/domain/scoring.py option_risk (checked by scripts/verify_frontend_parity.py)
+  if (n === 'yes')      return 100
+  if (n === 'maybe')    return 58
+  if (n === 'somewhat') return 48
+  if (n === 'no')       return 0
+  // Numeric 0-5 scale - linear to 0-100
+  if (/^-?\d+$/.test(n) && q.options.every(o => /^-?\d+$/.test(o))) {
+    const maxVal = Math.max(...q.options.map(o => parseInt(o)))
+    return maxVal ? Math.round(parseInt(n) / maxVal * 100) : 0
   }
-  // Ordinal options
+  // Options are listed healthiest-first: first option -> 0, last -> 100
   const i = q.options.findIndex(o => o.toLowerCase() === n)
   if (i === -1) return 50
-  const maxIdx = Math.max(q.options.length - 1, 1)
-  // Non-linear: top two options get amplified risk
-  let raw = i / maxIdx
-  if (i === maxIdx)     raw = 1.0
-  else if (i === maxIdx - 1) raw = Math.min(raw * 1.15, 0.92)
-  else raw = raw * 0.95
-  const score = Math.round(raw * 100)
-  return q.reverse ? Math.round((1 - raw) * 100) : score
+  const raw = Math.round(i / Math.max(q.options.length - 1, 1) * 100)
+  return q.reverse ? 100 - raw : raw
 }
 
 function calcScores(answers) {
@@ -1969,8 +1988,7 @@ function calcScores(answers) {
   const musculoskeletalRisk = painRaw
   const recoveryRisk      = recoveryRaw
 
-  // Overall — evidence-based domain weights from occupational health literature
-  // Musculoskeletal: 30%, Workload: 22%, Posture: 20%, Eye: 16%, Recovery: 12%
+  // Prototype composite weights: musculoskeletal 30%, workload 22%, posture 20%, eye 16%, recovery 12%.
   const overallRisk = Math.round(
     musculoskeletalRisk * 0.30 +
     workloadStress      * 0.22 +
@@ -1980,7 +1998,7 @@ function calcScores(answers) {
   )
 
 
-  // Severity classification (clinical thresholds)
+  // Prototype bands for display; they are not clinical thresholds.
   const classify = v => v >= 75 ? 'Severe' : v >= 55 ? 'High' : v >= 35 ? 'Moderate' : v >= 18 ? 'Low' : 'Minimal'
 
   // Pain sub-domains for body map
@@ -2041,7 +2059,7 @@ function buildReport(scores) {
     if (pd.lower_back >= 40) detailedFindings.push(`Lumbar pain pattern (score: ${pd.lower_back}%). Possible disc loading stress from sustained seated posture. Rule out radiculopathy if score ≥70%.`)
     if (pd.wrist >= 40)      detailedFindings.push(`Wrist/forearm cumulative strain (score: ${pd.wrist}%). Consistent with early-stage repetitive strain injury (RSI). Check keyboard height.`)
   }
-  if (scores.eyeStrain >= 60) detailedFindings.push('Computer Vision Syndrome (CVS) criteria met. Recommend annual ophthalmology screen and vergence/accommodation assessment.')
+  if (scores.eyeStrain >= 60) detailedFindings.push('Strong eye-strain signs. If dryness, blurring or headaches persist, see an eye-care professional.')
   if (scores.recoveryRisk >= 60) detailedFindings.push('Sleep quality and recovery are significantly impaired. Consider screening for work-related stress disorder.')
 
   // Positive habits
@@ -2083,21 +2101,27 @@ async function startAssessment(mode){
       })
       state.backendSessionId = sess.id
       state.sessionId = sess.id
+      state.sessionToken = sess.access_token || null
     }
   }catch(e){
     state.errorMessage='Backend unreachable — running in offline mode.'
+    state.sessionToken = null
     if(!state.sessionId) state.sessionId='offline-'+Date.now()
   }
   state.mode=mode; state.idx=0; state.answers=[]
-  state.selectedOption=''; state.freeText=''; state.transcript=''
+  state.selectedOption='';state.manualPick=false; state.freeText=''; state.transcript=''
   state.notice=mode==='voice'?tr('noticeVoice'):tr('noticeTyped')
   state.saving=false
   if(state.backendSessionId){ wearReset(); state.screen='wearable'; render(); wearStartPolling() }   // wearable needs the backend
   else { state.screen='assessment'; render() }
 }
-function canContinue(){ if(state.saving||state.recording)return false; if(state.lang!=='en')return !!state.selectedOption; if(state.mode==='typed')return!!(state.freeText.trim()||state.selectedOption); return!!(state.transcript.trim()||state.freeText.trim()||state.selectedOption) }
+// Recording no longer blocks Continue: saveAnswer stops the mic itself.
+function canContinue(){ if(state.saving)return false; if(state.lang!=='en')return !!state.selectedOption; if(state.mode==='typed')return!!(state.freeText.trim()||state.selectedOption); return!!(state.transcript.trim()||state.freeText.trim()||state.selectedOption) }
 async function saveAnswer(){
   if(!canContinue())return
+  if(state.recording) await stopRecording({quiet:true})
+  // Voice: make sure what was said has been matched to an option before saving it
+  if(state.mode==='voice' && !state.selectedOption && state.transcript.trim()) await runMatch(state.transcript)
   const q=questions[state.idx]
   const ans=state.mode==='typed'?(state.freeText.trim()||state.selectedOption):(state.transcript.trim()||state.freeText.trim()||state.selectedOption)
 
@@ -2126,7 +2150,8 @@ async function saveAnswer(){
           const form=new FormData()
           form.append('file', blob, `session-${state.backendSessionId}-q${q.id}.webm`)
           form.append('transcript', ans||'')
-          const up=await fetch(`${API}/api/sessions/${state.backendSessionId}/answers/${q.id}/audio`,{method:'POST',body:form})
+          const headers = state.sessionToken ? { 'X-Session-Token': state.sessionToken } : {}
+          const up=await fetch(`${API}/api/sessions/${state.backendSessionId}/answers/${q.id}/audio`,{method:'POST',headers,body:form})
           if(up.ok){ const r=await up.json(); audioUrl=r.audio_url; console.log('Audio uploaded:', audioUrl) }
         }catch(e){ console.warn('Audio upload failed (continuing):', e) }
       }
@@ -2137,7 +2162,7 @@ async function saveAnswer(){
   }catch(e){ console.warn('Save answer failed (offline mode):', e) }
 
   if(state.idx===questions.length-1){ await finishSession() }
-  else{ state.idx++; state.selectedOption=''; state.freeText=''; state.transcript=''; state.audioChunks=[]; state.notice=''; state.match=null; state.saving=false; render() }
+  else{ state.idx++; state.selectedOption='';state.manualPick=false; state.freeText=''; state.transcript=''; state.audioChunks=[]; state.notice=''; state.match=null; state.saving=false; render() }
 }
 async function finishSession(){
   wearStopPolling(); paintAlerts([])   // backend stops recording sensor data on /complete
@@ -2228,7 +2253,12 @@ async function wearFetch(path, opts = {}) {
   const ctl = new AbortController()
   const t = setTimeout(() => ctl.abort(), 4000)          // a live poll must never hang
   try {
-    const r = await fetch(API + path, { headers: { 'Content-Type': 'application/json' }, ...opts, signal: ctl.signal })
+    const headers = {
+      'Content-Type': 'application/json',
+      ...(state.sessionToken ? { 'X-Session-Token': state.sessionToken } : {}),
+      ...(opts.headers || {})
+    }
+    const r = await fetch(API + path, { ...opts, headers, signal: ctl.signal })
     const body = r.status === 204 ? null : await r.json().catch(() => null)
     if (!r.ok) throw new Error(body?.detail || `HTTP ${r.status}`)
     return body
@@ -2251,7 +2281,7 @@ async function wearTick() {
     try {
       if (state.screen === 'wearable') {
         if (!wear.deviceId) {
-          const found = (await wearFetch('/api/devices')).find(d => d.connected)
+          const found = (await wearFetch('/api/devices/status')).find(d => d.connected)
           wear.deviceId = found ? found.device_id : null
         }
         wear.live = wear.deviceId ? await wearFetch(`/api/devices/${encodeURIComponent(wear.deviceId)}/latest`) : null
@@ -2334,7 +2364,7 @@ function wearTilesHTML(live) {
   else stress = tile('good', '💧 Stress (GSR)', Math.round(r.gsr_raw), 'Skin response (raw)')
 
   let posture
-  if (!r.mpu_ok) posture = tile('bad', '🧍 Posture', '--', 'Motion sensor error')
+  if (!r.mpu_ok) posture = tile('warn', '🧍 Posture', '--', 'Sensor not detected (optional)')
   else {
     const ang = d.posture_angle ?? r.tilt ?? 0, tone = postureTone(ang)
     posture = tile(tone, '🧍 Posture', `${Math.round(ang)}°`,
@@ -2405,7 +2435,7 @@ function paintWear() {
       [connected, 'Wearable connected', 'Plug the ESP32 into USB and run usb_bridge.py'],
       [connected && r?.finger, 'Fingertip on the pulse sensor', 'Rest it gently - do not press'],
       [connected && r?.gsr_contact, 'GSR electrodes touched', 'Hold both electrodes with your other hand'],
-      [connected && r?.mpu_ok, 'Posture sensor ready', 'Clip it to the back of your collar'],
+      [connected && r?.mpu_ok, 'Posture sensor (optional)', r?.mpu_ok ? 'Clip it to the back of your collar' : 'Optional — connect MPU6050 to SDA/SCL'],
     ].map(([ok, label, hint]) => `<li class="${ok ? 'ok' : ''}"><span class="ic">${ok ? '✓' : '•'}</span><span>${label}<small>${hint}</small></span></li>`).join('')
     const btn = document.getElementById('btn-baseline')
     if (btn) btn.disabled = !connected || wear.starting
@@ -2447,7 +2477,7 @@ async function runMatch(text) {
       body: JSON.stringify({ text: t, lang: state.lang, labels: q.options.map(optLabel) }) })
     if (seq !== matchSeq || questions[state.idx].id !== q.id) return          // an older request
     state.match = { qid: q.id, ...r }
-    if (r.option && (state.mode === 'voice' || state.lang !== 'en')) state.selectedOption = r.option
+    if (r.option && !state.manualPick && (state.mode === 'voice' || state.lang !== 'en')) state.selectedOption = r.option
     paintMatch()
     const nb = document.querySelector('[data-action="next"]'); if (nb) nb.disabled = !canContinue()
   } catch (e) { /* matcher unavailable: the person simply taps an option */ }
@@ -2522,6 +2552,7 @@ async function toggleRecording() {
     rec.start(250)
     state.recorder = rec
     state.recording = true
+    state.notice = ''   // drop "Recording saved" from an earlier take
 
     // Speech recognition — robust restart
     startSpeechRecog()
@@ -2549,6 +2580,7 @@ function startSpeechRecog() {
 
     let finalTranscript = ''
     recog.onresult = ev => {
+      if (state.recognition !== recog) return   // late result after Stop / next question
       let interim = ''
       for (let i = ev.resultIndex; i < ev.results.length; i++) {
         if (ev.results[i].isFinal) finalTranscript += ev.results[i][0].transcript + ' '
@@ -2578,18 +2610,24 @@ function startSpeechRecog() {
   }
 }
 
-function stopRecording() {
+// Resolves once the audio clip is complete. quiet: no notice/re-render (used by Save & Continue).
+function stopRecording({ quiet = false } = {}) {
   if (state.recognition) {
     try { state.recognition.stop() } catch(e) {}
     state.recognition = null
   }
-  if (state.recorder && state.recorder.state !== 'inactive') {
-    state.recorder.stop()
-  }
+  const rec = state.recorder
+  const done = new Promise(resolve => {
+    if (rec && rec.state !== 'inactive') { rec.addEventListener('stop', () => resolve(), { once: true }); rec.stop() }
+    else resolve()
+  })
   state.recording = false
-  state.notice = tr('recordingSaved')
-  render()
-  runMatch(state.transcript)
+  if (!quiet) {
+    state.notice = tr('recordingSaved')
+    render()
+    runMatch(state.transcript)
+  }
+  return done
 }
 
 /* ════════════════════════════════════════════════════
@@ -2709,35 +2747,42 @@ function renderResults() {
   if (!scores || !report) { renderLanding(); return }
   const cl = currentClient || { name:'User', email:'—', age:'—', job:'—', phone:'—' }
 
-  const lvMeta = {
-    Low:      { color:'#059669', bg:'#ecfdf5', label:'Low Risk',      emoji:'✅', tag:'Workspace habits are within healthy parameters. Maintain current protective behaviours.' },
-    Moderate: { color:'#d97706', bg:'#fffbeb', label:'Moderate Risk', emoji:'⚠️', tag:'Clinically significant ergonomic stressors identified. Structured intervention recommended within 8 weeks.' },
-    High:     { color:'#dc2626', bg:'#fef2f2', label:'High Risk',     emoji:'🚨', tag:'Multiple high-severity ergonomic risk factors present. Referral to occupational health physician advised.' },
-  }[report.level]
+  const LEVELS = {
+    Low:     { color:'#059669', bg:'#ecfdf5', label:'Low Risk',      emoji:'✅', tag:'Few signs of ergonomic strain right now. Keep the habits that are working for you.' },
+    Moderate: { color:'#d97706', bg:'#fffbeb', label:'Moderate Risk', emoji:'⚠️', tag:'Several signs of ergonomic strain showed up. Start with the top three actions below — small changes add up.' },
+    High:     { color:'#dc2626', bg:'#fef2f2', label:'High Risk',     emoji:'🚨', tag:'Many signs of ergonomic strain showed up. Consider sharing this report with a doctor or physiotherapist.' },
+  }
+  // With the wearable, the ErgoCare Index (answers + body) is the headline number;
+  // the questionnaire score becomes one of its two inputs.
+  const comb = report.wearable?.available ? report.wearable.combined : null
+  const headLevel = comb ? comb.level : report.level
+  const headScore = comb ? comb.index : scores.overallRisk
+  const lvMeta = LEVELS[headLevel], qMeta = LEVELS[report.level]
 
   const circ = 339.3
-  const offset = circ - (scores.overallRisk / 100) * circ
+  const offset = circ - (headScore / 100) * circ
   const initials = cl.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase()
 
   const catData = [
-    { label:'Posture & Movement', icon:'🧍', score:scores.postureRisk,         sev:scores.severities?.posture,   what:'Spinal alignment, workstation ergonomics, and dynamic movement patterns.', tip:'Screen at eye-level (top edge = eye height). Keyboard at 90° elbow angle. Feet flat or on footrest.' },
-    { label:'Visual Fatigue (CVS)',icon:'👁️', score:scores.eyeStrain,           sev:scores.severities?.eyes,      what:'Computer Vision Syndrome indicators: dryness, convergence insufficiency, accommodative spasm.', tip:'20-20-20 rule. Matte screen protector. Annual ophthalmology review if score >60%.' },
-    { label:'Workload Stress',     icon:'🧠', score:scores.workloadStress,      sev:scores.severities?.workload,  what:'Psychosocial work demands, time pressure, and cognitive overload without adequate recovery.', tip:'Structured Pomodoro intervals. Occupational stress diary for 2 weeks.' },
-    { label:'Musculoskeletal Pain',icon:'💪', score:scores.musculoskeletalRisk, sev:scores.severities?.pain,     what:'Upper/lower limb and spinal musculoskeletal symptom burden across cervical, thoracic, lumbar, and upper extremity regions.', tip:'Refer to physiotherapist if any sub-domain ≥70%. WRULD screening indicated.' },
-    { label:'Recovery & Resilience',icon:'🌙',score:scores.recoveryRisk,       sev:scores.severities?.recovery,  what:'Sleep quality, circadian disruption, hydration, and physiological restoration capacity.', tip:'Sleep hygiene protocol. Hydration target 1.5-2L/day during work. 7-9 hours sleep target.' },
+    { label:'Posture & Movement', icon:'🧍', score:scores.postureRisk,         sev:scores.severities?.posture,   what:'How your screen, chair and desk are set up, and how often you change position.', tip:'Top of the screen at eye level, elbows near 90°, feet flat on the floor or a footrest.' },
+    { label:'Eye Strain',icon:'👁️', score:scores.eyeStrain,           sev:scores.severities?.eyes,      what:'Tired, dry or blurry eyes and headaches after screen work.', tip:'Every 20 minutes, look about 20 feet away for 20 seconds. Match screen brightness to the room. See an eye-care professional if discomfort persists.' },
+    { label:'Workload Stress',     icon:'🧠', score:scores.workloadStress,      sev:scores.severities?.workload,  what:'Time pressure, long stretches without breaks and working through discomfort.', tip:'Try 25 minutes of work, then a 5-minute break. Note how you feel each day for two weeks.' },
+    { label:'Musculoskeletal Pain',icon:'💪', score:scores.musculoskeletalRisk, sev:scores.severities?.pain,     what:'Self-reported aches and stiffness in the neck, back, shoulders, wrists and arms.', tip:'If pain keeps coming back, or you feel numbness or tingling, talk to a doctor or physiotherapist.' },
+    { label:'Recovery & Resilience',icon:'🌙',score:scores.recoveryRisk,       sev:scores.severities?.recovery,  what:'Sleep, tiredness, water intake and commute fatigue.', tip:'Aim for 7–9 hours of sleep, keep a regular wake-up time and keep water at your desk.' },
   ]
 
   const tips = [
-    { icon:'🖥️', title:'Workstation RULA Setup',    desc:'Screen at eye level, keyboard at elbow height (90°), lumbar support at L3-L5. Reduces cervical and lumbar load by up to 40% (NIOSH data).', c:'#0a9396' },
-    { icon:'⏱️', title:'Microbreak Protocol',        desc:'Every 45 min: 5-min standing + 3 cervical retractions + 10 shoulder CARs. Reduces cumulative musculoskeletal load by 28% (OSHA 2019).', c:'#4564d6' },
-    { icon:'💧', title:'Hydration & Nutrition',      desc:'1.5-2L water during work hours. Avoid skipping meals — hypoglycaemia increases musculoskeletal tension and cognitive error rate.', c:'#059669' },
-    { icon:'🌿', title:'CVS 20-20-20 Protocol',      desc:'Every 20 min, focus 20 ft away for 20 sec. Reduces accommodative strain and dry eye symptoms by up to 65% (AOA guidelines).', c:'#7c3aed' },
-    { icon:'🪑', title:'Dynamic Sitting Practice',   desc:'Recline 10-15° periodically. Alternate between seated, standing, and perching. Spinal disc pressure lowest at slight recline (Nachemson data).', c:'#dc2626' },
-    { icon:'🏃', title:'Daily Movement Target',      desc:'7,000-10,000 steps/day target. Morning mobility routine (10 min): hip flexor release, thoracic rotation, wrist extension — directly counters desk posture loading.', c:'#d97706' },
+    { icon:'🖥️', title:'Comfortable Workstation',    desc:'Place the screen near eye level, keep frequently used items within easy reach, and adjust the chair for comfortable support.', c:'#0a9396' },
+    { icon:'⏱️', title:'Take Regular Movement Breaks', desc:'Try standing, walking or gently stretching between periods of desk work. Choose a rhythm that suits your needs.', c:'#4564d6' },
+    { icon:'💧', title:'Hydration & Nutrition',      desc:'Keep a water bottle at your desk and avoid skipping meals on busy days.', c:'#059669' },
+    { icon:'🌿', title:'Give Your Eyes a Break',      desc:'Look away from the screen regularly and focus on something farther away. If eye discomfort persists, seek professional advice.', c:'#7c3aed' },
+    { icon:'🪑', title:'Dynamic Sitting Practice',   desc:'Change position often: lean back slightly, stand for calls, and avoid holding one posture for long.', c:'#dc2626' },
+    { icon:'🏃', title:'Daily Movement Target',      desc:'Walk a little more each day and add a short morning stretch for your hips, upper back and wrists.', c:'#d97706' },
   ]
 
   const ap = report.actionPlan || [], tf = report.topFactors || []
-  const df = report.detailedFindings || [], ph = report.positiveHabits || []
+  // Scoring diagnostics (confidence, fuzzy profile, top question) are for the team, not the participant.
+  const df = (report.detailedFindings || []).filter(f => !/^(ML Confidence Score|Fuzzy Risk Profile|Highest-influence question)/.test(f)), ph = report.positiveHabits || []
   const pd = scores.painSubdomains || {}
 
   // (ICD-10 codes removed)
@@ -2757,8 +2802,8 @@ function renderResults() {
               <div class="hcc-sub">${esc(cl.job)} · Age ${esc(String(cl.age))} · ${esc(cl.email)}${cl.phone?' · '+esc(cl.phone):''}</div>
             </div>
           </div>
-          <h1 class="hero-title" style="color:${lvMeta.color};">Overall Risk Score: ${scores.overallRisk.toFixed(1)}%</h1>
-          ${report.wearable?.available?`<a class="idx-chip" href="#body-signals">⭐ ErgoCare Index <b>${report.wearable.combined.index.toFixed(0)}%</b> · ${report.wearable.combined.level} <small>answers + body signals</small></a>`:''}
+          <h1 class="hero-title" style="color:${lvMeta.color};">${comb?`ErgoCare Index: ${headScore.toFixed(0)}%`:`Overall Risk Score: ${headScore.toFixed(1)}%`}</h1>
+          ${comb?`<div class="hero-split"><span>📝 From your answers <b>${comb.questionnaire.toFixed(0)}%</b> × 60%</span><span>⌚ From your body signals <b>${comb.objective.toFixed(0)}%</b> × 40%</span><a class="idx-chip" href="#body-signals" style="padding:6px 12px;font-size:.85rem">See body signals ↓</a></div>`:''}
           <p class="hero-tagline">${lvMeta.tag}</p>
           <div class="hero-actions">
             ${state.backendSessionId?`<button class="btn-download" data-action="download-pdf" style="background:${lvMeta.color};">⬇ Download PDF Report</button>`:''}
@@ -2771,10 +2816,10 @@ function renderResults() {
             <circle cx="60" cy="60" r="54" fill="none" stroke="${lvMeta.color}" stroke-width="10"
               stroke-linecap="round" stroke-dasharray="${circ}" stroke-dashoffset="${circ}"
               class="ring-animate" style="--t:${offset};" transform="rotate(-90 60 60)"/>
-            <text x="60" y="56" text-anchor="middle" font-family="Playfair Display,serif" font-size="20" font-weight="800" fill="${lvMeta.color}">${scores.overallRisk.toFixed(0)}%</text>
-            <text x="60" y="72" text-anchor="middle" font-size="7.5" fill="#8ea5b8">Overall Risk</text>
+            <text x="60" y="56" text-anchor="middle" font-family="Playfair Display,serif" font-size="20" font-weight="800" fill="${lvMeta.color}">${headScore.toFixed(0)}%</text>
+            <text x="60" y="72" text-anchor="middle" font-size="7.5" fill="#8ea5b8">${comb?'ErgoCare Index':'Overall Risk'}</text>
           </svg>
-          <p class="ring-caption">Weighted composite of 5<br>clinical ergonomic domains</p>
+          <p class="ring-caption">${comb?'Answers + body signals,<br>combined 60 : 40':'Prototype score across<br>5 ergonomic domains'}</p>
         </div>
       </div>
     </div>
@@ -2787,32 +2832,32 @@ function renderResults() {
 
       <!-- ── DOCTOR SUMMARY BOX ── -->
       <section>
-        <div class="section-head"><h2>🩺 Summary to Share with Your Doctor or Physiotherapist</h2><p>Structured summary for occupational health physician, physiotherapist, or GP referral.</p></div>
+        <div class="section-head"><h2>🩺 Summary to Discuss with a Health Professional</h2><p>A concise record of your screening responses and scores to support a conversation about your wellbeing.</p></div>
         <div class="doctor-box">
           <h3>📋 Name: ${esc(cl.name)} &nbsp;|&nbsp; Age: ${esc(String(cl.age))} &nbsp;|&nbsp; Occupation: ${esc(cl.job)}</h3>
-          <p><strong>Assessment date:</strong> ${new Date().toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'})} &nbsp;|&nbsp; <strong>Tool:</strong> ErgoCare AI Ergonomic Risk Assessment (40-item validated instrument) &nbsp;|&nbsp; <strong>Scoring:</strong> NIOSH/RULA-aligned weighted composite</p>
-          <p><strong>Overall Ergonomic Risk Index:</strong> <span style="font-weight:700;color:${lvMeta.color}">${scores.overallRisk.toFixed(1)}% (${report.level} Risk)</span></p>
+          <p><strong>Assessment date:</strong> ${new Date().toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'})} &nbsp;|&nbsp; <strong>Tool:</strong> ErgoCare 40-question prototype screening &nbsp;|&nbsp; <strong>Scoring:</strong> transparent, rule-based weighted composite; not clinically validated</p>
+          <p><strong>Overall Ergonomic Risk Index:</strong> <span style="font-weight:700;color:${qMeta.color}">${scores.overallRisk.toFixed(1)}% (${report.level} Risk)</span></p>
           ${report.wearable?.available?`<p><strong>ErgoCare Index (answers + wearable):</strong> <span style="font-weight:700">${report.wearable.combined.index.toFixed(1)}% (${report.wearable.combined.level})</span> · questionnaire ${report.wearable.combined.questionnaire.toFixed(0)}% × 60% + body signals ${report.wearable.combined.objective.toFixed(0)}% × 40%${(report.wearable.insights||[]).length?' · '+report.wearable.insights.map(i=>esc(i.title)).join(', '):''}</p>`:''}
           <p><strong>Domain scores:</strong> Musculoskeletal ${scores.musculoskeletalRisk}% · Workload ${scores.workloadStress}% · Posture ${scores.postureRisk}% · Visual Fatigue ${scores.eyeStrain}% · Recovery ${scores.recoveryRisk}%</p>
           ${pd.neck||pd.lower_back||pd.wrist ? `<p><strong>Pain sub-domains:</strong> Cervical ${pd.neck||0}% · Upper back ${pd.upper_back||0}% · Shoulder ${pd.shoulder||0}% · Lumbar ${pd.lower_back||0}% · Wrist/hand ${pd.wrist||0}% · Forearm ${pd.forearm||0}%</p>` : ''}
-          <p style="font-size:.82rem;color:#6b7280;margin-top:4px;">This screening tool does not replace clinical examination. Scores ≥70% in any domain warrant formal clinical review.</p>
+          <p style="font-size:.82rem;color:#6b7280;margin-top:4px;">These prototype scores are not clinical thresholds. For persistent pain or other concerns, speak with a qualified health professional.</p>
         </div>
       </section>
 
       <!-- ── CLINICAL CHARTS ── -->
       <section class="charts-section">
-        <div class="section-head"><h2>📊 Clinical Visualisation Dashboard</h2><p>Evidence-based graphical representation of ergonomic risk domains — designed for clinical interpretation and patient communication.</p></div>
+        <div class="section-head"><h2>📊 Screening Insights</h2><p>A visual summary of ergonomic domains to support reflection and practical prevention conversations.</p></div>
 
         <!-- Row 1: Radar + Bar -->
         <div class="chart-grid-2">
           <div class="chart-card">
             <h3>Domain Risk Profile (Radar)</h3>
-            <p class="chart-sub">Spider plot of all 5 ergonomic domains. Ideal profile stays within the green zone (≤35%). Red shading indicates clinical concern threshold (≥70%).</p>
+            <p class="chart-sub">Compare the five prototype domain scores. Colour bands are illustrative screening cues, not clinical thresholds.</p>
             <div class="chart-canvas-wrap" style="height:260px"><canvas id="chart-radar"></canvas></div>
           </div>
           <div class="chart-card">
             <h3>Horizontal Risk Bar Chart</h3>
-            <p class="chart-sub">Comparative domain scores with severity classification. Colour bands: green &lt;35%, amber 35-69%, red ≥70%.</p>
+            <p class="chart-sub">Comparative domain scores. Colour bands are illustrative prototype cues, not clinical cut-offs.</p>
             <div class="chart-canvas-wrap" style="height:260px"><canvas id="chart-bar"></canvas></div>
           </div>
         </div>
@@ -2821,28 +2866,28 @@ function renderResults() {
         <div class="chart-grid-2">
           <div class="chart-card">
             <h3>Musculoskeletal Body-Region Breakdown</h3>
-            <p class="chart-sub">Pain burden across 6 anatomical regions. Scores ≥60% should be flagged for clinical assessment (WRULD / MSK screen).</p>
+            <p class="chart-sub">Self-reported discomfort across six body regions. Use this view to notice patterns, not to determine a diagnosis.</p>
             <div class="chart-canvas-wrap" style="height:260px"><canvas id="chart-pain"></canvas></div>
           </div>
           <div class="chart-card">
             <h3>Risk Distribution (Donut)</h3>
-            <p class="chart-sub">Proportional contribution of each domain to the composite risk score, weighted by clinical importance.</p>
+            <p class="chart-sub">Illustrates how each domain contributes to the prototype composite score.</p>
             <div class="chart-canvas-wrap" style="height:260px"><canvas id="chart-donut"></canvas></div>
           </div>
         </div>
 
         <!-- Row 3: Severity table -->
         <div class="chart-card">
-          <h3>Clinical Severity Classification Table</h3>
-          <p class="chart-sub">Scores classified against occupational health thresholds (WHO/NIOSH). Severity bands: Minimal &lt;18% · Low 18-34% · Moderate 35-54% · High 55-74% · Severe ≥75%.</p>
+          <h3>Prototype Score Bands</h3>
+          <p class="chart-sub">Illustrative bands for comparing answers only; these cut-offs have not been clinically validated and must not guide diagnosis or treatment.</p>
           <table class="sev-table">
-            <thead><tr><th>Domain</th><th>Score</th><th>Severity</th><th>Clinical Priority</th></tr></thead>
+            <thead><tr><th>Domain</th><th>Score</th><th>Prototype band</th><th>Suggested next step</th></tr></thead>
             <tbody>
               ${catData.map(cat => {
                 const sev = cat.sev || (cat.score>=75?'Severe':cat.score>=55?'High':cat.score>=35?'Moderate':cat.score>=18?'Low':'Minimal')
                 const sevColor = sev==='Severe'?'#7f1d1d':sev==='High'?'#dc2626':sev==='Moderate'?'#d97706':sev==='Low'?'#059669':'#6b7280'
                 const sevBg    = sev==='Severe'?'#fef2f2':sev==='High'?'#fef2f2':sev==='Moderate'?'#fffbeb':sev==='Low'?'#ecfdf5':'#f9fafb'
-                const priority = (sev==='Severe'||sev==='High') ? 'Immediate referral' : sev==='Moderate' ? 'Routine review' : sev==='Low' ? 'Self-management' : 'No action required'
+                const priority = (sev==='Severe'||sev==='High') ? 'Consider discussing with a health professional' : sev==='Moderate' ? 'Review the prevention tips' : 'Keep up helpful habits'
                 return `<tr>
                   <td><strong>${cat.icon} ${cat.label}</strong></td>
                   <td><strong style="color:${sevColor}">${cat.score}%</strong></td>
@@ -2852,9 +2897,9 @@ function renderResults() {
               }).join('')}
               <tr style="background:var(--color-surface-offset,#f0ede8)">
                 <td colspan="1"><strong>COMPOSITE SCORE</strong></td>
-                <td><strong style="color:${lvMeta.color}">${scores.overallRisk}%</strong></td>
-                <td><span class="sev-pill" style="background:${lvMeta.color}15;color:${lvMeta.color}">${report.level} Risk</span></td>
-                <td style="font-size:.82rem;color:var(--muted)">Weighted composite of 5 domains</td>
+                <td><strong style="color:${qMeta.color}">${scores.overallRisk}%</strong></td>
+                <td><span class="sev-pill" style="background:${qMeta.color}15;color:${qMeta.color}">${report.level} Risk</span></td>
+                <td style="font-size:.82rem;color:var(--muted)">Prototype scoring rules</td>
               </tr>
             </tbody>
           </table>
@@ -2864,7 +2909,7 @@ function renderResults() {
 
       <!-- ── CATEGORY CARDS ── -->
       <section>
-        <div class="section-head"><h2>🔬 Domain-Level Analysis</h2><p>Detailed breakdown with evidence-based interventions for each ergonomic domain.</p></div>
+        <div class="section-head"><h2>🔬 Domain-Level Breakdown</h2><p>Self-reported patterns, optional wearable signals and practical prevention suggestions.</p></div>
         <div class="cat-grid">
           ${catData.map(cat => {
             const lv = cat.score>=70?'High':cat.score>=40?'Moderate':'Low'
@@ -2880,8 +2925,8 @@ function renderResults() {
                 <span class="cat-score" style="color:${c};">${cat.score.toFixed(0)}%</span>
               </div>
               <div class="cat-bar"><div class="cat-bar-fill" style="width:${cat.score}%;background:${c};"></div></div>
-              <p style="font-size:.86rem;color:var(--muted);font-weight:300;"><strong>Clinical context:</strong> ${cat.what}</p>
-              <div class="cat-tip" style="border-left:3px solid ${c};background:${bg};"><strong>💡 Intervention:</strong> ${cat.tip}</div>
+              <p style="font-size:.86rem;color:var(--muted);font-weight:300;"><strong>What this covers:</strong> ${cat.what}</p>
+              <div class="cat-tip" style="border-left:3px solid ${c};background:${bg};"><strong>💡 Try this:</strong> ${cat.tip}</div>
             </div>`
           }).join('')}
         </div>
@@ -2889,13 +2934,13 @@ function renderResults() {
 
       <!-- ── PREVENTION PLAN ── -->
       <section>
-        <div class="section-head"><h2>🛡️ Evidence-Based Prevention Protocol</h2><p>NIOSH/OSHA-aligned ergonomic interventions — quantified outcomes from occupational health literature.</p></div>
+        <div class="section-head"><h2>🛡️ Prevention Tips</h2><p>Simple, low-cost habits that commonly help people who work at a desk or screen.</p></div>
         <div class="prev-grid">${tips.map((t,i)=>`<div class="prev-card"><div class="prev-inner" style="--c:${t.c};"><div class="prev-num">0${i+1}</div><div class="prev-icon">${t.icon}</div><h3 class="prev-title">${t.title}</h3><p class="prev-desc">${t.desc}</p><div class="prev-shine"></div></div></div>`).join('')}</div>
       </section>
 
       <!-- ── ACTION PLAN ── -->
       <section>
-        <div class="section-head"><h2>📋 Personalised Clinical Action Plan — ${esc(cl.name)}</h2><p>Prioritised recommendations ranked by urgency and evidence weight.</p></div>
+        <div class="section-head"><h2>📋 Your Action Plan — ${esc(cl.name)}</h2><p>Start at the top: these are ordered by what matters most in your answers.</p></div>
         <div class="action-list">
           ${ap.map((item,i)=>{
             const urgent=item.startsWith('⚠')||item.startsWith('Priority')||item.startsWith('Refer')
@@ -2906,7 +2951,7 @@ function renderResults() {
 
       <!-- ── FINDINGS + POSITIVES ── -->
       <div class="two-col">
-        ${df.length?`<div class="finding-panel"><h3>🔍 Clinical Findings</h3><ul class="flist">${df.map(f=>`<li>${esc(f)}</li>`).join('')}</ul></div>`:''}
+        ${df.length?`<div class="finding-panel"><h3>🔍 Screening Findings</h3><ul class="flist">${df.map(f=>`<li>${esc(f)}</li>`).join('')}</ul></div>`:''}
         ${ph.length?`<div class="positive-panel"><h3>✅ Protective Factors Identified</h3><ul class="flist" style="color:#166534">${ph.map(p=>`<li>${esc(p)}</li>`).join('')}</ul></div>`:''}
       </div>
 
@@ -2916,11 +2961,11 @@ function renderResults() {
       <!-- ── FOOTER CTA ── -->
       <div>
         <div class="footer-cta">
-          <h3>Download Full Clinical Report</h3>
-          <p>A professionally formatted PDF including all domain scores, body-region pain map, clinical findings, and personalised action plan for <strong style="color:#e2e8f0">${esc(cl.name)}</strong> — designed for GP, physiotherapist, or occupational health referral.</p>
+          <h3>Download Your Screening Report</h3>
+          <p>A summary of domain scores, self-reported discomfort, optional wearable trends and practical next steps for <strong style="color:#e2e8f0">${esc(cl.name)}</strong>. Use it to support a wellbeing conversation, not as a clinical assessment.</p>
           ${state.backendSessionId?`<button class="btn-download" data-action="download-pdf" style="background:#0a9396;">⬇ Download PDF Report</button>`:'<p style="color:#7e9bb5;font-size:.85rem;">PDF available when backend server is running.</p>'}
         </div>
-        <p class="disclaimer" style="margin-top:20px;">This report is generated by ErgoCare AI (precision scoring engine v2) and is for clinical reference purposes only. It does not constitute a medical diagnosis. All findings should be interpreted by a qualified occupational health clinician. NIOSH/RULA-aligned methodology.</p>
+        <p class="disclaimer" style="margin-top:20px;">ErgoCare is an early-stage screening prototype, not a medical device or diagnosis. Scores use prototype rules and have not been clinically validated. For persistent pain, numbness, tingling or severe headaches, consult a qualified health professional.</p>
         ${state.backendSessionId?`<p class="session-ref" style="margin-top:8px;">Session ID: <code>${esc(state.backendSessionId)}</code> · Client: ${esc(cl.name)}</p>`:''}
       </div>
 
@@ -3234,13 +3279,13 @@ function render(){
 ════════════════════════════════════════════════════ */
 document.getElementById('app').addEventListener('click',e=>{
   const t=e.target.closest('[data-action]'), o=e.target.closest('[data-option]')
-  if(o){state.selectedOption=o.dataset.option||'';state.match=null;if(state.mode==='typed')state.freeText=optLabel(state.selectedOption);if(state.mode==='voice'&&!state.transcript.trim())state.transcript=optLabel(state.selectedOption);render();return}
+  if(o){state.selectedOption=o.dataset.option||'';state.manualPick=true;state.match=null;if(state.mode==='typed')state.freeText=optLabel(state.selectedOption);if(state.mode==='voice'&&!state.transcript.trim())state.transcript=optLabel(state.selectedOption);render();return}
   if(!t)return
   const a=t.dataset.action
   if(a==='start-typed')startAssessment('typed')
   if(a==='start-voice')startAssessment('voice')
   if(a==='reset')resetApp()
-  if(a==='previous'){if(state.idx>0){state.idx--;state.selectedOption='';state.freeText='';state.transcript='';state.match=null;render()}}
+  if(a==='previous'){if(state.idx>0){state.idx--;state.selectedOption='';state.manualPick=false;state.freeText='';state.transcript='';state.match=null;render()}}
   if(a==='next')saveAnswer()
   if(a==='record')toggleRecording()
   if(a.startsWith('lang-'))setLang(a.slice(5))

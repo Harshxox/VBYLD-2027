@@ -6,6 +6,16 @@ ErgoCare pairs a 40-question ergonomic assessment (typed or spoken, in **English
 
 > ErgoCare is a **screening tool, not a medical diagnosis.**
 
+**Team Upright** — Harshdeep Sharma (Team Lead · Hardware & Firmware) · Alex Jilson (Backend & AI) · Shrayana KS (Frontend, UX & Languages)
+
+| Document | What's in it |
+|---|---|
+| [Setup](#setup) · [Environment variables](#environment-variables) | Install and run on a laptop, every setting explained |
+| [Technical Design Document](docs/TECHNICAL_DESIGN.md) | Architecture diagrams, API, data model, scoring rules, AI matcher, security |
+| [Test cases and results](docs/TEST_CASES.md) | 9 automated suites + end-to-end replay, incl. **500-answer** and **500-participant** tests |
+| [Sample data](sample_data/README.md) | Simulated wearable session, answer sets, 100 voice-answer test cases |
+| [LICENSE](LICENSE) · [Third-party notices](THIRD_PARTY_NOTICES.md) | MIT |
+
 | Connect the wearable | Live posture warning |
 |---|---|
 | ![Connect wearable](docs/screenshots/wearable-connect.png) | ![Posture warning](docs/screenshots/posture-warning.png) |
@@ -67,35 +77,50 @@ Spoken answers rarely match an option word-for-word. A layered matcher (`app/dom
 
 | Test set | Old exact-match | Rules only | Rules + MiniLM |
 |---|---|---|---|
-| Development (50 English answers) | 0% | 94% | 100% |
-| **Held-out (20 new English answers)** | 0% | 85% | **85%** |
+| Development (50 English answers) | 0% | 94% | 96% |
+| Held-out (20 English answers) | 0% | 100% | 100% |
+| Hindi / Kannada (30 answers, own script and romanised, e.g. "Ek Ghanta") | 0% | 100% | — (rules + glossary only) |
+| **500 answers** — English, Hindi, Kannada, script + romanised ([details](docs/TEST_CASES.md#500-sample-tests)) | — | — | **98.4%** (first run before fixes: 87.8%) |
 
-The held-out score was 70% before three general fixes it prompted, so **70–85% is the honest range** on unseen phrasing — which is why the person always confirms the option on screen.
+The held-out set scored 70%, then 85%, the first times it was run; the general fixes it prompted brought it to 100%, so it is no longer truly unseen. **70–85% is the honest range** on new phrasing until a fresh test set is collected — which is why the person always confirms the option on screen.
 
 ---
 
-## Quick start (Windows)
+## Setup
 
-**Needs:** Python 3.10+, Node.js 18+, Chrome or Edge, Arduino IDE (for the ESP32).
+**Needs:** Python 3.10+, Node.js 18+, Chrome or Edge, and the Arduino IDE only if you flash the ESP32. No hardware? Use demo mode (step 4).
 
+**1. Get the code**
 ```bat
-REM 1. Backend
+git clone <this-repository-url>
+cd ErgoCare
+```
+
+**2. Backend (FastAPI)**
+```bat
 cd ergo_ml_backend
 python -m venv .venv
 .venv\Scripts\pip install -r requirements.txt pyserial
 copy .env.example .env
-REM    edit .env: set ADMIN_USERNAME, ADMIN_PASSWORD (long, random) and ADMIN_SECRET
+REM edit .env - at least ADMIN_USERNAME, ADMIN_PASSWORD (long, random) and ADMIN_SECRET
+REM optional: DEVICE_INGEST_TOKEN  (python -c "import secrets; print(secrets.token_urlsafe(32))")
 cd ..
+```
+macOS / Linux: `python3 -m venv .venv`, `.venv/bin/pip install -r requirements.txt pyserial`, `cp .env.example .env`.
 
-REM 2. Web app
+**3. Web app**
+```bat
 npm install
-
-REM 3. Run everything (backend + app + wearable) and open the browser
-start_demo.bat          &REM with the ESP32 plugged in via USB
-start_demo.bat demo     &REM DEMO MODE: simulated wearable "DEMO-01" (no hardware)
 ```
 
-Then open **http://localhost:5173**. Everything runs on the laptop — no Wi-Fi needed (Chrome's voice recognition does need internet; typing works offline).
+**4. Run everything (Windows, one click)**
+```bat
+start_demo.bat          &REM ESP32 plugged in via USB
+start_demo.bat demo     &REM DEMO MODE: simulated wearable "DEMO-01", no hardware
+```
+It opens three windows (backend, web app, wearable) and then **http://localhost:5173**. Everything runs on the laptop — no Wi-Fi needed (the browser's voice recognition does need internet; typing works offline). On its first start the backend downloads the ~90 MB answer-matcher model in the background (internet needed once; until then matching uses the rules only).
+
+**5. Check it works** — `cd ergo_ml_backend` then `.venv\Scripts\python scripts\verify_scoring.py` (expects `27/27`). Full list: [docs/TEST_CASES.md](docs/TEST_CASES.md).
 
 <details>
 <summary>Running the parts by hand</summary>
@@ -110,6 +135,44 @@ ergo_ml_backend\.venv\Scripts\python firmware\usb_bridge.py
 ```
 API docs: http://127.0.0.1:8000/docs
 </details>
+
+## Environment variables
+
+**Backend** — `ergo_ml_backend/.env` (copy from [`.env.example`](ergo_ml_backend/.env.example)). Real environment variables win over the file, so on Render the dashboard values are used.
+
+| Variable | Required? | Default | What it does |
+|---|---|---|---|
+| `ADMIN_USERNAME` | yes | `admin` | Admin login name |
+| `ADMIN_PASSWORD` | yes* | — (admin login disabled) | Admin password. *Or set `ADMIN_PASSWORD_HASH` instead |
+| `ADMIN_PASSWORD_HASH` | no | — | PBKDF2 hash `pbkdf2_sha256$<iterations>$<salt_hex>$<hash_hex>`; takes precedence over `ADMIN_PASSWORD` |
+| `ADMIN_SECRET` | recommended | random at each start (logins reset on restart) | Signs admin login tokens |
+| `ADMIN_TOKEN_HOURS` | no | `8` | How long an admin login stays valid |
+| `ADMIN_API_TOKEN` | no | — (disabled) | Static token for scripts (`X-Admin-Token` header) |
+| `DEVICE_INGEST_TOKEN` | **yes on any network** | — (ingest open) | Secret the wearable sends as `X-Device-Token`; must equal `DEVICE_TOKEN` in the firmware's `secrets.h`. `usb_bridge.py` and `demo_simulator.py` read it from `.env` automatically |
+| `ALLOWED_ORIGINS` | **yes in production** | local dev origins (`localhost:5173`, `:4173`, `:8000`) | Comma-separated web app origins allowed by CORS; `*` is refused; the server will not start on Render without it |
+| `DATABASE_URL` | no | `sqlite:///./ergocare.db` | Database (Postgres needs a driver, e.g. `psycopg2-binary`) |
+| `AUDIO_UPLOAD_DIR` | no | `./uploads/audio` | Where voice clips are stored |
+| `MAX_AUDIO_MB` | no | `10` | Largest voice clip accepted |
+| `MIN_FREE_MB` | no | `500` | Uploads refused when free disk space is below this |
+| `SENSOR_RETENTION_S` | no | `21600` (6 h) | Wearable readings older than this are deleted; `0` keeps everything |
+| `MATCHER_MODEL` | no | `sentence-transformers/all-MiniLM-L6-v2` | Sentence-embedding model for the answer matcher |
+| `MATCHER_CACHE_DIR` | no | `ergo_ml_backend/models_cache` | Where the model is downloaded |
+| `RENDER` / `PRODUCTION` | set by host | — | When set, `ALLOWED_ORIGINS` becomes mandatory |
+
+**Web app** — `.env` in the project root (copy from [`.env.example`](.env.example)), or the Vercel dashboard:
+
+| Variable | Default | What it does |
+|---|---|---|
+| `VITE_API_BASE` | `http://127.0.0.1:8000` | URL of the backend, baked in at build time |
+
+**Wearable** — `firmware/ergocare_wearable/secrets.h` (copy from `secrets.example.h`, git-ignored; only needed for Wi-Fi or a device token):
+
+| Setting | What it does |
+|---|---|
+| `WIFI_SSID`, `WIFI_PASSWORD` | 2.4 GHz network (leave empty for USB-only) |
+| `BACKEND_URL` | Laptop/backend address, e.g. `http://192.168.1.20:8000` |
+| `DEVICE_ID` | Device name shown in the app (default `ERGO-01`) |
+| `DEVICE_TOKEN` | Same value as the backend's `DEVICE_INGEST_TOKEN` |
 
 ### Flashing the ESP32
 
@@ -140,13 +203,22 @@ Wi-Fi is optional: copy `secrets.example.h` to `secrets.h` (git-ignored) and fil
 
 Power the GSR module from **3.3 V** so its output never exceeds the ESP32's 3.3 V input. Wear the MPU6050 on the back of the collar / upper back, a fingertip on the MAX30102, and the GSR electrodes on two fingers of the other hand.
 
-## Checking it works
+## Testing
 
-```bat
-cd ergo_ml_backend
-.venv\Scripts\python scripts\verify_wearable.py     &REM logic + scoring + live wearable checks (PASS/FAIL)
-.venv\Scripts\python scripts\eval_matcher.py        &REM answer-matcher accuracy
-```
+Latest results (26 Oct 2026) — details and how to run each one in [docs/TEST_CASES.md](docs/TEST_CASES.md):
+
+| Suite | Result |
+|---|---|
+| `verify_scoring.py` — scoring rules | 27 / 27 |
+| `verify_frontend_parity.py` — web app scores = server scores | 206 / 206 values match |
+| `verify_sensor_security.py` — wearable security, data integrity | 36 / 36 |
+| `verify_pdf_indic.py` — Hindi + Kannada in the PDF | pass |
+| `smoke_wearable.py` — full wearable session over HTTP | 30 / 30 |
+| `eval_matcher.py` — AI answer matcher | 48/50 English · 20/20 held-out · 30/30 Hindi/Kannada |
+| `eval_matcher_500.py` — **500** answers in 3 languages | 492/500 (98.4%) · first run 439/500 (87.8%) |
+| `eval_500_participants.py` — **500** simulated participants through the scoring engine | 500/500 pass all rule checks · detection 100% on clear cases |
+| `verify_wearable.py` — live band checks | 22 / 23 without the band (only "band is sending" fails) |
+| `sample_data/run_sample_session.py` — end-to-end replay of the sample data | 16 / 16 |
 
 ## Privacy and security
 
@@ -157,7 +229,7 @@ cd ergo_ml_backend
 
 ## Deploying
 
-- **Backend (Render):** `render.yaml` — set `ADMIN_USERNAME` and `ADMIN_PASSWORD` in the dashboard (`ADMIN_SECRET` is generated); set `ALLOWED_ORIGINS` to the web app's URL.
+- **Backend (Render):** `render.yaml` — set `ADMIN_USERNAME`, `ADMIN_PASSWORD` and `DEVICE_INGEST_TOKEN` in the dashboard (`ADMIN_SECRET` is generated); set `ALLOWED_ORIGINS` to the web app's URL.
 - **Web app (Vercel):** `npm run build`; set `VITE_API_BASE` to the backend URL.
 
 ## Project structure
@@ -172,7 +244,9 @@ ergo_ml_backend/app/
   api/routes/              sessions, answers, reports (PDF), sensors, questions, admin
   domain/                  scoring, wearable scoring, answer matcher, Hindi/Kannada glossary
   models/                  database tables
-ergo_ml_backend/scripts/   verify_wearable.py, eval_matcher.py
+ergo_ml_backend/scripts/   test suites (verify_*.py, smoke_wearable.py, eval_matcher.py)
+sample_data/               sample wearable session, answer sets, voice test cases, replay test
+docs/                      TECHNICAL_DESIGN.md, TEST_CASES.md, submission kit, screenshots
 ```
 
 ## Limitations and next steps
@@ -181,3 +255,7 @@ ergo_ml_backend/scripts/   verify_wearable.py, eval_matcher.py
 - Scoring rules are hand-set; a trained model needs labelled outcome data from a larger pilot.
 - Hindi/Kannada translations need native-speaker review; results page and PDF are English only.
 - Voice recognition uses the browser (needs internet); on-device speech recognition is future work.
+
+## License
+
+ErgoCare's code is released under the [MIT License](LICENSE) © 2026 Team Upright. Bundled libraries and fonts keep their own licenses — see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

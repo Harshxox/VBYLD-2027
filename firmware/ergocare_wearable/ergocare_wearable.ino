@@ -42,6 +42,11 @@
 #ifndef DEVICE_ID
 #define DEVICE_ID "ERGO-01"
 #endif
+#ifndef DEVICE_TOKEN
+// Must match DEVICE_INGEST_TOKEN in the backend .env. Leave empty only if the
+// backend has no token configured; the server logs a warning in that case.
+#define DEVICE_TOKEN ""
+#endif
 
 const int      PIN_SDA        = 21;
 const int      PIN_SCL        = 22;
@@ -111,6 +116,15 @@ struct Reading {
 };
 QueueHandle_t netQueue;
 volatile bool wifiUp = false;
+
+// ── Offline buffer ────────────────────────────────────────────────────────────
+// Readings produced while Wi-Fi is down used to be thrown away, which punched
+// holes in the baseline and assessment graphs. Keep the last NET_BUF readings
+// and replay them once the link is back; the backend orders them by age_ms.
+#define NET_BUF 64
+static Reading   netBuf[NET_BUF];
+static uint8_t  netHead = 0;    // next slot to write
+static uint32_t netCount = 0;   // readings currently held (saturates at NET_BUF)
 
 // ── MPU6050 (raw registers — also works with clones that fail WHO_AM_I checks) ─
 bool mpuWrite(uint8_t reg, uint8_t val) {
@@ -386,18 +400,39 @@ void report() {
   char json[400];
   toJson(r, json, sizeof(json));
   Serial.println(json);
-  if (netQueue) xQueueOverwrite(netQueue, &r);   // network core sends the newest
+
+  // Hand to the network core. It keeps a replay buffer so a Wi-Fi outage does not
+  // punch holes in the baseline or assessment graphs.
+  if (netQueue) xQueueOverwrite(netQueue, &r);
   resetWindow();
 }
 
 // ── Network (core 0) ──────────────────────────────────────────────────────────
+bool sendReading(const String &url, const Reading &r) {
+  char json[400];
+  toJson(r, json, sizeof(json));
+  HTTPClient http;
+  http.setConnectTimeout(800);
+  http.setTimeout(800);
+  if (!http.begin(url)) return false;              // DNS/URL failure - try again next tick
+  http.addHeader("Content-Type", "application/json");
+  if (strlen(DEVICE_TOKEN)) http.addHeader("X-Device-Token", DEVICE_TOKEN);
+  int code = http.POST((uint8_t *)json, strlen(json));
+  if (code >= 200 && code < 300) {
+    String body = http.getString();
+    if (body.indexOf("\"calibrate\":true") >= 0) calibrateRequested = true;  // app baseline step
+  }
+  http.end();
+  return code >= 200 && code < 300;
+}
+
 void netTask(void *) {
   WiFi.mode(WIFI_STA);
   WiFi.setAutoReconnect(true);
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
   uint32_t lastTry = millis();
+  uint32_t lastPost = 0;
   String url = String(BACKEND_URL) + "/api/devices/" + DEVICE_ID + "/readings";
-  char json[400];
   bool announcedFail = false;
 
   for (;;) {
@@ -406,33 +441,50 @@ void netTask(void *) {
       wifiUp = up;
       if (up) Serial.printf("# wifi connected, ip=%s, sending to %s\n",
                             WiFi.localIP().toString().c_str(), url.c_str());
-      else    Serial.println("# wifi disconnected - retrying");
+      else    Serial.println("# wifi disconnected - buffering readings");
     }
-    if (!up && millis() - lastTry > 10000) {
+    // Unsigned subtraction, so this stays correct across the ~49 day millis() rollover.
+    if (!up && (uint32_t)(millis() - lastTry) > 10000) {
       WiFi.disconnect();
       WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
       lastTry = millis();
     }
 
     Reading r;
-    if (xQueueReceive(netQueue, &r, pdMS_TO_TICKS(500)) != pdTRUE || !up) continue;
+    if (xQueueReceive(netQueue, &r, pdMS_TO_TICKS(500)) != pdTRUE) continue;
 
-    toJson(r, json, sizeof(json));
-    HTTPClient http;
-    http.setConnectTimeout(800);
-    http.setTimeout(800);
-    if (!http.begin(url)) continue;
-    http.addHeader("Content-Type", "application/json");
-    int code = http.POST((uint8_t *)json, strlen(json));
-    if (code >= 200 && code < 300) {
+    // Buffer first, so nothing is lost while the link is down or a POST is failing.
+    netBuf[netHead] = r;
+    netHead = (netHead + 1) % NET_BUF;
+    if (netCount < NET_BUF) netCount++;
+
+    if (!up) continue;
+
+    // Replay the backlog oldest-first, then keep going live.
+    bool ok = true;
+    if (netCount > 1) {
+      Serial.printf("# replaying %u buffered readings\n", (unsigned)netCount - 1);
+      uint8_t sent = 0;
+      uint8_t tail = (netHead + NET_BUF - netCount) % NET_BUF;
+      for (; sent < netCount - 1; sent++) {
+        if (!sendReading(url, netBuf[tail])) { ok = false; break; }
+        tail = (tail + 1) % NET_BUF;
+      }
+      // Keep whatever we could not deliver, plus the newest reading.
+      netCount = (uint8_t)(netCount - sent);
+    }
+
+    if ((uint32_t)(millis() - lastPost) >= 1000) {
+      lastPost = millis();
+      if (sendReading(url, r) && ok) netCount = 0;
+    }
+
+    if (ok) {
       announcedFail = false;
-      String body = http.getString();
-      if (body.indexOf("\"calibrate\":true") >= 0) calibrateRequested = true;  // app baseline step
     } else if (!announcedFail) {
-      Serial.printf("# backend POST failed (%d) - is the server running at %s ?\n", code, BACKEND_URL);
+      Serial.printf("# backend POST failed - is the server running at %s ?\n", BACKEND_URL);
       announcedFail = true;   // print once, not every second
     }
-    http.end();
   }
 }
 

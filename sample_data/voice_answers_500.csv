@@ -1,0 +1,501 @@
+﻿id,language,kind,question_id,question_text,spoken_answer,expected_option,matched_option,method,correct,no_match
+1,English,quantity,1,How long do you usually work continuously before taking a short break?,90 minutes,1-2 hours,1-2 hours,quantity,True,False
+2,English,quantity,1,How long do you usually work continuously before taking a short break?,"90 minutes, to be honest",1-2 hours,1-2 hours,quantity,True,False
+3,English,quantity,1,How long do you usually work continuously before taking a short break?,I'd say 90 minutes,1-2 hours,1-2 hours,quantity,True,False
+4,English,quantity,1,How long do you usually work continuously before taking a short break?,I'd say about an hour,1 hour,1 hour,contains,True,False
+5,English,quantity,1,How long do you usually work continuously before taking a short break?,I'd say about four hours straight,More than 2 hours,More than 2 hours,quantity,True,False
+6,English,quantity,1,How long do you usually work continuously before taking a short break?,I'd say about twenty minutes,Less than 30 minutes,Less than 30 minutes,quantity,True,False
+7,English,quantity,1,How long do you usually work continuously before taking a short break?,I'd say an hour and a half,1-2 hours,1-2 hours,quantity,True,False
+8,English,quantity,1,How long do you usually work continuously before taking a short break?,I'd say between one and two hours,1-2 hours,1-2 hours,quantity,True,False
+9,English,quantity,1,How long do you usually work continuously before taking a short break?,I'd say every 15 minutes or so,Less than 30 minutes,Less than 30 minutes,quantity,True,False
+10,English,quantity,1,How long do you usually work continuously before taking a short break?,I'd say every hour,1 hour,1 hour,contains,True,False
+11,English,quantity,1,How long do you usually work continuously before taking a short break?,I'd say less than half an hour,Less than 30 minutes,Less than 30 minutes,contains,True,False
+12,English,quantity,1,How long do you usually work continuously before taking a short break?,I'd say more than two hours,More than 2 hours,More than 2 hours,contains,True,False
+13,English,quantity,1,How long do you usually work continuously before taking a short break?,I'd say one hour,1 hour,1 hour,contains,True,False
+14,English,quantity,1,How long do you usually work continuously before taking a short break?,I'd say three hours,More than 2 hours,More than 2 hours,quantity,True,False
+15,English,quantity,1,How long do you usually work continuously before taking a short break?,about an hour,1 hour,1 hour,contains,True,False
+16,English,quantity,1,How long do you usually work continuously before taking a short break?,"about an hour, to be honest",1 hour,1 hour,contains,True,False
+17,English,quantity,1,How long do you usually work continuously before taking a short break?,about four hours straight,More than 2 hours,More than 2 hours,quantity,True,False
+18,English,quantity,1,How long do you usually work continuously before taking a short break?,"about four hours straight, to be honest",More than 2 hours,More than 2 hours,quantity,True,False
+19,English,quantity,1,How long do you usually work continuously before taking a short break?,about twenty minutes,Less than 30 minutes,Less than 30 minutes,quantity,True,False
+20,English,quantity,1,How long do you usually work continuously before taking a short break?,"about twenty minutes, to be honest",Less than 30 minutes,Less than 30 minutes,quantity,True,False
+21,English,quantity,1,How long do you usually work continuously before taking a short break?,an hour and a half,1-2 hours,1-2 hours,quantity,True,False
+22,English,quantity,1,How long do you usually work continuously before taking a short break?,"an hour and a half, to be honest",1-2 hours,1-2 hours,quantity,True,False
+23,English,quantity,1,How long do you usually work continuously before taking a short break?,between one and two hours,1-2 hours,1-2 hours,quantity,True,False
+24,English,quantity,1,How long do you usually work continuously before taking a short break?,"between one and two hours, to be honest",1-2 hours,1-2 hours,quantity,True,False
+25,English,quantity,1,How long do you usually work continuously before taking a short break?,every 15 minutes or so,Less than 30 minutes,Less than 30 minutes,quantity,True,False
+26,English,quantity,1,How long do you usually work continuously before taking a short break?,"every 15 minutes or so, to be honest",Less than 30 minutes,Less than 30 minutes,quantity,True,False
+27,English,quantity,1,How long do you usually work continuously before taking a short break?,every hour,1 hour,1 hour,exact,True,False
+28,English,quantity,1,How long do you usually work continuously before taking a short break?,"every hour, to be honest",1 hour,1 hour,contains,True,False
+29,English,quantity,1,How long do you usually work continuously before taking a short break?,less than half an hour,Less than 30 minutes,Less than 30 minutes,exact,True,False
+30,English,quantity,1,How long do you usually work continuously before taking a short break?,"less than half an hour, to be honest",Less than 30 minutes,Less than 30 minutes,contains,True,False
+31,English,quantity,1,How long do you usually work continuously before taking a short break?,more than two hours,More than 2 hours,More than 2 hours,exact,True,False
+32,English,quantity,1,How long do you usually work continuously before taking a short break?,"more than two hours, to be honest",More than 2 hours,More than 2 hours,contains,True,False
+33,English,quantity,1,How long do you usually work continuously before taking a short break?,one hour,1 hour,1 hour,exact,True,False
+34,English,quantity,1,How long do you usually work continuously before taking a short break?,"one hour, to be honest",1 hour,1 hour,contains,True,False
+35,English,quantity,1,How long do you usually work continuously before taking a short break?,three hours,More than 2 hours,More than 2 hours,quantity,True,False
+36,English,quantity,1,How long do you usually work continuously before taking a short break?,"three hours, to be honest",More than 2 hours,More than 2 hours,quantity,True,False
+37,English,quantity,3,How many hours do you work on a laptop without an external keyboard or mouse?,I'd say about seven hours,6-7,6-7,quantity,True,False
+38,English,quantity,3,How many hours do you work on a laptop without an external keyboard or mouse?,I'd say about two hours,1-2,1-2,quantity,True,False
+39,English,quantity,3,How many hours do you work on a laptop without an external keyboard or mouse?,I'd say around three hours,3-4,3-4,quantity,True,False
+40,English,quantity,3,How many hours do you work on a laptop without an external keyboard or mouse?,I'd say more than eight hours,>8,>8,quantity,True,False
+41,English,quantity,3,How many hours do you work on a laptop without an external keyboard or mouse?,I'd say one or two hours,1-2,1-2,contains,True,False
+42,English,quantity,3,How many hours do you work on a laptop without an external keyboard or mouse?,I'd say six or seven hours,6-7,6-7,contains,True,False
+43,English,quantity,3,How many hours do you work on a laptop without an external keyboard or mouse?,I'd say ten hours,>8,>8,quantity,True,False
+44,English,quantity,3,How many hours do you work on a laptop without an external keyboard or mouse?,I'd say three or four hours,3-4,3-4,contains,True,False
+45,English,quantity,3,How many hours do you work on a laptop without an external keyboard or mouse?,about seven hours,6-7,6-7,quantity,True,False
+46,English,quantity,3,How many hours do you work on a laptop without an external keyboard or mouse?,"about seven hours, to be honest",6-7,6-7,quantity,True,False
+47,English,quantity,3,How many hours do you work on a laptop without an external keyboard or mouse?,about two hours,1-2,1-2,quantity,True,False
+48,English,quantity,3,How many hours do you work on a laptop without an external keyboard or mouse?,"about two hours, to be honest",1-2,1-2,quantity,True,False
+49,English,quantity,3,How many hours do you work on a laptop without an external keyboard or mouse?,around three hours,3-4,3-4,quantity,True,False
+50,English,quantity,3,How many hours do you work on a laptop without an external keyboard or mouse?,"around three hours, to be honest",3-4,3-4,quantity,True,False
+51,English,quantity,3,How many hours do you work on a laptop without an external keyboard or mouse?,more than eight hours,>8,>8,quantity,True,False
+52,English,quantity,3,How many hours do you work on a laptop without an external keyboard or mouse?,"more than eight hours, to be honest",>8,>8,quantity,True,False
+53,English,quantity,3,How many hours do you work on a laptop without an external keyboard or mouse?,one or two hours,1-2,1-2,contains,True,False
+54,English,quantity,3,How many hours do you work on a laptop without an external keyboard or mouse?,"one or two hours, to be honest",1-2,1-2,contains,True,False
+55,English,quantity,3,How many hours do you work on a laptop without an external keyboard or mouse?,six or seven hours,6-7,6-7,contains,True,False
+56,English,quantity,3,How many hours do you work on a laptop without an external keyboard or mouse?,"six or seven hours, to be honest",6-7,6-7,contains,True,False
+57,English,quantity,3,How many hours do you work on a laptop without an external keyboard or mouse?,ten hours,>8,>8,quantity,True,False
+58,English,quantity,3,How many hours do you work on a laptop without an external keyboard or mouse?,"ten hours, to be honest",>8,>8,quantity,True,False
+59,English,quantity,3,How many hours do you work on a laptop without an external keyboard or mouse?,three or four hours,3-4,3-4,contains,True,False
+60,English,quantity,3,How many hours do you work on a laptop without an external keyboard or mouse?,"three or four hours, to be honest",3-4,3-4,contains,True,False
+61,English,meaning,5,How often do you stretch during work hours?,I never stretch,Never,Never,contains,True,False
+62,English,meaning,5,How often do you stretch during work hours?,a couple of times a week,A few times a week,A few times a week,semantic,True,False
+63,English,meaning,5,How often do you stretch during work hours?,once every day,Once a day,Once a day,frequency,True,False
+64,English,meaning,5,How often do you stretch during work hours?,several times a day,Multiple times a day,Multiple times a day,frequency,True,False
+65,English,meaning,8,How supportive is your chair for long hours of work?,it has no back support at all,Not supportive at all,Not supportive at all,intensity,True,False
+66,English,meaning,8,How supportive is your chair for long hours of work?,my chair is really comfortable and supportive,Very supportive,Very supportive,intensity,True,False
+67,English,meaning,9,Where is your screen usually placed while working?,a bit lower than my eyes,Slightly below eye level,Slightly below eye level,semantic,True,False
+68,English,meaning,9,Where is your screen usually placed while working?,right at eye level,At eye level,At eye level,contains,True,False
+69,English,meaning,9,Where is your screen usually placed while working?,"way down, I look down at my laptop",Far below eye level,,none,False,True
+70,English,meaning,10,How often do you use your phone during or between work sessions?,I'm on my phone constantly,Very frequently,Very frequently,frequency,True,False
+71,English,meaning,10,How often do you use your phone during or between work sessions?,hardly ever,Rarely,Rarely,frequency,True,False
+72,English,meaning,17,How well does your body recover after a long day of work?,I recover completely after a night's sleep,Completely,Completely,contains,True,False
+73,English,meaning,17,How well does your body recover after a long day of work?,mostly fine the next day,Mostly,Mostly,contains,True,False
+74,English,meaning,17,How well does your body recover after a long day of work?,"not at all, I wake up sore",Not at all,Not at all,contains,True,False
+75,English,quantity,21,How many hours per day do you spend in front of a screen across all devices combined?,I'd say about seven hours a day,6-8 hours,6-8 hours,quantity,True,False
+76,English,quantity,21,How many hours per day do you spend in front of a screen across all devices combined?,I'd say about three hours,Less than 4 hours,Less than 4 hours,quantity,True,False
+77,English,quantity,21,How many hours per day do you spend in front of a screen across all devices combined?,I'd say around five hours,4-6 hours,4-6 hours,quantity,True,False
+78,English,quantity,21,How many hours per day do you spend in front of a screen across all devices combined?,I'd say five hours or so,4-6 hours,4-6 hours,quantity,True,False
+79,English,quantity,21,How many hours per day do you spend in front of a screen across all devices combined?,I'd say four to six hours,4-6 hours,4-6 hours,contains,True,False
+80,English,quantity,21,How many hours per day do you spend in front of a screen across all devices combined?,I'd say less than four hours,Less than 4 hours,Less than 4 hours,contains,True,False
+81,English,quantity,21,How many hours per day do you spend in front of a screen across all devices combined?,I'd say more than eight hours,More than 8 hours,More than 8 hours,contains,True,False
+82,English,quantity,21,How many hours per day do you spend in front of a screen across all devices combined?,I'd say nine or ten hours,More than 8 hours,More than 8 hours,quantity,True,False
+83,English,quantity,21,How many hours per day do you spend in front of a screen across all devices combined?,I'd say seven hours,6-8 hours,6-8 hours,quantity,True,False
+84,English,quantity,21,How many hours per day do you spend in front of a screen across all devices combined?,I'd say six to eight hours,6-8 hours,6-8 hours,contains,True,False
+85,English,quantity,21,How many hours per day do you spend in front of a screen across all devices combined?,I'd say ten hours,More than 8 hours,More than 8 hours,quantity,True,False
+86,English,quantity,21,How many hours per day do you spend in front of a screen across all devices combined?,I'd say two or three hours,Less than 4 hours,Less than 4 hours,quantity,True,False
+87,English,quantity,21,How many hours per day do you spend in front of a screen across all devices combined?,about seven hours a day,6-8 hours,6-8 hours,quantity,True,False
+88,English,quantity,21,How many hours per day do you spend in front of a screen across all devices combined?,"about seven hours a day, to be honest",6-8 hours,6-8 hours,quantity,True,False
+89,English,quantity,21,How many hours per day do you spend in front of a screen across all devices combined?,about three hours,Less than 4 hours,Less than 4 hours,quantity,True,False
+90,English,quantity,21,How many hours per day do you spend in front of a screen across all devices combined?,"about three hours, to be honest",Less than 4 hours,Less than 4 hours,quantity,True,False
+91,English,quantity,21,How many hours per day do you spend in front of a screen across all devices combined?,around five hours,4-6 hours,4-6 hours,quantity,True,False
+92,English,quantity,21,How many hours per day do you spend in front of a screen across all devices combined?,"around five hours, to be honest",4-6 hours,4-6 hours,quantity,True,False
+93,English,quantity,21,How many hours per day do you spend in front of a screen across all devices combined?,five hours or so,4-6 hours,4-6 hours,quantity,True,False
+94,English,quantity,21,How many hours per day do you spend in front of a screen across all devices combined?,"five hours or so, to be honest",4-6 hours,4-6 hours,quantity,True,False
+95,English,quantity,21,How many hours per day do you spend in front of a screen across all devices combined?,four to six hours,4-6 hours,4-6 hours,exact,True,False
+96,English,quantity,21,How many hours per day do you spend in front of a screen across all devices combined?,"four to six hours, to be honest",4-6 hours,4-6 hours,contains,True,False
+97,English,quantity,21,How many hours per day do you spend in front of a screen across all devices combined?,less than four hours,Less than 4 hours,Less than 4 hours,exact,True,False
+98,English,quantity,21,How many hours per day do you spend in front of a screen across all devices combined?,"less than four hours, to be honest",Less than 4 hours,Less than 4 hours,contains,True,False
+99,English,quantity,21,How many hours per day do you spend in front of a screen across all devices combined?,more than eight hours,More than 8 hours,More than 8 hours,exact,True,False
+100,English,quantity,21,How many hours per day do you spend in front of a screen across all devices combined?,"more than eight hours, to be honest",More than 8 hours,More than 8 hours,contains,True,False
+101,English,quantity,21,How many hours per day do you spend in front of a screen across all devices combined?,nine or ten hours,More than 8 hours,More than 8 hours,quantity,True,False
+102,English,quantity,21,How many hours per day do you spend in front of a screen across all devices combined?,"nine or ten hours, to be honest",More than 8 hours,More than 8 hours,quantity,True,False
+103,English,quantity,21,How many hours per day do you spend in front of a screen across all devices combined?,seven hours,6-8 hours,6-8 hours,quantity,True,False
+104,English,quantity,21,How many hours per day do you spend in front of a screen across all devices combined?,"seven hours, to be honest",6-8 hours,6-8 hours,quantity,True,False
+105,English,quantity,21,How many hours per day do you spend in front of a screen across all devices combined?,six to eight hours,6-8 hours,6-8 hours,exact,True,False
+106,English,quantity,21,How many hours per day do you spend in front of a screen across all devices combined?,"six to eight hours, to be honest",6-8 hours,6-8 hours,contains,True,False
+107,English,quantity,21,How many hours per day do you spend in front of a screen across all devices combined?,ten hours,More than 8 hours,More than 8 hours,quantity,True,False
+108,English,quantity,21,How many hours per day do you spend in front of a screen across all devices combined?,"ten hours, to be honest",More than 8 hours,More than 8 hours,quantity,True,False
+109,English,quantity,21,How many hours per day do you spend in front of a screen across all devices combined?,two or three hours,Less than 4 hours,Less than 4 hours,quantity,True,False
+110,English,quantity,21,How many hours per day do you spend in front of a screen across all devices combined?,"two or three hours, to be honest",Less than 4 hours,Less than 4 hours,quantity,True,False
+111,English,meaning,22,Do you feel your workload leaves you sufficient time for personal well-being activities?,"never, work takes everything",Never,Never,contains,True,False
+112,English,meaning,22,Do you feel your workload leaves you sufficient time for personal well-being activities?,"yes, I have plenty of time for myself","Yes, comfortably","Yes, comfortably",semantic,True,False
+113,English,meaning,23,How confident are you that your current work habits will support your long-term physical and mental health?,I'm not sure about that,Uncertain,Uncertain,contains,True,False
+114,English,meaning,23,How confident are you that your current work habits will support your long-term physical and mental health?,not confident at all,Not confident at all,Not confident at all,exact,True,False
+115,English,meaning,23,How confident are you that your current work habits will support your long-term physical and mental health?,very confident,Very confident,Very confident,exact,True,False
+116,English,meaning,24,How often do you consciously correct your posture while working?,I never think about it,Never think about it,Never think about it,contains,True,False
+117,English,meaning,24,How often do you consciously correct your posture while working?,all through the day,Frequently throughout the day,Frequently throughout the day,semantic,True,False
+118,English,meaning,24,How often do you consciously correct your posture while working?,only when my back starts hurting,Only when I feel pain,Only when I feel pain,semantic,True,False
+119,English,meaning,25,How often do you skip meals or eat at your desk due to workload?,"never, I always take a lunch break",Never,Never,contains,True,False
+120,English,meaning,25,How often do you skip meals or eat at your desk due to workload?,very often,Often,Often,contains,True,False
+121,English,meaning,26,Which best describes your physical activity pattern on a typical workday?,I go to the gym every evening,Structured activity like yoga or a gym session,Vigorous daily exercise routine,semantic,False,False
+122,English,meaning,26,Which best describes your physical activity pattern on a typical workday?,I just walk between classes,Light movement such as walking between buildings,,none,False,True
+123,English,meaning,26,Which best describes your physical activity pattern on a typical workday?,I mostly sit all day,Mostly seated with minimal movement,Mostly seated with minimal movement,semantic,True,False
+124,English,meaning,26,Which best describes your physical activity pattern on a typical workday?,I run hard every single morning,Vigorous daily exercise routine,Vigorous daily exercise routine,semantic,True,False
+125,English,quantity,27,How much water do you typically consume throughout your working hours?,I'd say about 1.5 litres,1-2 litres,1-2 litres,quantity,True,False
+126,English,quantity,27,How much water do you typically consume throughout your working hours?,I'd say around 3 litres,More than 2 litres,More than 2 litres,quantity,True,False
+127,English,quantity,27,How much water do you typically consume throughout your working hours?,I'd say between one and two litres,1-2 litres,1-2 litres,quantity,True,False
+128,English,quantity,27,How much water do you typically consume throughout your working hours?,I'd say half a litre,Less than 1 litre,Less than 1 litre,quantity,True,False
+129,English,quantity,27,How much water do you typically consume throughout your working hours?,I'd say just one glass,Less than 1 litre,,none,False,True
+130,English,quantity,27,How much water do you typically consume throughout your working hours?,I'd say less than a litre,Less than 1 litre,Less than 1 litre,contains,True,False
+131,English,quantity,27,How much water do you typically consume throughout your working hours?,I'd say more than two litres,More than 2 litres,More than 2 litres,contains,True,False
+132,English,quantity,27,How much water do you typically consume throughout your working hours?,I'd say one and a half litres,1-2 litres,1-2 litres,quantity,True,False
+133,English,quantity,27,How much water do you typically consume throughout your working hours?,I'd say three litres,More than 2 litres,More than 2 litres,quantity,True,False
+134,English,quantity,27,How much water do you typically consume throughout your working hours?,about 1.5 litres,1-2 litres,1-2 litres,quantity,True,False
+135,English,quantity,27,How much water do you typically consume throughout your working hours?,"about 1.5 litres, to be honest",1-2 litres,1-2 litres,quantity,True,False
+136,English,quantity,27,How much water do you typically consume throughout your working hours?,around 3 litres,More than 2 litres,More than 2 litres,quantity,True,False
+137,English,quantity,27,How much water do you typically consume throughout your working hours?,"around 3 litres, to be honest",More than 2 litres,More than 2 litres,quantity,True,False
+138,English,quantity,27,How much water do you typically consume throughout your working hours?,between one and two litres,1-2 litres,1-2 litres,quantity,True,False
+139,English,quantity,27,How much water do you typically consume throughout your working hours?,"between one and two litres, to be honest",1-2 litres,1-2 litres,quantity,True,False
+140,English,quantity,27,How much water do you typically consume throughout your working hours?,half a litre,Less than 1 litre,Less than 1 litre,quantity,True,False
+141,English,quantity,27,How much water do you typically consume throughout your working hours?,"half a litre, to be honest",Less than 1 litre,Less than 1 litre,quantity,True,False
+142,English,quantity,27,How much water do you typically consume throughout your working hours?,just one glass,Less than 1 litre,,none,False,True
+143,English,quantity,27,How much water do you typically consume throughout your working hours?,"just one glass, to be honest",Less than 1 litre,,none,False,True
+144,English,quantity,27,How much water do you typically consume throughout your working hours?,less than a litre,Less than 1 litre,Less than 1 litre,exact,True,False
+145,English,quantity,27,How much water do you typically consume throughout your working hours?,"less than a litre, to be honest",Less than 1 litre,Less than 1 litre,contains,True,False
+146,English,quantity,27,How much water do you typically consume throughout your working hours?,more than two litres,More than 2 litres,More than 2 litres,exact,True,False
+147,English,quantity,27,How much water do you typically consume throughout your working hours?,"more than two litres, to be honest",More than 2 litres,More than 2 litres,contains,True,False
+148,English,quantity,27,How much water do you typically consume throughout your working hours?,one and a half litres,1-2 litres,1-2 litres,quantity,True,False
+149,English,quantity,27,How much water do you typically consume throughout your working hours?,"one and a half litres, to be honest",1-2 litres,1-2 litres,quantity,True,False
+150,English,quantity,27,How much water do you typically consume throughout your working hours?,three litres,More than 2 litres,More than 2 litres,quantity,True,False
+151,English,quantity,27,How much water do you typically consume throughout your working hours?,"three litres, to be honest",More than 2 litres,More than 2 litres,quantity,True,False
+152,English,quantity,28,How much time do you spend commuting to and from work each day in total?,I'd say about 45 minutes,30-60 minutes,30-60 minutes,quantity,True,False
+153,English,quantity,28,How much time do you spend commuting to and from work each day in total?,I'd say about 90 minutes,1-2 hours,1-2 hours,quantity,True,False
+154,English,quantity,28,How much time do you spend commuting to and from work each day in total?,I'd say an hour and a half,1-2 hours,1-2 hours,quantity,True,False
+155,English,quantity,28,How much time do you spend commuting to and from work each day in total?,I'd say around fifty minutes,30-60 minutes,30-60 minutes,quantity,True,False
+156,English,quantity,28,How much time do you spend commuting to and from work each day in total?,I'd say forty five minutes,30-60 minutes,30-60 minutes,quantity,True,False
+157,English,quantity,28,How much time do you spend commuting to and from work each day in total?,I'd say less than half an hour,Under 30 minutes,Under 30 minutes,quantity,True,False
+158,English,quantity,28,How much time do you spend commuting to and from work each day in total?,I'd say more than two hours,Over 2 hours,Over 2 hours,quantity,True,False
+159,English,quantity,28,How much time do you spend commuting to and from work each day in total?,I'd say three hours,Over 2 hours,Over 2 hours,quantity,True,False
+160,English,quantity,28,How much time do you spend commuting to and from work each day in total?,I'd say twenty minutes,Under 30 minutes,Under 30 minutes,quantity,True,False
+161,English,quantity,28,How much time do you spend commuting to and from work each day in total?,about 45 minutes,30-60 minutes,30-60 minutes,quantity,True,False
+162,English,quantity,28,How much time do you spend commuting to and from work each day in total?,"about 45 minutes, to be honest",30-60 minutes,30-60 minutes,quantity,True,False
+163,English,quantity,28,How much time do you spend commuting to and from work each day in total?,about 90 minutes,1-2 hours,1-2 hours,quantity,True,False
+164,English,quantity,28,How much time do you spend commuting to and from work each day in total?,"about 90 minutes, to be honest",1-2 hours,1-2 hours,quantity,True,False
+165,English,quantity,28,How much time do you spend commuting to and from work each day in total?,an hour and a half,1-2 hours,1-2 hours,quantity,True,False
+166,English,quantity,28,How much time do you spend commuting to and from work each day in total?,"an hour and a half, to be honest",1-2 hours,1-2 hours,quantity,True,False
+167,English,quantity,28,How much time do you spend commuting to and from work each day in total?,around fifty minutes,30-60 minutes,30-60 minutes,quantity,True,False
+168,English,quantity,28,How much time do you spend commuting to and from work each day in total?,"around fifty minutes, to be honest",30-60 minutes,30-60 minutes,quantity,True,False
+169,English,quantity,28,How much time do you spend commuting to and from work each day in total?,forty five minutes,30-60 minutes,30-60 minutes,quantity,True,False
+170,English,quantity,28,How much time do you spend commuting to and from work each day in total?,"forty five minutes, to be honest",30-60 minutes,30-60 minutes,quantity,True,False
+171,English,quantity,28,How much time do you spend commuting to and from work each day in total?,less than half an hour,Under 30 minutes,Under 30 minutes,quantity,True,False
+172,English,quantity,28,How much time do you spend commuting to and from work each day in total?,"less than half an hour, to be honest",Under 30 minutes,Under 30 minutes,quantity,True,False
+173,English,quantity,28,How much time do you spend commuting to and from work each day in total?,more than two hours,Over 2 hours,Over 2 hours,quantity,True,False
+174,English,quantity,28,How much time do you spend commuting to and from work each day in total?,"more than two hours, to be honest",Over 2 hours,Over 2 hours,quantity,True,False
+175,English,quantity,28,How much time do you spend commuting to and from work each day in total?,three hours,Over 2 hours,Over 2 hours,quantity,True,False
+176,English,quantity,28,How much time do you spend commuting to and from work each day in total?,"three hours, to be honest",Over 2 hours,Over 2 hours,quantity,True,False
+177,English,quantity,28,How much time do you spend commuting to and from work each day in total?,twenty minutes,Under 30 minutes,Under 30 minutes,quantity,True,False
+178,English,quantity,28,How much time do you spend commuting to and from work each day in total?,"twenty minutes, to be honest",Under 30 minutes,Under 30 minutes,quantity,True,False
+179,English,frequency,16,How often do you continue working even when you feel discomfort?,I'd say not even once,Never,Never,frequency,True,False
+180,English,intensity,2,"At the end of a workday, how tired do your eyes usually feel?",very,Very tired,Very tired,intensity,True,False
+181,English,frequency,12,How often do you feel wrist or finger strain while typing?,"hmm, it happens daily",Very often,Very often,frequency,True,False
+182,English,frequency,30,How often do you experience difficulty falling or staying asleep due to work-related thoughts?,I'd say sometimes,Sometimes,Sometimes,contains,True,False
+183,English,frequency,32,How often does turning your head side to side feel restricted or painful?,almost never,Rarely,Rarely,frequency,True,False
+184,English,frequency,19,How often do you adjust your sitting position during work?,I'd say often,Often,Often,contains,True,False
+185,English,0-5 scale,33,How would you rate the heaviness or burning sensation across your upper back or shoulder blades?,about a 0,0,0,number,True,False
+186,English,frequency,15,How frequently do you switch between sitting and standing while working?,"all the time, to be honest",Very frequently,Very frequently,frequency,True,False
+187,English,frequency,16,How often do you continue working even when you feel discomfort?,"sometimes, to be honest",Sometimes,Sometimes,contains,True,False
+188,English,frequency,18,How often do you notice headaches after screen-heavy work?,I'd say a lot of the time,Often,Often,frequency,True,False
+189,English,intensity,29,How physically draining do you find your daily commute?,"fairly, to be honest",Moderately exhausting,Moderately exhausting,intensity,True,False
+190,English,frequency,18,How often do you notice headaches after screen-heavy work?,honestly it happens occasionally,Sometimes,Sometimes,frequency,True,False
+191,English,yes/no,38,Do you experience a dull ache along your forearm or elbow after extended writing or clicking?,honestly I'm not sure,Maybe,Maybe,yes_no,True,False
+192,English,yes/no,38,Do you experience a dull ache along your forearm or elbow after extended writing or clicking?,"honestly yeah, it hurts",Yes,Yes,yes_no,True,False
+193,English,frequency,18,How often do you notice headaches after screen-heavy work?,"most days, to be honest",Often,Often,frequency,True,False
+194,English,frequency,19,How often do you adjust your sitting position during work?,hardly ever,Rarely,Rarely,frequency,True,False
+195,English,frequency,32,How often does turning your head side to side feel restricted or painful?,"hmm, it happens occasionally",Sometimes,Sometimes,frequency,True,False
+196,English,frequency,4,How often do long work sessions leave you feeling stiff?,honestly pretty frequently,Often,Often,frequency,True,False
+197,English,frequency,13,How often do you work in poor lighting conditions?,"I'd say no, never really",Never,Never,frequency,True,False
+198,English,intensity,2,"At the end of a workday, how tired do your eyes usually feel?","fairly, to be honest",Moderately tired,Moderately tired,intensity,True,False
+199,English,intensity,29,How physically draining do you find your daily commute?,"a little bit, to be honest",Mildly tiring,Mildly tiring,intensity,True,False
+200,English,yes/no,40,Do you experience a general sense of physical exhaustion or body ache by the end of your workday that is not linked to any single region?,honestly not sure,Maybe,Maybe,yes_no,True,False
+201,Hindi (Devanagari),quantity,1,How long do you usually work continuously before taking a short break?,आधा घंटा से कम,Less than 30 minutes,Less than 30 minutes,quantity (hi),True,False
+202,Hindi (Devanagari),quantity,1,How long do you usually work continuously before taking a short break?,एक घंटा,1 hour,1 hour,exact (hi),True,False
+203,Hindi (Devanagari),quantity,1,How long do you usually work continuously before taking a short break?,एक से दो घंटे,1-2 hours,1-2 hours,quantity (hi),True,False
+204,Hindi (Devanagari),quantity,1,How long do you usually work continuously before taking a short break?,डेढ़ घंटा,1-2 hours,1-2 hours,quantity (hi),True,False
+205,Hindi (Devanagari),quantity,1,How long do you usually work continuously before taking a short break?,तीन घंटे,More than 2 hours,More than 2 hours,quantity (hi),True,False
+206,Hindi (Devanagari),quantity,1,How long do you usually work continuously before taking a short break?,दो घंटे से ज़्यादा,More than 2 hours,More than 2 hours,quantity (hi),True,False
+207,Hindi (Devanagari),quantity,1,How long do you usually work continuously before taking a short break?,बीस मिनट,Less than 30 minutes,Less than 30 minutes,quantity (hi),True,False
+208,Hindi (Devanagari),quantity,1,How long do you usually work continuously before taking a short break?,मुझे लगता है आधा घंटा से कम,Less than 30 minutes,Less than 30 minutes,quantity (hi),True,False
+209,Hindi (Devanagari),quantity,1,How long do you usually work continuously before taking a short break?,मुझे लगता है एक घंटा,1 hour,1 hour,exact (hi),True,False
+210,Hindi (Devanagari),quantity,1,How long do you usually work continuously before taking a short break?,मुझे लगता है एक से दो घंटे,1-2 hours,1-2 hours,quantity (hi),True,False
+211,Hindi (Devanagari),quantity,1,How long do you usually work continuously before taking a short break?,मुझे लगता है डेढ़ घंटा,1-2 hours,1-2 hours,quantity (hi),True,False
+212,Hindi (Devanagari),quantity,1,How long do you usually work continuously before taking a short break?,मुझे लगता है तीन घंटे,More than 2 hours,More than 2 hours,quantity (hi),True,False
+213,Hindi (Devanagari),quantity,1,How long do you usually work continuously before taking a short break?,मुझे लगता है दो घंटे से ज़्यादा,More than 2 hours,More than 2 hours,quantity (hi),True,False
+214,Hindi (Devanagari),quantity,1,How long do you usually work continuously before taking a short break?,मुझे लगता है बीस मिनट,Less than 30 minutes,Less than 30 minutes,quantity (hi),True,False
+215,Hindi (Devanagari),quantity,1,How long do you usually work continuously before taking a short break?,मुझे लगता है हर एक घंटे में,1 hour,1 hour,exact (hi),True,False
+216,Hindi (Devanagari),quantity,1,How long do you usually work continuously before taking a short break?,हर एक घंटे में,1 hour,1 hour,exact (hi),True,False
+217,Hindi (Devanagari),quantity,21,How many hours per day do you spend in front of a screen across all devices combined?,आठ घंटे से ज़्यादा,More than 8 hours,More than 8 hours,quantity (hi),True,False
+218,Hindi (Devanagari),quantity,21,How many hours per day do you spend in front of a screen across all devices combined?,चार घंटे से कम,Less than 4 hours,Less than 4 hours,quantity (hi),True,False
+219,Hindi (Devanagari),quantity,21,How many hours per day do you spend in front of a screen across all devices combined?,तीन घंटे,Less than 4 hours,Less than 4 hours,quantity (hi),True,False
+220,Hindi (Devanagari),quantity,21,How many hours per day do you spend in front of a screen across all devices combined?,दस घंटे,More than 8 hours,More than 8 hours,quantity (hi),True,False
+221,Hindi (Devanagari),quantity,21,How many hours per day do you spend in front of a screen across all devices combined?,पाँच घंटे,4-6 hours,4-6 hours,quantity (hi),True,False
+222,Hindi (Devanagari),quantity,21,How many hours per day do you spend in front of a screen across all devices combined?,मुझे लगता है आठ घंटे से ज़्यादा,More than 8 hours,More than 8 hours,quantity (hi),True,False
+223,Hindi (Devanagari),quantity,21,How many hours per day do you spend in front of a screen across all devices combined?,मुझे लगता है चार घंटे से कम,Less than 4 hours,Less than 4 hours,quantity (hi),True,False
+224,Hindi (Devanagari),quantity,21,How many hours per day do you spend in front of a screen across all devices combined?,मुझे लगता है तीन घंटे,Less than 4 hours,Less than 4 hours,quantity (hi),True,False
+225,Hindi (Devanagari),quantity,21,How many hours per day do you spend in front of a screen across all devices combined?,मुझे लगता है दस घंटे,More than 8 hours,More than 8 hours,quantity (hi),True,False
+226,Hindi (Devanagari),quantity,21,How many hours per day do you spend in front of a screen across all devices combined?,मुझे लगता है पाँच घंटे,4-6 hours,4-6 hours,quantity (hi),True,False
+227,Hindi (Devanagari),quantity,21,How many hours per day do you spend in front of a screen across all devices combined?,मुझे लगता है सात घंटे,6-8 hours,6-8 hours,quantity (hi),True,False
+228,Hindi (Devanagari),quantity,21,How many hours per day do you spend in front of a screen across all devices combined?,सात घंटे,6-8 hours,6-8 hours,quantity (hi),True,False
+229,Hindi (Devanagari),quantity,27,How much water do you typically consume throughout your working hours?,आधा लीटर,Less than 1 litre,Less than 1 litre,quantity (hi),True,False
+230,Hindi (Devanagari),quantity,27,How much water do you typically consume throughout your working hours?,एक लीटर से कम,Less than 1 litre,Less than 1 litre,quantity (hi),True,False
+231,Hindi (Devanagari),quantity,27,How much water do you typically consume throughout your working hours?,डेढ़ लीटर,1-2 litres,1-2 litres,quantity (hi),True,False
+232,Hindi (Devanagari),quantity,27,How much water do you typically consume throughout your working hours?,तीन लीटर,More than 2 litres,More than 2 litres,quantity (hi),True,False
+233,Hindi (Devanagari),quantity,27,How much water do you typically consume throughout your working hours?,दो लीटर से ज़्यादा,More than 2 litres,More than 2 litres,quantity (hi),True,False
+234,Hindi (Devanagari),quantity,27,How much water do you typically consume throughout your working hours?,मुझे लगता है आधा लीटर,Less than 1 litre,Less than 1 litre,quantity (hi),True,False
+235,Hindi (Devanagari),quantity,27,How much water do you typically consume throughout your working hours?,मुझे लगता है एक लीटर से कम,Less than 1 litre,Less than 1 litre,quantity (hi),True,False
+236,Hindi (Devanagari),quantity,27,How much water do you typically consume throughout your working hours?,मुझे लगता है डेढ़ लीटर,1-2 litres,1-2 litres,quantity (hi),True,False
+237,Hindi (Devanagari),quantity,27,How much water do you typically consume throughout your working hours?,मुझे लगता है तीन लीटर,More than 2 litres,More than 2 litres,quantity (hi),True,False
+238,Hindi (Devanagari),quantity,27,How much water do you typically consume throughout your working hours?,मुझे लगता है दो लीटर से ज़्यादा,More than 2 litres,More than 2 litres,quantity (hi),True,False
+239,Hindi (Devanagari),frequency,13,How often do you work in poor lighting conditions?,कभी कभी,Occasionally,Occasionally,frequency (hi),True,False
+240,Hindi (Devanagari),yes/no,34,Do you experience pain or tightness when lifting your arms above shoulder height?,मुझे लगता है जी हाँ,Yes,Yes,exact (hi),True,False
+241,Hindi (Devanagari),frequency,32,How often does turning your head side to side feel restricted or painful?,सच कहूँ तो हर दिन,Always,Always,frequency (hi),True,False
+242,Hindi (Devanagari),frequency,19,How often do you adjust your sitting position during work?,मुझे लगता है कभी कभी,Sometimes,Sometimes,exact (hi),True,False
+243,Hindi (Devanagari),frequency,32,How often does turning your head side to side feel restricted or painful?,मुझे लगता है हमेशा,Always,Always,exact (hi),True,False
+244,Hindi (Devanagari),frequency,7,How often do work deadlines affect your posture or comfort?,कभी नहीं,Never,Never,exact (hi),True,False
+245,Hindi (Devanagari),0-5 scale,37,How would you rate any aching or stiffness in your wrist when gripping a pen or mouse?,एक,1,1,exact (hi),True,False
+246,Hindi (Devanagari),intensity,11,How much physical discomfort do you feel by the end of the week?,बहुत,Severe,Severe,intensity (hi),True,False
+247,Hindi (Devanagari),frequency,30,How often do you experience difficulty falling or staying asleep due to work-related thoughts?,सच कहूँ तो बहुत कम,Rarely,Rarely,exact (hi),True,False
+248,Hindi (Devanagari),frequency,18,How often do you notice headaches after screen-heavy work?,कभी-कभार,Sometimes,Sometimes,frequency (hi),True,False
+249,Hindi (Devanagari),frequency,7,How often do work deadlines affect your posture or comfort?,अक्सर होता है,Often,Often,exact (hi),True,False
+250,Hindi (Devanagari),yes/no,40,Do you experience a general sense of physical exhaustion or body ache by the end of your workday that is not linked to any single region?,सच कहूँ तो पता नहीं,Maybe,Maybe,yes_no (hi),True,False
+251,Hindi (Devanagari),yes/no,36,Do you experience radiating pain or numbness from your lower back down into your legs at the end of the day?,मुझे लगता है हाँ,Yes,Yes,exact (hi),True,False
+252,Hindi (Devanagari),frequency,18,How often do you notice headaches after screen-heavy work?,हमेशा,Always,Always,exact (hi),True,False
+253,Hindi (Devanagari),intensity,29,How physically draining do you find your daily commute?,सच कहूँ तो बहुत ज़्यादा,"Severely fatiguing, it impacts my workday","Severely fatiguing, it impacts my workday",intensity (hi),True,False
+254,Hindi (Devanagari),frequency,18,How often do you notice headaches after screen-heavy work?,मुझे लगता है अक्सर,Often,Often,exact (hi),True,False
+255,Hindi (Devanagari),frequency,19,How often do you adjust your sitting position during work?,कभी-कभार होता है,Sometimes,Sometimes,frequency (hi),True,False
+256,Hindi (Devanagari),intensity,6,Do you feel exhausted in a typical workday?,मुझे लगता है बहुत ज़्यादा,Extremely exhausting,Extremely exhausting,intensity (hi),True,False
+257,Hindi (Devanagari),frequency,14,How often do you feel your shoulders become tense while working?,अक्सर होता है,Often,Often,exact (hi),True,False
+258,Hindi (Devanagari),frequency,13,How often do you work in poor lighting conditions?,रोज़,Always,Always,frequency (hi),True,False
+259,Hindi (Devanagari),intensity,6,Do you feel exhausted in a typical workday?,बहुत ज़्यादा होता है,Extremely exhausting,Extremely exhausting,intensity (hi),True,False
+260,Hindi (Devanagari),frequency,4,How often do long work sessions leave you feeling stiff?,हर दिन,Every Day,Every Day,exact (hi),True,False
+261,Hindi (Devanagari),yes/no,40,Do you experience a general sense of physical exhaustion or body ache by the end of your workday that is not linked to any single region?,नहीं,No,No,exact (hi),True,False
+262,Hindi (Devanagari),yes/no,36,Do you experience radiating pain or numbness from your lower back down into your legs at the end of the day?,"हाँ, होता है",Yes,Yes,exact (hi),True,False
+263,Hindi (Devanagari),intensity,29,How physically draining do you find your daily commute?,काफ़ी होता है,Moderately exhausting,Moderately exhausting,intensity (hi),True,False
+264,Hindi (Devanagari),yes/no,34,Do you experience pain or tightness when lifting your arms above shoulder height?,जी हाँ,Yes,Yes,exact (hi),True,False
+265,Hindi (Devanagari),frequency,7,How often do work deadlines affect your posture or comfort?,सच कहूँ तो कभी नहीं,Never,Never,exact (hi),True,False
+266,Hindi (Devanagari),frequency,15,How frequently do you switch between sitting and standing while working?,मुझे लगता है कभी कभी,Sometimes,Sometimes,exact (hi),True,False
+267,Hindi (Devanagari),frequency,14,How often do you feel your shoulders become tense while working?,कभी नहीं,Never,Never,exact (hi),True,False
+268,Hindi (Devanagari),intensity,2,"At the end of a workday, how tired do your eyes usually feel?",सच कहूँ तो बहुत ज़्यादा,Very tired,Very tired,intensity (hi),True,False
+269,Hindi (Devanagari),yes/no,36,Do you experience radiating pain or numbness from your lower back down into your legs at the end of the day?,हाँ होता है,Yes,Yes,exact (hi),True,False
+270,Hindi (Devanagari),yes/no,34,Do you experience pain or tightness when lifting your arms above shoulder height?,सच कहूँ तो पता नहीं,Maybe,Maybe,yes_no (hi),True,False
+271,Hindi (Devanagari),frequency,16,How often do you continue working even when you feel discomfort?,मुझे लगता है कभी कभी,Sometimes,Sometimes,exact (hi),True,False
+272,Hindi (Devanagari),frequency,15,How frequently do you switch between sitting and standing while working?,मुझे लगता है कभी-कभार,Sometimes,Sometimes,frequency (hi),True,False
+273,Hindi (Devanagari),frequency,13,How often do you work in poor lighting conditions?,बार-बार होता है,Frequently,Frequently,frequency (hi),True,False
+274,Hindi (Devanagari),yes/no,36,Do you experience radiating pain or numbness from your lower back down into your legs at the end of the day?,नहीं,No,No,exact (hi),True,False
+275,Hindi (Devanagari),frequency,16,How often do you continue working even when you feel discomfort?,सच कहूँ तो कभी-कभार,Sometimes,Sometimes,frequency (hi),True,False
+276,Hindi (romanised),quantity,1,How long do you usually work continuously before taking a short break?,aadhe ghante se kam,Less than 30 minutes,Less than 30 minutes,quantity (romanised),True,False
+277,Hindi (romanised),quantity,1,How long do you usually work continuously before taking a short break?,bees minute,Less than 30 minutes,Less than 30 minutes,quantity (romanised),True,False
+278,Hindi (romanised),quantity,1,How long do you usually work continuously before taking a short break?,dedh ghanta,1-2 hours,1-2 hours,quantity (romanised),True,False
+279,Hindi (romanised),quantity,1,How long do you usually work continuously before taking a short break?,do ghante se zyada,More than 2 hours,More than 2 hours,quantity (romanised),True,False
+280,Hindi (romanised),quantity,1,How long do you usually work continuously before taking a short break?,ek ghanta,1 hour,1 hour,exact (romanised),True,False
+281,Hindi (romanised),quantity,1,How long do you usually work continuously before taking a short break?,ek se do ghante,1-2 hours,1-2 hours,quantity (romanised),True,False
+282,Hindi (romanised),quantity,1,How long do you usually work continuously before taking a short break?,har ek ghante mein,1 hour,1 hour,contains (romanised),True,False
+283,Hindi (romanised),quantity,1,How long do you usually work continuously before taking a short break?,mujhe lagta hai aadhe ghante se kam,Less than 30 minutes,Less than 30 minutes,quantity (romanised),True,False
+284,Hindi (romanised),quantity,1,How long do you usually work continuously before taking a short break?,mujhe lagta hai bees minute,Less than 30 minutes,,none,False,True
+285,Hindi (romanised),quantity,1,How long do you usually work continuously before taking a short break?,mujhe lagta hai dedh ghanta,1-2 hours,1-2 hours,quantity (romanised),True,False
+286,Hindi (romanised),quantity,1,How long do you usually work continuously before taking a short break?,mujhe lagta hai do ghante se zyada,More than 2 hours,More than 2 hours,quantity (romanised),True,False
+287,Hindi (romanised),quantity,1,How long do you usually work continuously before taking a short break?,mujhe lagta hai ek ghanta,1 hour,1 hour,contains (romanised),True,False
+288,Hindi (romanised),quantity,1,How long do you usually work continuously before taking a short break?,mujhe lagta hai ek se do ghante,1-2 hours,1-2 hours,quantity (romanised),True,False
+289,Hindi (romanised),quantity,1,How long do you usually work continuously before taking a short break?,mujhe lagta hai har ek ghante mein,1 hour,1 hour,contains (romanised),True,False
+290,Hindi (romanised),quantity,1,How long do you usually work continuously before taking a short break?,mujhe lagta hai teen ghante,More than 2 hours,More than 2 hours,quantity (romanised),True,False
+291,Hindi (romanised),quantity,1,How long do you usually work continuously before taking a short break?,teen ghante,More than 2 hours,More than 2 hours,quantity (romanised),True,False
+292,Hindi (romanised),quantity,3,How many hours do you work on a laptop without an external keyboard or mouse?,das ghante,>8,>8,quantity (romanised),True,False
+293,Hindi (romanised),quantity,3,How many hours do you work on a laptop without an external keyboard or mouse?,do ghante,1-2,1-2,quantity (romanised),True,False
+294,Hindi (romanised),quantity,3,How many hours do you work on a laptop without an external keyboard or mouse?,mujhe lagta hai das ghante,>8,>8,quantity (romanised),True,False
+295,Hindi (romanised),quantity,3,How many hours do you work on a laptop without an external keyboard or mouse?,mujhe lagta hai do ghante,1-2,1-2,quantity (romanised),True,False
+296,Hindi (romanised),quantity,3,How many hours do you work on a laptop without an external keyboard or mouse?,mujhe lagta hai saat ghante,6-7,6-7,quantity (romanised),True,False
+297,Hindi (romanised),quantity,3,How many hours do you work on a laptop without an external keyboard or mouse?,mujhe lagta hai teen chaar ghante,3-4,3-4,quantity (romanised),True,False
+298,Hindi (romanised),quantity,3,How many hours do you work on a laptop without an external keyboard or mouse?,saat ghante,6-7,6-7,quantity (romanised),True,False
+299,Hindi (romanised),quantity,3,How many hours do you work on a laptop without an external keyboard or mouse?,teen chaar ghante,3-4,3-4,quantity (romanised),True,False
+300,Hindi (romanised),quantity,21,How many hours per day do you spend in front of a screen across all devices combined?,aath ghante se zyada,More than 8 hours,More than 8 hours,quantity (romanised),True,False
+301,Hindi (romanised),quantity,21,How many hours per day do you spend in front of a screen across all devices combined?,chaar ghante se kam,Less than 4 hours,Less than 4 hours,quantity (romanised),True,False
+302,Hindi (romanised),quantity,21,How many hours per day do you spend in front of a screen across all devices combined?,das ghante,More than 8 hours,More than 8 hours,quantity (romanised),True,False
+303,Hindi (romanised),quantity,21,How many hours per day do you spend in front of a screen across all devices combined?,mujhe lagta hai aath ghante se zyada,More than 8 hours,More than 8 hours,quantity (romanised),True,False
+304,Hindi (romanised),quantity,21,How many hours per day do you spend in front of a screen across all devices combined?,mujhe lagta hai chaar ghante se kam,Less than 4 hours,Less than 4 hours,quantity (romanised),True,False
+305,Hindi (romanised),quantity,21,How many hours per day do you spend in front of a screen across all devices combined?,mujhe lagta hai das ghante,More than 8 hours,More than 8 hours,quantity (romanised),True,False
+306,Hindi (romanised),quantity,21,How many hours per day do you spend in front of a screen across all devices combined?,mujhe lagta hai paanch ghante,4-6 hours,4-6 hours,quantity (romanised),True,False
+307,Hindi (romanised),quantity,21,How many hours per day do you spend in front of a screen across all devices combined?,mujhe lagta hai saat ghante,6-8 hours,6-8 hours,quantity (romanised),True,False
+308,Hindi (romanised),quantity,21,How many hours per day do you spend in front of a screen across all devices combined?,mujhe lagta hai teen ghante,Less than 4 hours,Less than 4 hours,quantity (romanised),True,False
+309,Hindi (romanised),quantity,21,How many hours per day do you spend in front of a screen across all devices combined?,paanch ghante,4-6 hours,4-6 hours,quantity (romanised),True,False
+310,Hindi (romanised),quantity,21,How many hours per day do you spend in front of a screen across all devices combined?,saat ghante,6-8 hours,6-8 hours,quantity (romanised),True,False
+311,Hindi (romanised),quantity,21,How many hours per day do you spend in front of a screen across all devices combined?,teen ghante,Less than 4 hours,Less than 4 hours,quantity (romanised),True,False
+312,Hindi (romanised),quantity,27,How much water do you typically consume throughout your working hours?,aadha litre,Less than 1 litre,Less than 1 litre,quantity (romanised),True,False
+313,Hindi (romanised),quantity,27,How much water do you typically consume throughout your working hours?,dedh litre,1-2 litres,1-2 litres,quantity (romanised),True,False
+314,Hindi (romanised),quantity,27,How much water do you typically consume throughout your working hours?,do litre se zyada,More than 2 litres,More than 2 litres,quantity (romanised),True,False
+315,Hindi (romanised),quantity,27,How much water do you typically consume throughout your working hours?,ek litre se kam,Less than 1 litre,Less than 1 litre,quantity (romanised),True,False
+316,Hindi (romanised),quantity,27,How much water do you typically consume throughout your working hours?,mujhe lagta hai aadha litre,Less than 1 litre,Less than 1 litre,quantity (romanised),True,False
+317,Hindi (romanised),quantity,27,How much water do you typically consume throughout your working hours?,mujhe lagta hai dedh litre,1-2 litres,1-2 litres,quantity (romanised),True,False
+318,Hindi (romanised),quantity,27,How much water do you typically consume throughout your working hours?,mujhe lagta hai do litre se zyada,More than 2 litres,More than 2 litres,quantity (romanised),True,False
+319,Hindi (romanised),quantity,27,How much water do you typically consume throughout your working hours?,mujhe lagta hai ek litre se kam,Less than 1 litre,Less than 1 litre,quantity (romanised),True,False
+320,Hindi (romanised),quantity,27,How much water do you typically consume throughout your working hours?,mujhe lagta hai teen litre,More than 2 litres,More than 2 litres,quantity (romanised),True,False
+321,Hindi (romanised),quantity,27,How much water do you typically consume throughout your working hours?,teen litre,More than 2 litres,More than 2 litres,quantity (romanised),True,False
+322,Hindi (romanised),quantity,28,How much time do you spend commuting to and from work each day in total?,bees minute,Under 30 minutes,Under 30 minutes,quantity (romanised),True,False
+323,Hindi (romanised),quantity,28,How much time do you spend commuting to and from work each day in total?,dedh ghanta,1-2 hours,1-2 hours,quantity (romanised),True,False
+324,Hindi (romanised),quantity,28,How much time do you spend commuting to and from work each day in total?,mujhe lagta hai bees minute,Under 30 minutes,,none,False,True
+325,Hindi (romanised),quantity,28,How much time do you spend commuting to and from work each day in total?,mujhe lagta hai dedh ghanta,1-2 hours,1-2 hours,quantity (romanised),True,False
+326,Hindi (romanised),quantity,28,How much time do you spend commuting to and from work each day in total?,mujhe lagta hai paune ghanta,30-60 minutes,30-60 minutes,quantity (romanised),True,False
+327,Hindi (romanised),quantity,28,How much time do you spend commuting to and from work each day in total?,mujhe lagta hai teen ghante,Over 2 hours,Over 2 hours,quantity (romanised),True,False
+328,Hindi (romanised),quantity,28,How much time do you spend commuting to and from work each day in total?,paune ghanta,30-60 minutes,30-60 minutes,quantity (romanised),True,False
+329,Hindi (romanised),quantity,28,How much time do you spend commuting to and from work each day in total?,teen ghante,Over 2 hours,Over 2 hours,quantity (romanised),True,False
+330,Hindi (romanised),frequency,12,How often do you feel wrist or finger strain while typing?,sach kahun to hamesha,Very often,Very often,frequency (romanised),True,False
+331,Hindi (romanised),yes/no,34,Do you experience pain or tightness when lifting your arms above shoulder height?,sach kahun to haan hota hai,Yes,Yes,yes_no (romanised),True,False
+332,Hindi (romanised),frequency,12,How often do you feel wrist or finger strain while typing?,shayad hi kabhi hota hai,Rarely,Rarely,contains (romanised),True,False
+333,Hindi (romanised),yes/no,36,Do you experience radiating pain or numbness from your lower back down into your legs at the end of the day?,mujhe lagta hai shayad,Maybe,Maybe,yes_no (romanised),True,False
+334,Hindi (romanised),yes/no,36,Do you experience radiating pain or numbness from your lower back down into your legs at the end of the day?,bilkul nahi,No,No,yes_no (romanised),True,False
+335,Hindi (romanised),yes/no,38,Do you experience a dull ache along your forearm or elbow after extended writing or clicking?,ji haan hota hai,Yes,Yes,yes_no (romanised),True,False
+336,Hindi (romanised),intensity,2,"At the end of a workday, how tired do your eyes usually feel?",bahut hota hai,Very tired,Very tired,intensity (romanised),True,False
+337,Hindi (romanised),yes/no,38,Do you experience a dull ache along your forearm or elbow after extended writing or clicking?,nahi hota hai,No,No,yes_no (romanised),True,False
+338,Hindi (romanised),frequency,30,How often do you experience difficulty falling or staying asleep due to work-related thoughts?,kabhi kabhar,Sometimes,Sometimes,frequency (romanised),True,False
+339,Hindi (romanised),frequency,7,How often do work deadlines affect your posture or comfort?,baar baar hota hai,Often,Often,contains (romanised),True,False
+340,Hindi (romanised),frequency,4,How often do long work sessions leave you feeling stiff?,kabhi kabhi hota hai,Once in a while,Once in a while,frequency (romanised),True,False
+341,Hindi (romanised),frequency,12,How often do you feel wrist or finger strain while typing?,sach kahun to kabhi bhi nahi,Never,Never,contains (romanised),True,False
+342,Hindi (romanised),frequency,4,How often do long work sessions leave you feeling stiff?,sach kahun to kabhi kabhar,Once in a while,Once in a while,frequency (romanised),True,False
+343,Hindi (romanised),frequency,16,How often do you continue working even when you feel discomfort?,sach kahun to kabhi kabhi,Sometimes,Sometimes,contains (romanised),True,False
+344,Hindi (romanised),yes/no,36,Do you experience radiating pain or numbness from your lower back down into your legs at the end of the day?,sach kahun to pata nahi,Maybe,Maybe,yes_no (romanised),True,False
+345,Hindi (romanised),yes/no,38,Do you experience a dull ache along your forearm or elbow after extended writing or clicking?,mujhe lagta hai ji haan,Yes,Yes,yes_no (romanised),True,False
+346,Hindi (romanised),intensity,11,How much physical discomfort do you feel by the end of the week?,mujhe lagta hai thoda,Mild,Mild,intensity (romanised),True,False
+347,Hindi (romanised),frequency,4,How often do long work sessions leave you feeling stiff?,hamesha hota hai,Every Day,Every Day,frequency (romanised),True,False
+348,Hindi (romanised),intensity,11,How much physical discomfort do you feel by the end of the week?,bilkul nahi hota hai,None,None,intensity (romanised),True,False
+349,Hindi (romanised),frequency,18,How often do you notice headaches after screen-heavy work?,hamesha hota hai,Always,Always,contains (romanised),True,False
+350,Hindi (romanised),yes/no,38,Do you experience a dull ache along your forearm or elbow after extended writing or clicking?,bilkul nahi,No,No,yes_no (romanised),True,False
+351,Kannada (script),quantity,1,How long do you usually work continuously before taking a short break?,ಅರ್ಧ ಗಂಟೆಗಿಂತ ಕಡಿಮೆ,Less than 30 minutes,Less than 30 minutes,quantity (kn),True,False
+352,Kannada (script),quantity,1,How long do you usually work continuously before taking a short break?,ಅರ್ಧ ಗಂಟೆಗಿಂತ ಕಡಿಮೆ ಅನ್ನಿಸುತ್ತೆ,Less than 30 minutes,Less than 30 minutes,quantity (kn),True,False
+353,Kannada (script),quantity,1,How long do you usually work continuously before taking a short break?,ಇಪ್ಪತ್ತು ನಿಮಿಷ,Less than 30 minutes,Less than 30 minutes,quantity (kn),True,False
+354,Kannada (script),quantity,1,How long do you usually work continuously before taking a short break?,ಇಪ್ಪತ್ತು ನಿಮಿಷ ಅನ್ನಿಸುತ್ತೆ,Less than 30 minutes,Less than 30 minutes,quantity (kn),True,False
+355,Kannada (script),quantity,1,How long do you usually work continuously before taking a short break?,ಎರಡು ಗಂಟೆಗಿಂತ ಹೆಚ್ಚು,More than 2 hours,More than 2 hours,quantity (kn),True,False
+356,Kannada (script),quantity,1,How long do you usually work continuously before taking a short break?,ಎರಡು ಗಂಟೆಗಿಂತ ಹೆಚ್ಚು ಅನ್ನಿಸುತ್ತೆ,More than 2 hours,More than 2 hours,quantity (kn),True,False
+357,Kannada (script),quantity,1,How long do you usually work continuously before taking a short break?,ಒಂದರಿಂದ ಎರಡು ಗಂಟೆ,1-2 hours,1-2 hours,quantity (kn),True,False
+358,Kannada (script),quantity,1,How long do you usually work continuously before taking a short break?,ಒಂದರಿಂದ ಎರಡು ಗಂಟೆ ಅನ್ನಿಸುತ್ತೆ,1-2 hours,1-2 hours,quantity (kn),True,False
+359,Kannada (script),quantity,1,How long do you usually work continuously before taking a short break?,ಒಂದು ಗಂಟೆ,1 hour,1 hour,quantity (kn),True,False
+360,Kannada (script),quantity,1,How long do you usually work continuously before taking a short break?,ಒಂದು ಗಂಟೆ ಅನ್ನಿಸುತ್ತೆ,1 hour,1 hour,quantity (kn),True,False
+361,Kannada (script),quantity,1,How long do you usually work continuously before taking a short break?,ಒಂದೂವರೆ ಗಂಟೆ,1-2 hours,1-2 hours,quantity (kn),True,False
+362,Kannada (script),quantity,1,How long do you usually work continuously before taking a short break?,ಒಂದೂವರೆ ಗಂಟೆ ಅನ್ನಿಸುತ್ತೆ,1-2 hours,1-2 hours,quantity (kn),True,False
+363,Kannada (script),quantity,1,How long do you usually work continuously before taking a short break?,ಪ್ರತಿ ಗಂಟೆಗೆ,1 hour,1 hour,exact (kn),True,False
+364,Kannada (script),quantity,1,How long do you usually work continuously before taking a short break?,ಪ್ರತಿ ಗಂಟೆಗೆ ಅನ್ನಿಸುತ್ತೆ,1 hour,1 hour,exact (kn),True,False
+365,Kannada (script),quantity,1,How long do you usually work continuously before taking a short break?,ಮೂರು ಗಂಟೆ,More than 2 hours,More than 2 hours,quantity (kn),True,False
+366,Kannada (script),quantity,1,How long do you usually work continuously before taking a short break?,ಮೂರು ಗಂಟೆ ಅನ್ನಿಸುತ್ತೆ,More than 2 hours,More than 2 hours,quantity (kn),True,False
+367,Kannada (script),quantity,21,How many hours per day do you spend in front of a screen across all devices combined?,ಎಂಟು ಗಂಟೆಗಿಂತ ಹೆಚ್ಚು,More than 8 hours,More than 8 hours,quantity (kn),True,False
+368,Kannada (script),quantity,21,How many hours per day do you spend in front of a screen across all devices combined?,ಎಂಟು ಗಂಟೆಗಿಂತ ಹೆಚ್ಚು ಅನ್ನಿಸುತ್ತೆ,More than 8 hours,More than 8 hours,quantity (kn),True,False
+369,Kannada (script),quantity,21,How many hours per day do you spend in front of a screen across all devices combined?,ಏಳು ಗಂಟೆ,6-8 hours,6-8 hours,quantity (kn),True,False
+370,Kannada (script),quantity,21,How many hours per day do you spend in front of a screen across all devices combined?,ಏಳು ಗಂಟೆ ಅನ್ನಿಸುತ್ತೆ,6-8 hours,6-8 hours,quantity (kn),True,False
+371,Kannada (script),quantity,21,How many hours per day do you spend in front of a screen across all devices combined?,ಐದು ಗಂಟೆ,4-6 hours,4-6 hours,quantity (kn),True,False
+372,Kannada (script),quantity,21,How many hours per day do you spend in front of a screen across all devices combined?,ಐದು ಗಂಟೆ ಅನ್ನಿಸುತ್ತೆ,4-6 hours,4-6 hours,quantity (kn),True,False
+373,Kannada (script),quantity,21,How many hours per day do you spend in front of a screen across all devices combined?,ನಾಲ್ಕು ಗಂಟೆಗಿಂತ ಕಡಿಮೆ,Less than 4 hours,Less than 4 hours,quantity (kn),True,False
+374,Kannada (script),quantity,21,How many hours per day do you spend in front of a screen across all devices combined?,ನಾಲ್ಕು ಗಂಟೆಗಿಂತ ಕಡಿಮೆ ಅನ್ನಿಸುತ್ತೆ,Less than 4 hours,Less than 4 hours,quantity (kn),True,False
+375,Kannada (script),quantity,21,How many hours per day do you spend in front of a screen across all devices combined?,ಮೂರು ಗಂಟೆ,Less than 4 hours,Less than 4 hours,quantity (kn),True,False
+376,Kannada (script),quantity,21,How many hours per day do you spend in front of a screen across all devices combined?,ಮೂರು ಗಂಟೆ ಅನ್ನಿಸುತ್ತೆ,Less than 4 hours,Less than 4 hours,quantity (kn),True,False
+377,Kannada (script),quantity,21,How many hours per day do you spend in front of a screen across all devices combined?,ಹತ್ತು ಗಂಟೆ,More than 8 hours,More than 8 hours,quantity (kn),True,False
+378,Kannada (script),quantity,21,How many hours per day do you spend in front of a screen across all devices combined?,ಹತ್ತು ಗಂಟೆ ಅನ್ನಿಸುತ್ತೆ,More than 8 hours,More than 8 hours,quantity (kn),True,False
+379,Kannada (script),quantity,27,How much water do you typically consume throughout your working hours?,ಅರ್ಧ ಲೀಟರ್,Less than 1 litre,Less than 1 litre,quantity (kn),True,False
+380,Kannada (script),quantity,27,How much water do you typically consume throughout your working hours?,ಅರ್ಧ ಲೀಟರ್ ಅನ್ನಿಸುತ್ತೆ,Less than 1 litre,Less than 1 litre,quantity (kn),True,False
+381,Kannada (script),quantity,27,How much water do you typically consume throughout your working hours?,ಒಂದೂವರೆ ಲೀಟರ್,1-2 litres,1-2 litres,quantity (kn),True,False
+382,Kannada (script),quantity,27,How much water do you typically consume throughout your working hours?,ಒಂದೂವರೆ ಲೀಟರ್ ಅನ್ನಿಸುತ್ತೆ,1-2 litres,1-2 litres,quantity (kn),True,False
+383,Kannada (script),quantity,27,How much water do you typically consume throughout your working hours?,ಮೂರು ಲೀಟರ್,More than 2 litres,More than 2 litres,quantity (kn),True,False
+384,Kannada (script),quantity,27,How much water do you typically consume throughout your working hours?,ಮೂರು ಲೀಟರ್ ಅನ್ನಿಸುತ್ತೆ,More than 2 litres,More than 2 litres,quantity (kn),True,False
+385,Kannada (script),yes/no,34,Do you experience pain or tightness when lifting your arms above shoulder height?,ಹೌದು ಅನ್ನಿಸುತ್ತೆ,Yes,Yes,exact (kn),True,False
+386,Kannada (script),frequency,7,How often do work deadlines affect your posture or comfort?,ನನಗೆ ಪ್ರತಿದಿನ,Always,Always,frequency (kn),True,False
+387,Kannada (script),yes/no,36,Do you experience radiating pain or numbness from your lower back down into your legs at the end of the day?,ಹೌದು,Yes,Yes,exact (kn),True,False
+388,Kannada (script),yes/no,38,Do you experience a dull ache along your forearm or elbow after extended writing or clicking?,"ಹೌದು, ಆಗುತ್ತೆ",Yes,Yes,exact (kn),True,False
+389,Kannada (script),frequency,12,How often do you feel wrist or finger strain while typing?,ನನಗೆ ಆಗಾಗ್ಗೆ,Often,Often,exact (kn),True,False
+390,Kannada (script),yes/no,36,Do you experience radiating pain or numbness from your lower back down into your legs at the end of the day?,ಬಹುಶಃ,Maybe,Maybe,exact (kn),True,False
+391,Kannada (script),frequency,4,How often do long work sessions leave you feeling stiff?,ನನಗೆ ಕೆಲವೊಮ್ಮೆ,Once in a while,Once in a while,frequency (kn),True,False
+392,Kannada (script),0-5 scale,39,"How would you rate the dryness, burning, or blurring of vision after extended screen time?",4,4,4,exact,True,False
+393,Kannada (script),frequency,20,How often do you push through physical discomfort just to keep working?,ಹೆಚ್ಚಾಗಿ,Often,Often,exact (kn),True,False
+394,Kannada (script),frequency,32,How often does turning your head side to side feel restricted or painful?,ಹೆಚ್ಚಾಗಿ,Often,Often,exact (kn),True,False
+395,Kannada (script),frequency,16,How often do you continue working even when you feel discomfort?,ಯಾವಾಗಲೂ,Always,Always,exact (kn),True,False
+396,Kannada (script),yes/no,38,Do you experience a dull ache along your forearm or elbow after extended writing or clicking?,ಇಲ್ಲ ಅನ್ನಿಸುತ್ತೆ,No,No,exact (kn),True,False
+397,Kannada (script),frequency,12,How often do you feel wrist or finger strain while typing?,ನನಗೆ ಹೆಚ್ಚಾಗಿ,Often,Often,exact (kn),True,False
+398,Kannada (script),0-5 scale,39,"How would you rate the dryness, burning, or blurring of vision after extended screen time?",0,0,0,exact,True,False
+399,Kannada (script),yes/no,40,Do you experience a general sense of physical exhaustion or body ache by the end of your workday that is not linked to any single region?,ನನಗೆ ಇಲ್ಲ,No,No,exact (kn),True,False
+400,Kannada (script),frequency,32,How often does turning your head side to side feel restricted or painful?,ಎಂದಿಗೂ ಇಲ್ಲ ಅನ್ನಿಸುತ್ತೆ,Never,Never,exact (kn),True,False
+401,Kannada (script),frequency,32,How often does turning your head side to side feel restricted or painful?,ಕೆಲವೊಮ್ಮೆ ಅನ್ನಿಸುತ್ತೆ,Sometimes,Sometimes,exact (kn),True,False
+402,Kannada (script),frequency,15,How frequently do you switch between sitting and standing while working?,ನನಗೆ ಪ್ರತಿದಿನ,Very frequently,Very frequently,frequency (kn),True,False
+403,Kannada (script),frequency,30,How often do you experience difficulty falling or staying asleep due to work-related thoughts?,ನನಗೆ ಕೆಲವೊಮ್ಮೆ,Sometimes,Sometimes,exact (kn),True,False
+404,Kannada (script),frequency,4,How often do long work sessions leave you feeling stiff?,ನನಗೆ ಆಗಾಗ್ಗೆ,Often,Often,exact (kn),True,False
+405,Kannada (script),frequency,18,How often do you notice headaches after screen-heavy work?,ಹೆಚ್ಚಾಗಿ ಅನ್ನಿಸುತ್ತೆ,Often,Often,exact (kn),True,False
+406,Kannada (script),0-5 scale,31,How would you rate any stiffness or aching in your neck after long screen sessions?,ಐದು ಅಂಕ,5,5,exact (kn),True,False
+407,Kannada (script),yes/no,40,Do you experience a general sense of physical exhaustion or body ache by the end of your workday that is not linked to any single region?,ನನಗೆ ಇಲ್ಲವೇ ಇಲ್ಲ,No,No,yes_no (kn),True,False
+408,Kannada (script),frequency,13,How often do you work in poor lighting conditions?,ನನಗೆ ಒಮ್ಮೊಮ್ಮೆ,Occasionally,Occasionally,exact (kn),True,False
+409,Kannada (script),frequency,30,How often do you experience difficulty falling or staying asleep due to work-related thoughts?,ಎಂದಿಗೂ ಇಲ್ಲ ಅನ್ನಿಸುತ್ತೆ,Never,Never,exact (kn),True,False
+410,Kannada (script),0-5 scale,33,How would you rate the heaviness or burning sensation across your upper back or shoulder blades?,ಮೂರು ಅಂಕ,3,3,exact (kn),True,False
+411,Kannada (script),frequency,30,How often do you experience difficulty falling or staying asleep due to work-related thoughts?,ನನಗೆ ಹೆಚ್ಚಾಗಿ,Often,Often,exact (kn),True,False
+412,Kannada (script),frequency,20,How often do you push through physical discomfort just to keep working?,ಯಾವಾಗಲೂ ಅನ್ನಿಸುತ್ತೆ,Always,Always,exact (kn),True,False
+413,Kannada (script),frequency,20,How often do you push through physical discomfort just to keep working?,ನನಗೆ ಕೆಲವೊಮ್ಮೆ,Sometimes,Sometimes,exact (kn),True,False
+414,Kannada (script),intensity,11,How much physical discomfort do you feel by the end of the week?,ತುಂಬಾ ಅನ್ನಿಸುತ್ತೆ,Severe,Severe,intensity (kn),True,False
+415,Kannada (script),frequency,13,How often do you work in poor lighting conditions?,ನನಗೆ ಎಂದಿಗೂ ಇಲ್ಲ,Never,Never,exact (kn),True,False
+416,Kannada (script),frequency,13,How often do you work in poor lighting conditions?,ಹೆಚ್ಚಾಗಿ,Frequently,Frequently,frequency (kn),True,False
+417,Kannada (script),frequency,13,How often do you work in poor lighting conditions?,ನನಗೆ ಪ್ರತಿದಿನ,Always,Always,frequency (kn),True,False
+418,Kannada (script),frequency,19,How often do you adjust your sitting position during work?,ಆಗಾಗ್ಗೆ ಅನ್ನಿಸುತ್ತೆ,Often,Often,exact (kn),True,False
+419,Kannada (script),intensity,11,How much physical discomfort do you feel by the end of the week?,ಸಾಕಷ್ಟು ಅನ್ನಿಸುತ್ತೆ,Moderate,Moderate,intensity (kn),True,False
+420,Kannada (script),0-5 scale,31,How would you rate any stiffness or aching in your neck after long screen sessions?,3,3,3,exact,True,False
+421,Kannada (script),frequency,32,How often does turning your head side to side feel restricted or painful?,ಆಗಾಗ್ಗೆ,Often,Often,exact (kn),True,False
+422,Kannada (script),0-5 scale,39,"How would you rate the dryness, burning, or blurring of vision after extended screen time?",ಸೊನ್ನೆ,0,0,exact (kn),True,False
+423,Kannada (script),frequency,20,How often do you push through physical discomfort just to keep working?,ಕೆಲವೊಮ್ಮೆ,Sometimes,Sometimes,exact (kn),True,False
+424,Kannada (script),intensity,29,How physically draining do you find your daily commute?,ನನಗೆ ಸಾಕಷ್ಟು,Moderately exhausting,Moderately exhausting,intensity (kn),True,False
+425,Kannada (script),frequency,15,How frequently do you switch between sitting and standing while working?,ನನಗೆ ಒಮ್ಮೊಮ್ಮೆ,Sometimes,Sometimes,frequency (kn),True,False
+426,Kannada (romanised),quantity,1,How long do you usually work continuously before taking a short break?,ardha gantegintha kadime,Less than 30 minutes,Less than 30 minutes,quantity (romanised),True,False
+427,Kannada (romanised),quantity,1,How long do you usually work continuously before taking a short break?,ardha gantegintha kadime annisutte,Less than 30 minutes,Less than 30 minutes,quantity (romanised),True,False
+428,Kannada (romanised),quantity,1,How long do you usually work continuously before taking a short break?,eradu gantegintha hechchu,More than 2 hours,More than 2 hours,quantity (romanised),True,False
+429,Kannada (romanised),quantity,1,How long do you usually work continuously before taking a short break?,eradu gantegintha hechchu annisutte,More than 2 hours,More than 2 hours,quantity (romanised),True,False
+430,Kannada (romanised),quantity,1,How long do you usually work continuously before taking a short break?,ippattu nimisha,Less than 30 minutes,Less than 30 minutes,quantity (romanised),True,False
+431,Kannada (romanised),quantity,1,How long do you usually work continuously before taking a short break?,ippattu nimisha annisutte,Less than 30 minutes,Less than 30 minutes,quantity (romanised),True,False
+432,Kannada (romanised),quantity,1,How long do you usually work continuously before taking a short break?,mooru gante,More than 2 hours,More than 2 hours,quantity (romanised),True,False
+433,Kannada (romanised),quantity,1,How long do you usually work continuously before taking a short break?,mooru gante annisutte,More than 2 hours,More than 2 hours,quantity (romanised),True,False
+434,Kannada (romanised),quantity,1,How long do you usually work continuously before taking a short break?,ondarinda eradu gante,1-2 hours,1-2 hours,quantity (romanised),True,False
+435,Kannada (romanised),quantity,1,How long do you usually work continuously before taking a short break?,ondarinda eradu gante annisutte,1-2 hours,1-2 hours,quantity (romanised),True,False
+436,Kannada (romanised),quantity,1,How long do you usually work continuously before taking a short break?,ondoovare gante,1-2 hours,1-2 hours,quantity (romanised),True,False
+437,Kannada (romanised),quantity,1,How long do you usually work continuously before taking a short break?,ondoovare gante annisutte,1-2 hours,1-2 hours,quantity (romanised),True,False
+438,Kannada (romanised),quantity,1,How long do you usually work continuously before taking a short break?,ondu gante,1 hour,1 hour,quantity (romanised),True,False
+439,Kannada (romanised),quantity,1,How long do you usually work continuously before taking a short break?,ondu gante annisutte,1 hour,1 hour,quantity (romanised),True,False
+440,Kannada (romanised),quantity,1,How long do you usually work continuously before taking a short break?,prati gantege,1 hour,1 hour,exact (romanised),True,False
+441,Kannada (romanised),quantity,1,How long do you usually work continuously before taking a short break?,prati gantege annisutte,1 hour,1 hour,contains (romanised),True,False
+442,Kannada (romanised),quantity,3,How many hours do you work on a laptop without an external keyboard or mouse?,elu gante,6-7,6-7,quantity (romanised),True,False
+443,Kannada (romanised),quantity,3,How many hours do you work on a laptop without an external keyboard or mouse?,elu gante annisutte,6-7,6-7,quantity (romanised),True,False
+444,Kannada (romanised),quantity,3,How many hours do you work on a laptop without an external keyboard or mouse?,eradu gante,1-2,1-2,quantity (romanised),True,False
+445,Kannada (romanised),quantity,3,How many hours do you work on a laptop without an external keyboard or mouse?,eradu gante annisutte,1-2,1-2,quantity (romanised),True,False
+446,Kannada (romanised),quantity,3,How many hours do you work on a laptop without an external keyboard or mouse?,hattu gante,>8,>8,quantity (romanised),True,False
+447,Kannada (romanised),quantity,3,How many hours do you work on a laptop without an external keyboard or mouse?,hattu gante annisutte,>8,>8,quantity (romanised),True,False
+448,Kannada (romanised),quantity,3,How many hours do you work on a laptop without an external keyboard or mouse?,mooru naalku gante,3-4,3-4,quantity (romanised),True,False
+449,Kannada (romanised),quantity,3,How many hours do you work on a laptop without an external keyboard or mouse?,mooru naalku gante annisutte,3-4,3-4,quantity (romanised),True,False
+450,Kannada (romanised),quantity,21,How many hours per day do you spend in front of a screen across all devices combined?,aidu gante,4-6 hours,4-6 hours,quantity (romanised),True,False
+451,Kannada (romanised),quantity,21,How many hours per day do you spend in front of a screen across all devices combined?,aidu gante annisutte,4-6 hours,4-6 hours,quantity (romanised),True,False
+452,Kannada (romanised),quantity,21,How many hours per day do you spend in front of a screen across all devices combined?,elu gante,6-8 hours,6-8 hours,quantity (romanised),True,False
+453,Kannada (romanised),quantity,21,How many hours per day do you spend in front of a screen across all devices combined?,elu gante annisutte,6-8 hours,6-8 hours,quantity (romanised),True,False
+454,Kannada (romanised),quantity,21,How many hours per day do you spend in front of a screen across all devices combined?,entu gantegintha hechchu,More than 8 hours,More than 8 hours,quantity (romanised),True,False
+455,Kannada (romanised),quantity,21,How many hours per day do you spend in front of a screen across all devices combined?,entu gantegintha hechchu annisutte,More than 8 hours,More than 8 hours,quantity (romanised),True,False
+456,Kannada (romanised),quantity,21,How many hours per day do you spend in front of a screen across all devices combined?,hattu gante,More than 8 hours,More than 8 hours,quantity (romanised),True,False
+457,Kannada (romanised),quantity,21,How many hours per day do you spend in front of a screen across all devices combined?,hattu gante annisutte,More than 8 hours,More than 8 hours,quantity (romanised),True,False
+458,Kannada (romanised),quantity,21,How many hours per day do you spend in front of a screen across all devices combined?,mooru gante,Less than 4 hours,Less than 4 hours,quantity (romanised),True,False
+459,Kannada (romanised),quantity,21,How many hours per day do you spend in front of a screen across all devices combined?,mooru gante annisutte,Less than 4 hours,Less than 4 hours,quantity (romanised),True,False
+460,Kannada (romanised),quantity,21,How many hours per day do you spend in front of a screen across all devices combined?,naalku gantegintha kadime,Less than 4 hours,Less than 4 hours,quantity (romanised),True,False
+461,Kannada (romanised),quantity,21,How many hours per day do you spend in front of a screen across all devices combined?,naalku gantegintha kadime annisutte,Less than 4 hours,Less than 4 hours,quantity (romanised),True,False
+462,Kannada (romanised),quantity,27,How much water do you typically consume throughout your working hours?,ardha litre,Less than 1 litre,Less than 1 litre,quantity (romanised),True,False
+463,Kannada (romanised),quantity,27,How much water do you typically consume throughout your working hours?,ardha litre annisutte,Less than 1 litre,Less than 1 litre,quantity (romanised),True,False
+464,Kannada (romanised),quantity,27,How much water do you typically consume throughout your working hours?,mooru litre,More than 2 litres,More than 2 litres,quantity (romanised),True,False
+465,Kannada (romanised),quantity,27,How much water do you typically consume throughout your working hours?,mooru litre annisutte,More than 2 litres,More than 2 litres,quantity (romanised),True,False
+466,Kannada (romanised),quantity,27,How much water do you typically consume throughout your working hours?,ondoovare litre,1-2 litres,1-2 litres,quantity (romanised),True,False
+467,Kannada (romanised),quantity,27,How much water do you typically consume throughout your working hours?,ondoovare litre annisutte,1-2 litres,1-2 litres,quantity (romanised),True,False
+468,Kannada (romanised),quantity,28,How much time do you spend commuting to and from work each day in total?,mooru gante,Over 2 hours,Over 2 hours,quantity (romanised),True,False
+469,Kannada (romanised),quantity,28,How much time do you spend commuting to and from work each day in total?,mooru gante annisutte,Over 2 hours,Over 2 hours,quantity (romanised),True,False
+470,Kannada (romanised),intensity,6,Do you feel exhausted in a typical workday?,nanage swalpa,Mildly exhausting,Mildly exhausting,intensity (romanised),True,False
+471,Kannada (romanised),intensity,11,How much physical discomfort do you feel by the end of the week?,nanage illave illa,None,None,intensity (romanised),True,False
+472,Kannada (romanised),frequency,18,How often do you notice headaches after screen-heavy work?,endu illa annisutte,Never,Never,contains (romanised),True,False
+473,Kannada (romanised),frequency,15,How frequently do you switch between sitting and standing while working?,nanage pratidina,Very frequently,Very frequently,frequency (romanised),True,False
+474,Kannada (romanised),frequency,20,How often do you push through physical discomfort just to keep working?,nanage pratidina,Always,Always,frequency (romanised),True,False
+475,Kannada (romanised),frequency,15,How frequently do you switch between sitting and standing while working?,aparupa,Rarely,Rarely,exact (romanised),True,False
+476,Kannada (romanised),0-5 scale,31,How would you rate any stiffness or aching in your neck after long screen sessions?,mooru,3,3,exact (romanised),True,False
+477,Kannada (romanised),frequency,32,How often does turning your head side to side feel restricted or painful?,aparupa,Rarely,Rarely,exact (romanised),True,False
+478,Kannada (romanised),frequency,7,How often do work deadlines affect your posture or comfort?,kelavomme annisutte,Sometimes,Sometimes,contains (romanised),True,False
+479,Kannada (romanised),frequency,32,How often does turning your head side to side feel restricted or painful?,pratidina annisutte,Always,Always,frequency (romanised),True,False
+480,Kannada (romanised),frequency,12,How often do you feel wrist or finger strain while typing?,endu illa annisutte,Never,Never,contains (romanised),True,False
+481,Kannada (romanised),frequency,13,How often do you work in poor lighting conditions?,nanage kelavomme,Occasionally,Occasionally,frequency (romanised),True,False
+482,Kannada (romanised),intensity,6,Do you feel exhausted in a typical workday?,bahala annisutte,Extremely exhausting,Extremely exhausting,intensity (romanised),True,False
+483,Kannada (romanised),intensity,6,Do you feel exhausted in a typical workday?,nanage madhyama,Quite exhausting,Quite exhausting,intensity (romanised),True,False
+484,Kannada (romanised),frequency,12,How often do you feel wrist or finger strain while typing?,pratidina,Very often,Very often,frequency (romanised),True,False
+485,Kannada (romanised),frequency,16,How often do you continue working even when you feel discomfort?,kelavomme annisutte,Sometimes,Sometimes,contains (romanised),True,False
+486,Kannada (romanised),0-5 scale,35,Rate the lower back pain you experience after sitting continuously for more than an hour.,aidu,5,5,exact (romanised),True,False
+487,Kannada (romanised),frequency,19,How often do you adjust your sitting position during work?,nanage endigu illa,Never,Never,contains (romanised),True,False
+488,Kannada (romanised),intensity,6,Do you feel exhausted in a typical workday?,nanage illave illa,Not exhausting,Not exhausting,intensity (romanised),True,False
+489,Kannada (romanised),yes/no,36,Do you experience radiating pain or numbness from your lower back down into your legs at the end of the day?,nanage gottilla,Maybe,Maybe,yes_no (romanised),True,False
+490,Kannada (romanised),intensity,29,How physically draining do you find your daily commute?,nanage madhyama,Moderately exhausting,Moderately exhausting,intensity (romanised),True,False
+491,Kannada (romanised),frequency,20,How often do you push through physical discomfort just to keep working?,endu illa annisutte,Never,Never,contains (romanised),True,False
+492,Kannada (romanised),frequency,30,How often do you experience difficulty falling or staying asleep due to work-related thoughts?,endu illa,Never,Never,exact (romanised),True,False
+493,Kannada (romanised),0-5 scale,33,How would you rate the heaviness or burning sensation across your upper back or shoulder blades?,sonne anka,0,0,number (romanised),True,False
+494,Kannada (romanised),0-5 scale,31,How would you rate any stiffness or aching in your neck after long screen sessions?,eradu,2,2,exact (romanised),True,False
+495,Kannada (romanised),frequency,32,How often does turning your head side to side feel restricted or painful?,nanage yavaglu,Always,Always,contains (romanised),True,False
+496,Kannada (romanised),frequency,15,How frequently do you switch between sitting and standing while working?,yavaglu,Very frequently,Very frequently,frequency (romanised),True,False
+497,Kannada (romanised),intensity,2,"At the end of a workday, how tired do your eyes usually feel?",illave illa,Not tired,Not tired,intensity (romanised),True,False
+498,Kannada (romanised),intensity,2,"At the end of a workday, how tired do your eyes usually feel?",nanage swalpa,Slightly tired,Slightly tired,intensity (romanised),True,False
+499,Kannada (romanised),yes/no,34,Do you experience pain or tightness when lifting your arms above shoulder height?,illave illa annisutte,No,No,yes_no (romanised),True,False
+500,Kannada (romanised),yes/no,34,Do you experience pain or tightness when lifting your arms above shoulder height?,bahusha annisutte,Maybe,Maybe,yes_no (romanised),True,False

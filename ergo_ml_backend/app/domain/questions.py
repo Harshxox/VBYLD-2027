@@ -1,7 +1,22 @@
 """
-All 40 ErgoCare questions ported from src/data/questions.ts.
-Each entry includes id, text, options, category, optional reverse flag,
-and an optional riskMap for non-linear answer scoring.
+All 40 ErgoCare questions. Single source of truth for the question bank.
+
+OPTION ORDERING CONTRACT — please read before editing
+------------------------------------------------------
+Every question lists its options from HEALTHIEST to UNHEALTHIEST (ascending risk).
+`option_risk()` scores a positional answer as `index / (n - 1) * 100`, so if you
+add or reorder options you MUST keep the healthiest option first.
+
+    ["Never", "Rarely", "Sometimes", "Often"]        -> risk 0, 33, 67, 100   OK
+    ["Often", "Sometimes", "Rarely", "Never"]        -> risk 100, 67, 33, 0  WRONG
+
+Questions whose options are NOT ordered that way carry an explicit `risk_map`
+(keyed by the exact option text), which bypasses the positional rule entirely.
+`scripts/verify_scoring.py` asserts this contract, so a mistake fails the tests
+instead of silently inverting a participant's report.
+
+Each entry includes id, text, options, category, and an optional risk_map for
+non-linear answer scoring.
 """
 from typing import Optional, Dict, List
 
@@ -45,7 +60,6 @@ QUESTIONS: List[Dict] = [
         "text": "How often do you stretch during work hours?",
         "options": ["Multiple times a day", "Once a day", "A few times a week", "Never"],
         "category": "movement",
-        "reverse": True,
     },
     {
         "id": 6,
@@ -64,7 +78,6 @@ QUESTIONS: List[Dict] = [
         "text": "How supportive is your chair for long hours of work?",
         "options": ["Very supportive", "Somewhat supportive", "Slightly supportive", "Not supportive at all"],
         "category": "posture",
-        "reverse": True,
     },
     {
         "id": 9,
@@ -107,7 +120,6 @@ QUESTIONS: List[Dict] = [
         "text": "How frequently do you switch between sitting and standing while working?",
         "options": ["Very frequently", "Sometimes", "Rarely", "Never"],
         "category": "movement",
-        "reverse": True,
     },
     {
         "id": 16,
@@ -118,9 +130,11 @@ QUESTIONS: List[Dict] = [
     {
         "id": 17,
         "text": "How well does your body recover after a long day of work?",
+        # Reads naturally worst-first, so the positional rule would score "Not at
+        # all" as 0 risk. risk_map states the intent explicitly.
         "options": ["Not at all", "Slightly", "Mostly", "Completely"],
+        "risk_map": {"Not at all": 100, "Slightly": 67, "Mostly": 33, "Completely": 0},
         "category": "recovery",
-        "reverse": True,
     },
     {
         "id": 18,
@@ -131,9 +145,11 @@ QUESTIONS: List[Dict] = [
     {
         "id": 19,
         "text": "How often do you adjust your sitting position during work?",
+        # Frequent micro-adjustment prevents posture fixation, so "Often" is the
+        # healthy end - the reverse of the option order.
         "options": ["Never", "Rarely", "Sometimes", "Often"],
+        "risk_map": {"Never": 100, "Rarely": 67, "Sometimes": 33, "Often": 0},
         "category": "posture",
-        "reverse": True,
     },
     {
         "id": 20,
@@ -162,9 +178,11 @@ QUESTIONS: List[Dict] = [
     {
         "id": 24,
         "text": "How often do you consciously correct your posture while working?",
+        # Correcting only once pain appears is already too late, so "Frequently
+        # throughout the day" is the healthy end.
         "options": ["Never think about it", "Only when I feel pain", "Occasionally", "Frequently throughout the day"],
+        "risk_map": {"Never think about it": 100, "Only when I feel pain": 67, "Occasionally": 33, "Frequently throughout the day": 0},
         "category": "posture",
-        "reverse": True,
     },
     {
         "id": 25,
@@ -192,9 +210,10 @@ QUESTIONS: List[Dict] = [
     {
         "id": 27,
         "text": "How much water do you typically consume throughout your working hours?",
+        # More water is healthier, so the healthiest option is last.
         "options": ["Less than 1 litre", "1-2 litres", "More than 2 litres"],
+        "risk_map": {"Less than 1 litre": 100, "1-2 litres": 50, "More than 2 litres": 0},
         "category": "recovery",
-        "reverse": True,
     },
     {
         "id": 28,
@@ -223,9 +242,10 @@ QUESTIONS: List[Dict] = [
     {
         "id": 32,
         "text": "How often does turning your head side to side feel restricted or painful?",
+        # "Never" is healthy, so the option list runs worst-first.
         "options": ["Always", "Often", "Sometimes", "Rarely", "Never"],
+        "risk_map": {"Always": 100, "Often": 75, "Sometimes": 50, "Rarely": 25, "Never": 0},
         "category": "pain",
-        "reverse": True,
     },
     {
         "id": 33,

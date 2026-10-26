@@ -31,7 +31,7 @@ import threading
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional
 
-from app.domain.indic_lexicon import gloss, normalize_label
+from app.domain.indic_lexicon import gloss, gloss_romanized, normalize_label
 
 log = logging.getLogger("ergocare.matcher")
 
@@ -44,17 +44,23 @@ NUMBER_WORDS = {"zero": "0", "one": "1", "two": "2", "three": "3", "four": "4", 
                 "six": "6", "seven": "7", "eight": "8", "nine": "9", "ten": "10", "eleven": "11",
                 "twelve": "12", "fifteen": "15", "twenty": "20", "thirty": "30", "forty": "40",
                 "forty-five": "45", "fifty": "50", "sixty": "60", "ninety": "90"}
-PHRASES = [("half an hour", "30 minutes"), ("half hour", "30 minutes"), ("an hour", "1 hour"),
+PHRASES = [("half an hour", "30 minutes"), ("half hour", "30 minutes"),
+           ("half a litre", "0.5 litres"), ("half a liter", "0.5 litres"),
+           ("every hour", "1 hour"), ("hourly", "1 hour"), ("an hour", "1 hour"),
            ("a hour", "1 hour"), ("a litre", "1 litre"), ("a liter", "1 litre"), ("couple of", "2"),
            ("a couple", "2"), ("way below", "far below"), ("lower than", "below"),
-           ("below my eyes", "below eye level"), ("below my eye level", "below eye level")]
+           ("below my eyes", "below eye level"), ("below my eye level", "below eye level"),
+           ("not sure", "uncertain"), ("unsure", "uncertain")]
+# "an hour and a half" / "1 and a half litres" / "2 hours and a half" -> 1.5 hours / 1.5 litres / 2.5 hours
+_AND_A_HALF = [(re.compile(r"\b(\d+) and a half (hours?|litres?|liters?)\b"), r"\1.5 \2"),
+               (re.compile(r"\b(\d+) (hours?|litres?|liters?) and a half\b"), r"\1.5 \2")]
 
 # Units for quantity answers ("about ten hours", "every twenty minutes")
 TIME_UNITS = {"minute": 1, "minutes": 1, "min": 1, "mins": 1, "hour": 60, "hours": 60, "hr": 60, "hrs": 60}
 VOLUME_UNITS = {"litre": 1, "litres": 1, "liter": 1, "liters": 1}
 
 # Checked in this order (maybe before no before yes: "not sure" is Maybe, not No)
-YN_MAYBE = ["not sure", "maybe", "sometimes", "occasionally", "kind of", "sort of", "a little", "a bit",
+YN_MAYBE = ["not sure", "uncertain", "maybe", "sometimes","occasionally", "kind of", "sort of", "a little", "a bit",
             "slightly", "somewhat", "depends", "at times", "now and then", "not always", "mild", "once in a while"]
 YN_NO = ["not really", "not at all", "never", "nope", "nah", "no", "don't", "do not", "doesn't", "dont",
          "not", "none", "nothing"]
@@ -67,10 +73,10 @@ FREQUENCY = [
          "very often", "very frequently", "each day", "multiple times a day", "several times a day",
          "many times a day", "every evening", "every night", "every morning"]),
     (3, ["often", "frequently", "usually", "regularly", "most days", "a lot", "most of the time", "many times",
-         "once a day", "once daily"]),
+         "once a day", "once daily", "once every day", "once each day"]),
     (2, ["sometimes", "occasionally", "once in a while", "now and then", "at times", "some days", "a few times"]),
     (1, ["rarely", "seldom", "hardly", "barely", "almost never", "not often", "not much"]),
-    (0, ["never", "not at all", "not once", "no never", "don't", "do not", "not really"]),
+    (0, ["never", "not at all", "not once", "not even once", "no never", "don't", "do not", "not really"]),
 ]
 # Intensity words -> level 0 (not) .. 3 (very); "not" is checked first
 INTENSITY = [
@@ -80,7 +86,7 @@ INTENSITY = [
     (2, ["quite", "moderately", "moderate", "fairly", "pretty", "rather", "mostly"]),
     (1, ["slightly", "mildly", "mild", "a bit", "a little", "somewhat", "little", "kind of", "sort of", "bit"]),
 ]
-NEGATORS = ("not ", "never ", "isn't ", "isnt ", "aren't ", "no ", "hardly ")
+NEGATORS = ("not ", "never ", "isn't ", "isnt ", "aren't ", "no ", "hardly ", "almost ")
 
 
 @dataclass
@@ -106,6 +112,8 @@ def normalize(text: str) -> str:
     t = re.sub(r"\s+", " ", t).strip()
     for a, b in PHRASES:
         t = re.sub(rf"(?<![a-z0-9']){re.escape(a)}(?![a-z0-9'])", b, t)
+    for pattern, repl in _AND_A_HALF:
+        t = pattern.sub(repl, t)
     return t
 
 
@@ -114,7 +122,12 @@ def _has(text: str, phrase: str) -> bool:
 
 
 def _level(text: str, table) -> Optional[int]:
-    for level, phrases in table:
+    if table is FREQUENCY:
+        # Longest phrase wins: "once every day" is once a day, not "every day";
+        # "not often" is rarely, not "often"; "very often" beats "often".
+        hits = [(len(p), level) for level, phrases in table for p in phrases if _has(text, p)]
+        return max(hits)[1] if hits else None
+    for level, phrases in table:          # INTENSITY: negation ("not") is checked first
         if any(_has(text, p) for p in phrases):
             return level
     return None
@@ -268,12 +281,20 @@ def _match_indic(question: dict, text: str, lang: str, labels: Optional[List[str
 
 # ── Matcher ───────────────────────────────────────────────────────────────────
 def match_answer(question: dict, text: Optional[str], use_semantic: bool = True,
-                 lang: Optional[str] = None, labels: Optional[List[str]] = None) -> Match:
+                 lang: Optional[str] = None, labels: Optional[List[str]] = None,
+                 romanized: bool = True) -> Match:
     if not text or not text.strip():
         return Match(None, "none", 0.0)
-    lang = detect_lang(text) if lang in (None, "", "auto") or detect_lang(text) != "en" else lang
-    if lang in ("hi", "kn"):
-        return _match_indic(question, text, lang, labels)
+    script = detect_lang(text)
+    if script in ("hi", "kn"):
+        return _match_indic(question, text, script, labels)
+    # Latin script: may still be Hindi/Kannada ("ek ghanta") - try its English keywords first
+    if romanized:
+        english = gloss_romanized(text)
+        if english:
+            m = match_answer(question, english, use_semantic=False, romanized=False)
+            if m.option:
+                return Match(m.option, f"{m.method} (romanised)", round(m.confidence * 0.95, 3))
     options: List[str] = question["options"]
     t = normalize(text)
     norm_opts = {normalize(o): o for o in options}

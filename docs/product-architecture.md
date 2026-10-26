@@ -1,5 +1,7 @@
 # Product Architecture Notes
 
+> **Superseded.** Early planning notes from before the build — several items here (XGBoost, SHAP, RAG) were never implemented. The system as built is described in [TECHNICAL_DESIGN.md](TECHNICAL_DESIGN.md).
+
 ## Frontend Responsibilities
 
 - Collect typed or spoken answers.

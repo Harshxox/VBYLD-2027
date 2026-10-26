@@ -56,7 +56,11 @@ def option_risk(question: Dict, answer: str) -> int:
     except ValueError:
         pass
 
-    # Positional index fallback
+    # Positional index fallback.
+    # CONTRACT: options are listed healthiest-first (see app/domain/questions.py),
+    # so index 0 -> risk 0 and the last option -> risk 100.
+    # `reverse` is retained only for the rare worst-first question and must not be
+    # used to "fix" a list that is already healthiest-first - that inverts it.
     idx = next((i for i, o in enumerate(options) if o.lower() == normalized), -1)
     if idx == -1:
         return 50
@@ -96,10 +100,12 @@ def calculate_scores(answers: List[Dict]) -> Tuple[RiskScores, Dict]:
         })
 
     if not enriched:
+        # Still return the (scores, ml) pair the signature promises - callers
+        # unpack two values and would break on a bare RiskScores here.
         return RiskScores(
             posture_risk=0, eye_strain=0, workload_stress=0,
             musculoskeletal_risk=0, recovery_risk=0, overall_risk=0,
-        )
+        ), {}
 
     # Run full ML pipeline
     ml = run_ml_pipeline(enriched, {})
@@ -206,7 +212,7 @@ def _tier(score: float) -> str:
 # Report builder
 # ─────────────────────────────────────────────────────────────────────────────
 
-def build_report(scores: RiskScores, ml: Dict) -> ReportData:
+def build_report(scores: RiskScores, ml: Dict, answers: List[Dict]) -> ReportData:
     """
     Builds the full report including ML outputs:
     - Decision tree tier and clinical action
@@ -218,13 +224,28 @@ def build_report(scores: RiskScores, ml: Dict) -> ReportData:
     from app.domain.ml_engine import (
         fuzzy_classify, detect_anomalies, confidence_score, get_weight
     )
+    
+    # Re-enrich answers for pain signal extraction
+    enriched: List[Dict] = []
+    for answer in answers:
+        q = QUESTIONS_BY_ID.get(answer["question_id"])
+        if not q:
+            continue
+        value = answer.get("typed_answer") or answer.get("transcript") or ""
+        if not value:
+            continue
+        enriched.append({
+            "question_text": q["text"],
+            "category":      q["category"],
+            "risk":          option_risk(q, value),
+        })
 
-    tier           = ml["tier"]
-    clinical_action = ml["clinical_action"]
-    fuzzy          = ml["fuzzy_memberships"]
-    confidence     = ml["confidence"]
-    anomalies      = ml["anomalies"]
-    top5           = ml["feature_importance_top5"]
+    tier           = ml.get("tier", "Low")
+    clinical_action = ml.get("clinical_action", "Not enough answers to build a report.")
+    fuzzy          = ml.get("fuzzy_memberships", {})
+    confidence     = ml.get("confidence", 0.0)
+    anomalies      = ml.get("anomalies", [])
+    top5           = ml.get("feature_importance_top5", [])
     overall_level  = "High" if scores.overall_risk >= 70 else "Moderate" if scores.overall_risk >= 40 else "Low"
 
     # Top risk factors

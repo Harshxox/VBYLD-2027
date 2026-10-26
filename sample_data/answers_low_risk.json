@@ -1,0 +1,245 @@
+{
+  "_note": "Sample answers for POST /api/sessions/{id}/answers (fields question_id, question_text, typed_answer). _risk = server option_risk, for reference.",
+  "answers": [
+    {
+      "question_id": 1,
+      "question_text": "How long do you usually work continuously before taking a short break?",
+      "typed_answer": "Less than 30 minutes",
+      "_risk": 0
+    },
+    {
+      "question_id": 2,
+      "question_text": "At the end of a workday, how tired do your eyes usually feel?",
+      "typed_answer": "Not tired",
+      "_risk": 0
+    },
+    {
+      "question_id": 3,
+      "question_text": "How many hours do you work on a laptop without an external keyboard or mouse?",
+      "typed_answer": "1-2",
+      "_risk": 0
+    },
+    {
+      "question_id": 4,
+      "question_text": "How often do long work sessions leave you feeling stiff?",
+      "typed_answer": "Never",
+      "_risk": 0
+    },
+    {
+      "question_id": 5,
+      "question_text": "How often do you stretch during work hours?",
+      "typed_answer": "Multiple times a day",
+      "_risk": 0
+    },
+    {
+      "question_id": 6,
+      "question_text": "Do you feel exhausted in a typical workday?",
+      "typed_answer": "Not exhausting",
+      "_risk": 0
+    },
+    {
+      "question_id": 7,
+      "question_text": "How often do work deadlines affect your posture or comfort?",
+      "typed_answer": "Never",
+      "_risk": 0
+    },
+    {
+      "question_id": 8,
+      "question_text": "How supportive is your chair for long hours of work?",
+      "typed_answer": "Very supportive",
+      "_risk": 0
+    },
+    {
+      "question_id": 9,
+      "question_text": "Where is your screen usually placed while working?",
+      "typed_answer": "At eye level",
+      "_risk": 0
+    },
+    {
+      "question_id": 10,
+      "question_text": "How often do you use your phone during or between work sessions?",
+      "typed_answer": "Rarely",
+      "_risk": 0
+    },
+    {
+      "question_id": 11,
+      "question_text": "How much physical discomfort do you feel by the end of the week?",
+      "typed_answer": "None",
+      "_risk": 0
+    },
+    {
+      "question_id": 12,
+      "question_text": "How often do you feel wrist or finger strain while typing?",
+      "typed_answer": "Never",
+      "_risk": 0
+    },
+    {
+      "question_id": 13,
+      "question_text": "How often do you work in poor lighting conditions?",
+      "typed_answer": "Never",
+      "_risk": 0
+    },
+    {
+      "question_id": 14,
+      "question_text": "How often do you feel your shoulders become tense while working?",
+      "typed_answer": "Never",
+      "_risk": 0
+    },
+    {
+      "question_id": 15,
+      "question_text": "How frequently do you switch between sitting and standing while working?",
+      "typed_answer": "Very frequently",
+      "_risk": 0
+    },
+    {
+      "question_id": 16,
+      "question_text": "How often do you continue working even when you feel discomfort?",
+      "typed_answer": "Never",
+      "_risk": 0
+    },
+    {
+      "question_id": 17,
+      "question_text": "How well does your body recover after a long day of work?",
+      "typed_answer": "Completely",
+      "_risk": 0
+    },
+    {
+      "question_id": 18,
+      "question_text": "How often do you notice headaches after screen-heavy work?",
+      "typed_answer": "Never",
+      "_risk": 0
+    },
+    {
+      "question_id": 19,
+      "question_text": "How often do you adjust your sitting position during work?",
+      "typed_answer": "Often",
+      "_risk": 0
+    },
+    {
+      "question_id": 20,
+      "question_text": "How often do you push through physical discomfort just to keep working?",
+      "typed_answer": "Never",
+      "_risk": 0
+    },
+    {
+      "question_id": 21,
+      "question_text": "How many hours per day do you spend in front of a screen across all devices combined?",
+      "typed_answer": "Less than 4 hours",
+      "_risk": 0
+    },
+    {
+      "question_id": 22,
+      "question_text": "Do you feel your workload leaves you sufficient time for personal well-being activities?",
+      "typed_answer": "Yes, comfortably",
+      "_risk": 0
+    },
+    {
+      "question_id": 23,
+      "question_text": "How confident are you that your current work habits will support your long-term physical and mental health?",
+      "typed_answer": "Very confident",
+      "_risk": 0
+    },
+    {
+      "question_id": 24,
+      "question_text": "How often do you consciously correct your posture while working?",
+      "typed_answer": "Frequently throughout the day",
+      "_risk": 0
+    },
+    {
+      "question_id": 25,
+      "question_text": "How often do you skip meals or eat at your desk due to workload?",
+      "typed_answer": "Never",
+      "_risk": 0
+    },
+    {
+      "question_id": 26,
+      "question_text": "Which best describes your physical activity pattern on a typical workday?",
+      "typed_answer": "Vigorous daily exercise routine",
+      "_risk": 5
+    },
+    {
+      "question_id": 27,
+      "question_text": "How much water do you typically consume throughout your working hours?",
+      "typed_answer": "More than 2 litres",
+      "_risk": 0
+    },
+    {
+      "question_id": 28,
+      "question_text": "How much time do you spend commuting to and from work each day in total?",
+      "typed_answer": "Under 30 minutes",
+      "_risk": 0
+    },
+    {
+      "question_id": 29,
+      "question_text": "How physically draining do you find your daily commute?",
+      "typed_answer": "Not draining at all",
+      "_risk": 0
+    },
+    {
+      "question_id": 30,
+      "question_text": "How often do you experience difficulty falling or staying asleep due to work-related thoughts?",
+      "typed_answer": "Never",
+      "_risk": 0
+    },
+    {
+      "question_id": 31,
+      "question_text": "How would you rate any stiffness or aching in your neck after long screen sessions?",
+      "typed_answer": "0",
+      "_risk": 0
+    },
+    {
+      "question_id": 32,
+      "question_text": "How often does turning your head side to side feel restricted or painful?",
+      "typed_answer": "Never",
+      "_risk": 0
+    },
+    {
+      "question_id": 33,
+      "question_text": "How would you rate the heaviness or burning sensation across your upper back or shoulder blades?",
+      "typed_answer": "0",
+      "_risk": 0
+    },
+    {
+      "question_id": 34,
+      "question_text": "Do you experience pain or tightness when lifting your arms above shoulder height?",
+      "typed_answer": "No",
+      "_risk": 0
+    },
+    {
+      "question_id": 35,
+      "question_text": "Rate the lower back pain you experience after sitting continuously for more than an hour.",
+      "typed_answer": "0",
+      "_risk": 0
+    },
+    {
+      "question_id": 36,
+      "question_text": "Do you experience radiating pain or numbness from your lower back down into your legs at the end of the day?",
+      "typed_answer": "No",
+      "_risk": 0
+    },
+    {
+      "question_id": 37,
+      "question_text": "How would you rate any aching or stiffness in your wrist when gripping a pen or mouse?",
+      "typed_answer": "0",
+      "_risk": 0
+    },
+    {
+      "question_id": 38,
+      "question_text": "Do you experience a dull ache along your forearm or elbow after extended writing or clicking?",
+      "typed_answer": "No",
+      "_risk": 0
+    },
+    {
+      "question_id": 39,
+      "question_text": "How would you rate the dryness, burning, or blurring of vision after extended screen time?",
+      "typed_answer": "0",
+      "_risk": 0
+    },
+    {
+      "question_id": 40,
+      "question_text": "Do you experience a general sense of physical exhaustion or body ache by the end of your workday that is not linked to any single region?",
+      "typed_answer": "No",
+      "_risk": 0
+    }
+  ]
+}

@@ -6,3 +6,7 @@
 #define WIFI_PASSWORD "your-wifi-password"
 #define BACKEND_URL   "http://192.168.1.20:8000"   // laptop IP running the FastAPI backend
 #define DEVICE_ID     "ERGO-01"
+
+// Must match DEVICE_INGEST_TOKEN in ergo_ml_backend/.env.
+// Generate one with:  python -c "import secrets;print(secrets.token_urlsafe(32))"
+#define DEVICE_TOKEN  ""

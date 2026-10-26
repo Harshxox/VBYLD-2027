@@ -24,12 +24,18 @@ if not exist "%ROOT%node_modules" (
 
 REM /d sets each window's folder - the backend must run inside ergo_ml_backend
 REM because its database, uploads and .env live there.
+REM
+REM --host 0.0.0.0 is required for the ESP32 over Wi-Fi: bound to the default
+REM localhost the firmware cannot reach the backend from another device. It does
+REM expose the API on the LAN, so only use it on a network you trust.
 echo Starting ErgoCare backend...
-start "ErgoCare backend" /d "%ROOT%ergo_ml_backend" cmd /k ""%PY%" -m uvicorn app.main:app --port 8000"
+start "ErgoCare backend" /d "%ROOT%ergo_ml_backend" cmd /k ""%PY%" -m uvicorn app.main:app --host 0.0.0.0 --port 8000"
 
 echo Starting ErgoCare app...
 start "ErgoCare app" /d "%ROOT%" cmd /k "npm run dev -- --port 5173"
 
+REM Both device senders read DEVICE_INGEST_TOKEN from ergo_ml_backend\.env
+REM themselves, so a configured token is forwarded automatically.
 if /i "%~1"=="demo" (
   echo Starting DEMO wearable simulator ^(DEMO-01^)...
   start "ErgoCare DEMO wearable" /d "%ROOT%firmware" cmd /k ""%PY%" demo_simulator.py"

@@ -1,0 +1,101 @@
+﻿test_set,question_id,question_text,spoken_answer,language,expected_option
+development,1,How long do you usually work continuously before taking a short break?,I usually go more than two hours without a break,English,More than 2 hours
+development,1,How long do you usually work continuously before taking a short break?,about an hour or so,English,1 hour
+development,1,How long do you usually work continuously before taking a short break?,honestly I never take breaks until lunch,English,More than 2 hours
+development,1,How long do you usually work continuously before taking a short break?,every twenty minutes or so I get up,English,Less than 30 minutes
+development,1,How long do you usually work continuously before taking a short break?,somewhere between one and two hours,English,1-2 hours
+development,2,"At the end of a workday, how tired do your eyes usually feel?",my eyes are really really tired by evening,English,Very tired
+development,2,"At the end of a workday, how tired do your eyes usually feel?","they feel fine, not tired at all",English,Not tired
+development,2,"At the end of a workday, how tired do your eyes usually feel?",a little bit tired,English,Slightly tired
+development,2,"At the end of a workday, how tired do your eyes usually feel?",moderately I would say,English,Moderately tired
+development,4,How often do long work sessions leave you feeling stiff?,almost every day,English,Every Day
+development,4,How often do long work sessions leave you feeling stiff?,once in a while after long meetings,English,Once in a while
+development,4,How often do long work sessions leave you feeling stiff?,I never feel stiff,English,Never
+development,4,How often do long work sessions leave you feeling stiff?,quite often actually,English,Often
+development,5,How often do you stretch during work hours?,I don't really stretch at all,English,Never
+development,5,How often do you stretch during work hours?,a couple of times every day,English,Multiple times a day
+development,5,How often do you stretch during work hours?,just once in the morning,English,Once a day
+development,6,Do you feel exhausted in a typical workday?,it's extremely exhausting honestly,English,Extremely exhausting
+development,6,Do you feel exhausted in a typical workday?,not really exhausting,English,Not exhausting
+development,6,Do you feel exhausted in a typical workday?,a bit tiring but okay,English,Mildly exhausting
+development,8,How supportive is your chair for long hours of work?,"my chair is terrible, no back support",English,Not supportive at all
+development,8,How supportive is your chair for long hours of work?,it is very comfortable and supportive,English,Very supportive
+development,8,How supportive is your chair for long hours of work?,"it's okay, somewhat supportive",English,Somewhat supportive
+development,9,Where is your screen usually placed while working?,the laptop screen is way below my eyes,English,Far below eye level
+development,9,Where is your screen usually placed while working?,right at eye level on a monitor stand,English,At eye level
+development,9,Where is your screen usually placed while working?,a little lower than my eyes,English,Slightly below eye level
+development,10,How often do you use your phone during or between work sessions?,I check my phone constantly,English,Very frequently
+development,10,How often do you use your phone during or between work sessions?,"hardly ever, I keep it away",English,Rarely
+development,11,How much physical discomfort do you feel by the end of the week?,severe pain by friday,English,Severe
+development,11,How much physical discomfort do you feel by the end of the week?,no discomfort,English,None
+development,11,How much physical discomfort do you feel by the end of the week?,mild discomfort,English,Mild
+development,12,How often do you feel wrist or finger strain while typing?,my wrists hurt very often while typing,English,Very often
+development,12,How often do you feel wrist or finger strain while typing?,never had wrist strain,English,Never
+development,13,How often do you work in poor lighting conditions?,my room is always dim,English,Always
+development,14,How often do you feel your shoulders become tense while working?,my shoulders get tense every single day,English,Everyday
+development,16,How often do you continue working even when you feel discomfort?,"yes I keep working even when it hurts, always",English,Always
+development,17,How well does your body recover after a long day of work?,I recover completely after sleep,English,Completely
+development,17,How well does your body recover after a long day of work?,I don't recover at all,English,Not at all
+development,21,How many hours per day do you spend in front of a screen across all devices combined?,around ten hours a day on screens,English,More than 8 hours
+development,21,How many hours per day do you spend in front of a screen across all devices combined?,maybe three hours,English,Less than 4 hours
+development,27,How much water do you typically consume throughout your working hours?,I drink less than a litre,English,Less than 1 litre
+development,27,How much water do you typically consume throughout your working hours?,more than two litres every day,English,More than 2 litres
+development,30,How often do you experience difficulty falling or staying asleep due to work-related thoughts?,I often lie awake thinking about work,English,Often
+development,31,How would you rate any stiffness or aching in your neck after long screen sessions?,it's about a four,English,4
+development,31,How would you rate any stiffness or aching in your neck after long screen sessions?,"zero, no neck pain",English,0
+development,35,Rate the lower back pain you experience after sitting continuously for more than an hour.,I'd rate my back pain three out of five,English,3
+development,34,Do you experience pain or tightness when lifting your arms above shoulder height?,yes it hurts a lot,English,Yes
+development,34,Do you experience pain or tightness when lifting your arms above shoulder height?,"no, not at all",English,No
+development,36,Do you experience radiating pain or numbness from your lower back down into your legs at the end of the day?,"not sure, sometimes I feel numbness",English,Maybe
+development,38,Do you experience a dull ache along your forearm or elbow after extended writing or clicking?,yeah after long typing sessions,English,Yes
+development,40,Do you experience a general sense of physical exhaustion or body ache by the end of your workday that is not linked to any single region?,"nope, I feel fine",English,No
+held-out,1,How long do you usually work continuously before taking a short break?,I work for like three hours straight,English,More than 2 hours
+held-out,1,How long do you usually work continuously before taking a short break?,I take a short break every half an hour,English,Less than 30 minutes
+held-out,2,"At the end of a workday, how tired do your eyes usually feel?",they're pretty tired by the end of the day,English,Moderately tired
+held-out,2,"At the end of a workday, how tired do your eyes usually feel?","super tired, they burn",English,Very tired
+held-out,3,How many hours do you work on a laptop without an external keyboard or mouse?,around six hours on the laptop without a mouse,English,6-7
+held-out,4,How often do long work sessions leave you feeling stiff?,i feel stiff pretty much daily,English,Every Day
+held-out,6,Do you feel exhausted in a typical workday?,most days it's quite exhausting,English,Quite exhausting
+held-out,7,How often do work deadlines affect your posture or comfort?,deadlines never really bother my posture,English,Never
+held-out,8,How supportive is your chair for long hours of work?,the chair has no lumbar support at all,English,Not supportive at all
+held-out,12,How often do you feel wrist or finger strain while typing?,my fingers ache quite often when I type,English,Often
+held-out,13,How often do you work in poor lighting conditions?,our office lighting is good,English,Never
+held-out,15,How frequently do you switch between sitting and standing while working?,I just sit the whole day,English,Never
+held-out,18,How often do you notice headaches after screen-heavy work?,headaches almost every evening,English,Always
+held-out,21,How many hours per day do you spend in front of a screen across all devices combined?,roughly seven hours including my phone,English,6-8 hours
+held-out,25,How often do you skip meals or eat at your desk due to workload?,I eat at my desk three or four times a week,English,3-4 times a week
+held-out,28,How much time do you spend commuting to and from work each day in total?,about forty five minutes each way,English,30-60 minutes
+held-out,30,How often do you experience difficulty falling or staying asleep due to work-related thoughts?,I sleep fine,English,Never
+held-out,33,How would you rate the heaviness or burning sensation across your upper back or shoulder blades?,I'd give it a two,English,2
+held-out,36,Do you experience radiating pain or numbness from your lower back down into your legs at the end of the day?,no numbness,English,No
+held-out,39,"How would you rate the dryness, burning, or blurring of vision after extended screen time?","my vision gets blurry, maybe a five",English,5
+indic,1,How long do you usually work continuously before taking a short break?,Ek Ghanta.,Hindi (romanised),1 hour
+indic,1,How long do you usually work continuously before taking a short break?,do ghante se zyada,Hindi (romanised),More than 2 hours
+indic,1,How long do you usually work continuously before taking a short break?,aadha ghanta,Hindi (romanised),Less than 30 minutes
+indic,1,How long do you usually work continuously before taking a short break?,dedh ghanta,Hindi (romanised),1-2 hours
+indic,1,How long do you usually work continuously before taking a short break?,एक घंटा,Hindi (Devanagari),1 hour
+indic,1,How long do you usually work continuously before taking a short break?,दो घंटे से ज़्यादा,Hindi (Devanagari),More than 2 hours
+indic,1,How long do you usually work continuously before taking a short break?,ondu gante,Kannada (romanised),1 hour
+indic,1,How long do you usually work continuously before taking a short break?,eradu gantegintha hechchu,Kannada (romanised),More than 2 hours
+indic,1,How long do you usually work continuously before taking a short break?,ಎರಡು ಗಂಟೆಗಿಂತ ಹೆಚ್ಚು,Kannada (Kannada script),More than 2 hours
+indic,2,"At the end of a workday, how tired do your eyes usually feel?",aankhein bahut thak jaati hain,Hindi (romanised),Very tired
+indic,2,"At the end of a workday, how tired do your eyes usually feel?",thodi thak jaati hain,Hindi (romanised),Slightly tired
+indic,2,"At the end of a workday, how tired do your eyes usually feel?",kannu tumba sustagutte,Kannada (romanised),Very tired
+indic,2,"At the end of a workday, how tired do your eyes usually feel?",शाम तक आँखें बहुत थक जाती हैं,Hindi (Devanagari),Very tired
+indic,4,How often do long work sessions leave you feeling stiff?,kabhi kabhi,Hindi (romanised),Once in a while
+indic,4,How often do long work sessions leave you feeling stiff?,roz,Hindi (romanised),Every Day
+indic,4,How often do long work sessions leave you feeling stiff?,kabhi nahi,Hindi (romanised),Never
+indic,4,How often do long work sessions leave you feeling stiff?,kelavomme,Kannada (romanised),Once in a while
+indic,4,How often do long work sessions leave you feeling stiff?,कभी कभी,Hindi (Devanagari),Once in a while
+indic,11,How much physical discomfort do you feel by the end of the week?,halka dard,Hindi (romanised),Mild
+indic,27,How much water do you typically consume throughout your working hours?,do litre se zyada,Hindi (romanised),More than 2 litres
+indic,31,How would you rate any stiffness or aching in your neck after long screen sessions?,teen,Hindi (romanised),3
+indic,31,How would you rate any stiffness or aching in your neck after long screen sessions?,char,Hindi (romanised),4
+indic,31,How would you rate any stiffness or aching in your neck after long screen sessions?,mooru,Kannada (romanised),3
+indic,31,How would you rate any stiffness or aching in your neck after long screen sessions?,ಮೂರು,Kannada (Kannada script),3
+indic,34,Do you experience pain or tightness when lifting your arms above shoulder height?,haan,Hindi (romanised),Yes
+indic,34,Do you experience pain or tightness when lifting your arms above shoulder height?,nahi,Hindi (romanised),No
+indic,34,Do you experience pain or tightness when lifting your arms above shoulder height?,shayad,Hindi (romanised),Maybe
+indic,34,Do you experience pain or tightness when lifting your arms above shoulder height?,houdu,Kannada (romanised),Yes
+indic,34,Do you experience pain or tightness when lifting your arms above shoulder height?,illa,Kannada (romanised),No
+indic,34,Do you experience pain or tightness when lifting your arms above shoulder height?,हाँ,Hindi (Devanagari),Yes

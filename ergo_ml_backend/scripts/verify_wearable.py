@@ -191,22 +191,28 @@ def live_checks(base_url: str, device: str, baseline_s: int, live_s: int) -> Non
     if not check(st == 201, "test session created"):
         return
     sid = sess["id"]
+    # Participant data is only served with the session's own access token.
+    auth = {"X-Session-Token": sess.get("access_token", "")}
+
+    def sapi(method, path, body=None):
+        return api(base_url, method, path, body, headers=auth)
+
     try:
-        st, link = api(base_url, "POST", f"/api/sessions/{sid}/device", {"device_id": device})
+        st, link = sapi("POST", f"/api/sessions/{sid}/device", {"device_id": device})
         check(st == 200 and link["active"], "wearable linked to session")
-        st, _ = api(base_url, "POST", f"/api/sessions/{sid}/device", {"device_id": "bad id!"})
+        st, _ = sapi("POST", f"/api/sessions/{sid}/device", {"device_id": "bad id!"})
         check(st == 422, "invalid device id rejected")
 
-        st, _ = api(base_url, "POST", f"/api/sessions/{sid}/baseline/start")
+        st, _ = sapi("POST", f"/api/sessions/{sid}/baseline/start")
         check(st == 200, "baseline started (posture zeroed on the ESP32)")
         print(f"\n  >>> BASELINE {baseline_s} s: sit upright, fingertip gently on the pulse sensor,")
         print("      other hand holding both GSR electrodes. Relax.\n")
         for left in range(baseline_s, 0, -1):
-            _, d = api(base_url, "GET", f"/api/sessions/{sid}/sensors/latest")
+            _, d = sapi("GET", f"/api/sessions/{sid}/sensors/latest")
             print(f"  {left:>3}s  {fmt_live(d)}")
             time.sleep(1)
 
-        st, base = api(base_url, "POST", f"/api/sessions/{sid}/baseline/finish")
+        st, base = sapi("POST", f"/api/sessions/{sid}/baseline/finish")
         if check(st == 200, "baseline computed", json.dumps(base) if st == 200 else str(base)):
             check(base["pulse_readings"] >= S.BASELINE_MIN_READINGS, "heart rate captured in baseline",
                   f"{base['pulse_readings']} readings, resting {base['bpm']} BPM")
@@ -218,31 +224,31 @@ def live_checks(base_url: str, device: str, baseline_s: int, live_s: int) -> Non
         print("      2) sit up, then hold your breath / do fast mental maths  -> GSR and stress rise\n")
         seen = set()
         for sec in range(live_s):
-            _, d = api(base_url, "GET", f"/api/sessions/{sid}/sensors/latest")
+            _, d = sapi("GET", f"/api/sessions/{sid}/sensors/latest")
             seen.update(w["type"] for w in d.get("warnings", []))
             print(f"  {sec + 1:>3}s  {fmt_live(d)}")
             time.sleep(1)
         check(True, "live panel data received every second", f"warning types seen: {sorted(seen) or 'none'}")
         check("posture" in seen, "posture warning triggered by leaning forward")
 
-        _, hist = api(base_url, "GET", f"/api/sessions/{sid}/sensors/history")
+        _, hist = sapi("GET", f"/api/sessions/{sid}/sensors/history")
         expected = baseline_s + live_s
         check(hist["total_readings"] >= expected * 0.8, "readings stored for the report",
               f"{hist['total_readings']} stored (~{expected} expected)")
 
-        api(base_url, "POST", f"/api/sessions/{sid}/answers",
+        sapi("POST", f"/api/sessions/{sid}/answers",
             {"question_id": 1, "question_text": "verify", "typed_answer": "1 hour"})
-        st, _ = api(base_url, "POST", f"/api/sessions/{sid}/complete")
-        n1 = api(base_url, "GET", f"/api/sessions/{sid}/sensors/history")[1]["total_readings"]
+        st, _ = sapi("POST", f"/api/sessions/{sid}/complete")
+        n1 = sapi("GET", f"/api/sessions/{sid}/sensors/history")[1]["total_readings"]
         time.sleep(3)
-        n2 = api(base_url, "GET", f"/api/sessions/{sid}/sensors/history")[1]["total_readings"]
+        n2 = sapi("GET", f"/api/sessions/{sid}/sensors/history")[1]["total_readings"]
         check(st == 200 and n1 == n2, "recording stops when the session is completed", f"{n1} -> {n2}")
     finally:
         _, login = api(base_url, "POST", "/api/admin/login",
                        {"username": os.getenv("ADMIN_USERNAME", "admin"), "password": os.getenv("ADMIN_PASSWORD", "")})
         token = (login or {}).get("token", "") if isinstance(login, dict) else ""
         st, _ = api(base_url, "DELETE", f"/api/sessions/{sid}", headers={"Authorization": f"Bearer {token}"})
-        gone = api(base_url, "GET", f"/api/sessions/{sid}/sensors/history")[0] == 404
+        gone = sapi("GET", f"/api/sessions/{sid}/sensors/history")[0] == 404
         check(st == 204 and gone, "test session and its sensor data deleted (admin login from .env)")
 
 
