@@ -1,5 +1,7 @@
 # ErgoCare AI
 
+### 🎬 [Watch the video demo](https://drive.google.com/file/d/14X7rOB4qwmAodeaaF95S1YOx9dwb4tKK/view?usp=sharing)
+
 **Posture and stress screening that combines what people *say* with what their *body shows*.**
 
 ErgoCare pairs a 40-question ergonomic assessment (typed or spoken, in **English, हिन्दी or ಕನ್ನಡ**) with a low-cost ESP32 wearable that measures **heart rate, skin response (a stress signal) and posture** while the person answers. Both are combined into one report — the **ErgoCare Index** — that also flags where answers and body disagree, e.g. *"You reported low stress, but your body showed stress responses for 59% of the session."*
