@@ -71,25 +71,24 @@ What the first run found, and the general fixes made (not answer-by-answer patch
 
 ### B. 500 simulated participants — full scoring engine
 
-Each participant gets 40 answers from a hidden "true" risk level (posture and workload drawn separately, so answers and body can disagree, plus answer noise); a 60-s calm baseline with their own resting heart rate (62–88 BPM) and skin response; then 4–8 minutes of wearable readings with a **known** share of time slouching and stressed (0–80% each, in 1–3 blocks). 5% have poor sensor contact for the whole session. All go through the server's own functions: `calculate_scores` → `compute_baseline` → `score_session`.
+Each participant gets 40 answers from a hidden "true" risk level (posture and workload drawn separately, so answers and body can disagree, plus answer noise); a 60-s calm baseline with their own resting heart rate (62–88 BPM) and skin response; then 4–8 minutes of wearable readings with a **known** share of band-wrist turns and stressed periods (0–80% each, in 1–3 blocks). Wrist movement is descriptive only; it is never scored as torso posture or whole-body inactivity. 5% have poor sensor contact for the whole session. All go through the server's own functions: `calculate_scores` → `compute_baseline` → `score_session`.
 
 | Check | Result |
 |---|---|
 | Ran without error | **500 / 500** |
 | All scores within 0–100 | **500 / 500** |
-| ErgoCare Index = 60% questionnaire + 40% body signals, correct Low / Moderate / High band | **500 / 500** |
-| Insights exactly as the documented rules (Hidden stress, Posture blind spot, …) | **500 / 500** |
-| Poor sensor contact never produces a stress result (27 participants) | **27 / 27** |
+| ErgoCare Index = 60% questionnaire + 40% heart-rate / skin-response score, correct Low / Moderate / High band | **500 / 500** |
+| Insights exactly as the documented stress rules; wrist turns never create posture insights | **500 / 500** |
+| Poor sensor contact never produces a stress result or combined index (27 participants) | **27 / 27** |
 | Questionnaire score rises with the true risk level | Spearman ρ = **0.84** |
 
-Did the wearable detect what was simulated? (473 participants with good contact)
+Did the stress score match the simulation? (473 participants with good contact)
 
 | Detection | All cases | Clear cases (> 5 points from the line) | Measured vs simulated |
 |---|---|---|---|
-| Slouching ≥ 30% of the time | accuracy 98.1% · sensitivity 96.6% · specificity 100% | **100%** (n = 404, 0 false alarms, 0 misses) | 1.7 points mean difference |
 | Stressed ≥ 40% of the time | accuracy 97.3% · sensitivity 100% · specificity 95.5% | **100%** (n = 402, 0 false alarms, 0 misses) | 1.9 points mean difference |
 
-All 22 disagreements (9 slouching, 13 stress) are people within **2.2 points** of a threshold: body signals take a few seconds to rise and settle, so 31.5 % slouching measured as 28.6 %, and 38.6 % stressed measured as a stress score of 47.6 (skin response settles slowly after a stressful stretch, which also explains the 95.5 % specificity). Insights produced across the 500: Posture problem confirmed 169 · Stress confirmed 122 · Posture blind spot 99 · Hidden stress 76 · Calm during the test 39.
+All 22 stress disagreements are people close to the stress threshold: body signals take a few seconds to rise and settle, and skin response settles slowly after a stressful stretch. Insights produced across the 500: Stress confirmed 122 · Hidden stress 76 · Calm during the test 39.
 
 **What this proves:** the scoring software is robust and does exactly what its rules say on 500 varied sessions. **What it does not prove:** that the rules match a clinician's judgement, or that real people's signals behave like the simulator's — that needs the planned pilot.
 
@@ -102,10 +101,10 @@ All 22 disagreements (9 slouching, 13 stress) are people within **2.2 points** o
 | TC-03 | Only the band can post readings | Reading without / with wrong `X-Device-Token` | HTTP 401 | security (3) | ✅ |
 | TC-04 | Bad sensor values cannot break reports | Reading with `NaN` / `Infinity` | Rejected (422); read endpoints still return 200 | security (3) | ✅ |
 | TC-05 | Personal baseline | 60 s of calm readings | Resting heart rate and skin response computed | replay (8) | ✅ 75.1 BPM, GSR 450 |
-| TC-06 | Live posture warning | Leaning > 20° for over 10 s | `posture` warning on the live panel | replay (8) | ✅ |
+| TC-06 | Wrist motion is not torso posture | Rotate the band wrist > 20° for over 10 s | Orientation is shown as a descriptive reading; no posture warning or posture score is generated | logic (20) | ✅ |
 | TC-07 | Live stress warning | Skin response +45 %, heart rate +16 BPM for over 15 s | `stress` warning | replay (8) | ✅ |
 | TC-08 | ErgoCare Index formula | Questionnaire 0.1 %, body signals 36.5 % | Index = 0.6 × 0.1 + 0.4 × 36.5 = 14.7 % | replay (8) | ✅ 14.7 |
-| TC-09 | "Posture blind spot" | Low-risk posture answers + leaning 40 % of the time | Insight "Posture blind spot" | replay (8) | ✅ |
+| TC-09 | No posture inference from wrist | Wrist orientation change while answering | No "Posture blind spot" insight is generated from wrist data | logic (20), replay (8) | ✅ |
 | TC-10 | "Hidden stress" | Low-stress answers + body stressed | Insight "Hidden stress" | replay (8) | ✅ |
 | TC-11 | PDF report | Completed session | `%PDF` file downloads | replay (8), PDF (4) | ✅ 17 KB |
 | TC-12 | Hindi/Kannada in the PDF | Hindi and Kannada answers | Text decodes back from the PDF | PDF (4) | ✅ |

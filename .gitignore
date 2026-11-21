@@ -28,6 +28,7 @@ __pycache__/
 *$py.class
 *.pyc
 .env
+research_data/
 .venv/
 venv/
 env/

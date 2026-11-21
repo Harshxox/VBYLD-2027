@@ -8,7 +8,7 @@ nothing on their own.
 
 Sensor facts verified on the prototype (see firmware/):
   - GSR raw rises with arousal/stress (skin conductance response).
-  - tilt = degrees away from the posture captured at calibration.
+  - tilt = band orientation change from its wrist position at calibration.
 """
 from __future__ import annotations
 
@@ -22,17 +22,14 @@ from typing import Dict, List, Optional
 
 # ── Thresholds ────────────────────────────────────────────────────────────────
 CONNECTED_WITHIN_S   = 5      # no reading for longer = wearable disconnected
-POSTURE_BAD_DEG      = 20     # leaning more than this from upright = poor posture
-POSTURE_WARN_AFTER_S = 10
 STRESS_GSR_ELEVATED  = 15     # % rise over baseline
 STRESS_GSR_HIGH      = 30
 STRESS_BPM_ELEVATED  = 10     # BPM rise over baseline
 STRESS_BPM_HIGH      = 20
 STRESS_WARN_AFTER_S  = 15
-STILL_WARN_AFTER_S   = 120
 MAX_READING_GAP_S    = 5      # a longer gap breaks a streak
 BASELINE_SECONDS     = 60
-BASELINE_SKIP_S      = 2      # ignore readings while posture calibration settles
+BASELINE_SKIP_S      = 2      # ignore readings while wrist orientation calibration settles
 BASELINE_MIN_READINGS = 10
 MIN_VALID_GSR        = 50     # below this the electrodes are not being touched
 
@@ -48,7 +45,7 @@ STRESS_LEVELS = ["calm", "elevated", "high"]
 
 # ── Live device registry (in memory) ──────────────────────────────────────────
 class DeviceRegistry:
-    """Latest reading per device, and one-shot 'calibrate posture' requests."""
+    """Latest reading per device, and one-shot neutral wrist-orientation requests."""
 
     def __init__(self) -> None:
         self._lock = threading.Lock()
@@ -122,7 +119,7 @@ def _level(value: Optional[float], elevated: float, high: float) -> Optional[int
 
 
 def derive(r: dict, baseline: Optional[dict]) -> dict:
-    """Values relative to the person's baseline, plus posture/stress/still flags."""
+    """Values relative to the person's baseline, plus wrist-motion observations."""
     base_bpm = (baseline or {}).get("bpm")
     base_gsr = (baseline or {}).get("gsr")
     base_tilt = (baseline or {}).get("tilt") or 0.0
@@ -137,15 +134,17 @@ def derive(r: dict, baseline: Optional[dict]) -> dict:
                             _level(bpm_change, STRESS_BPM_ELEVATED, STRESS_BPM_HIGH)) if lv is not None]
     stress = STRESS_LEVELS[max(levels)] if levels else None   # None = unknown (no baseline / no contact)
 
-    posture_angle = round(max(0.0, (r["tilt"] or 0.0) - base_tilt), 1) if r.get("mpu_ok", True) else None
+    wrist_orientation_change = (
+        round(max(0.0, (r["tilt"] or 0.0) - base_tilt), 1)
+        if r.get("mpu_ok", True) else None
+    )
     return {
         "bpm":            bpm,
         "bpm_change":     bpm_change,
         "gsr":            gsr,
         "gsr_change_pct": gsr_change_pct,
         "stress_level":   stress,
-        "posture_angle":  posture_angle,
-        "posture_bad":    posture_angle is not None and posture_angle > POSTURE_BAD_DEG,
+        "wrist_orientation_change": wrist_orientation_change,
         "moving":         bool(r["moving"]),
     }
 
@@ -153,14 +152,12 @@ def derive(r: dict, baseline: Optional[dict]) -> dict:
 # ── Streaks: how long each condition has held continuously ────────────────────
 def streaks(readings_newest_first: List[dict], baseline: Optional[dict]) -> dict:
     """
-    Seconds that posture has been bad / stress high / the person still, counting
-    back from the newest reading. A gap longer than MAX_READING_GAP_S ends a streak.
+    Seconds stress has stayed high, counting back from the newest reading.
+    A gap longer than MAX_READING_GAP_S ends the streak.
     readings: dicts with 'received_at' (datetime), newest first.
     """
     tests = {
-        "posture_bad_s": lambda d: d["posture_bad"],
         "stress_high_s": lambda d: d["stress_level"] == "high",
-        "still_s":       lambda d: not d["moving"],
     }
     out = {}
     for name, test in tests.items():
@@ -192,17 +189,9 @@ def warnings(reading: Optional[dict], age_s: Optional[float], derived: Optional[
 
     out: List[dict] = []
     if streak and derived:
-        if streak["posture_bad_s"] >= POSTURE_WARN_AFTER_S:
-            out.append({"type": "posture", "severity": "danger",
-                        "message": f"Sit up straight - you are leaning {derived['posture_angle']:.0f} deg "
-                                   f"forward for {streak['posture_bad_s']} s."})
         if streak["stress_high_s"] >= STRESS_WARN_AFTER_S:
             out.append({"type": "stress", "severity": "warning",
                         "message": "Stress rising - take 3 slow, deep breaths."})
-        if streak["still_s"] >= STILL_WARN_AFTER_S:
-            mins = streak["still_s"] // 60
-            out.append({"type": "still", "severity": "warning",
-                        "message": f"You have been still for {mins} min - roll your shoulders and stretch."})
 
     if not reading.get("pulse_ok", True):
         out.append({"type": "sensor", "severity": "info", "message": "Pulse sensor error - reconnecting..."})
@@ -211,7 +200,7 @@ def warnings(reading: Optional[dict], age_s: Optional[float], derived: Optional[
     if not reading["gsr_contact"]:
         out.append({"type": "sensor", "severity": "info", "message": "Touch both GSR electrodes."})
     if not reading.get("mpu_ok", True):
-        out.append({"type": "sensor", "severity": "info", "message": "Motion sensor error - check wiring."})
+        out.append({"type": "sensor", "severity": "info", "message": "Band motion sensor error - check wiring."})
     if baseline is None:
         out.append({"type": "baseline", "severity": "info",
                     "message": "Baseline not recorded yet - stress levels need a 60 s baseline."})
@@ -242,8 +231,7 @@ def history_points(readings: List[dict], baseline: Optional[dict],
             "gsr":            d["gsr"],
             "gsr_change_pct": d["gsr_change_pct"],
             "stress_level":   d["stress_level"],
-            "posture_angle":  d["posture_angle"],
-            "posture_bad":    d["posture_bad"],
+            "wrist_orientation_change": d["wrist_orientation_change"],
             "moving":         d["moving"],
         })
 

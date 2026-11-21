@@ -9,6 +9,7 @@ phone and every answer, so both now require the session access token
 (X-Session-Token) or an admin token.
 """
 import io
+import logging
 import re
 import urllib.parse
 from datetime import datetime, timezone
@@ -22,12 +23,14 @@ from app.models.assessment import AssessmentSession
 from app.models.schemas import CompleteSessionOut, RiskScores, ReportData
 from app.models.sensors import SensorLink, SensorReading
 from app.domain.sensor_scoring import score_session
-from app.domain.sensors import POSTURE_BAD_DEG, history_points
+from app.domain.sensors import history_points
 from app.domain.scoring import calculate_scores, build_report
 from app.security import require_session_access, session_token_matches
 from app.api.routes.pdf_fonts import mark_script_runs, register_fonts
+from app.research_export import export_completed_session
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 
 def _load_session(db: Session, session_id: str, caller: str,
@@ -105,6 +108,25 @@ def complete_session(
     # Assessment over: stop storing wearable readings against this session
     db.query(SensorLink).filter(SensorLink.session_id == session_id).update({"active": False})
     db.commit()
+    try:
+        export_completed_session(
+            session=session,
+            answers=list(session.answers),
+            readings=(
+                db.query(SensorReading)
+                .filter(SensorReading.session_id == session_id)
+                .order_by(SensorReading.received_at, SensorReading.id)
+                .all()
+            ),
+            link=db.query(SensorLink).filter(SensorLink.session_id == session_id).first(),
+            report=session.report_json,
+        )
+    except Exception as exc:
+        logger.exception("Automatic research export failed for session %s", session_id)
+        raise HTTPException(
+            status_code=500,
+            detail="Assessment saved, but the automatic research export failed. Check backend logs.",
+        ) from exc
 
     return CompleteSessionOut(session_id=session_id, scores=scores, report=report)
 
@@ -441,20 +463,25 @@ def _generate_pdf(session: AssessmentSession, history=None) -> bytes:
         if not wearable.get("available"):
             story.append(Paragraph(mark_script_runs(wearable.get("reason") or "Wearable data could not be scored."), body_s))
         else:
-            post, stress, still = wearable.get("posture"), wearable.get("stress"), wearable["stillness"]
+            wrist, stress = wearable.get("wrist_motion"), wearable.get("stress")
             cov = wearable.get("coverage", {})
-            idx_tbl = Table([[
-                Paragraph(f"<b>{combined['index']:.0f}%</b><br/><font size=7 color='#6b7a99'>ErgoCare Index ({combined['level']})</font>",
-                          sty("I1", fontSize=16, leading=19, alignment=TA_CENTER, textColor=TEAL_DARK)),
-                Paragraph(f"<b>{combined['questionnaire']:.0f}%</b><br/><font size=7 color='#6b7a99'>Questionnaire × 60%</font>",
-                          sty("I2", fontSize=13, leading=17, alignment=TA_CENTER)),
-                Paragraph(f"<b>{combined['objective']:.0f}%</b><br/><font size=7 color='#6b7a99'>Body signals × 40%</font>",
-                          sty("I3", fontSize=13, leading=17, alignment=TA_CENTER)),
-            ]], colWidths=[W / 3] * 3)
-            idx_tbl.setStyle(TableStyle([("GRID", (0, 0), (-1, -1), 0.3, BORDER), ("BACKGROUND", (0, 0), (0, 0), LIGHT),
-                                         ("TOPPADDING", (0, 0), (-1, -1), 8), ("BOTTOMPADDING", (0, 0), (-1, -1), 8)]))
-            story.append(idx_tbl)
-            story.append(Spacer(1, 6))
+            if combined:
+                idx_tbl = Table([[
+                    Paragraph(f"<b>{combined['index']:.0f}%</b><br/><font size=7 color='#6b7a99'>ErgoCare Index ({combined['level']})</font>",
+                              sty("I1", fontSize=16, leading=19, alignment=TA_CENTER, textColor=TEAL_DARK)),
+                    Paragraph(f"<b>{combined['questionnaire']:.0f}%</b><br/><font size=7 color='#6b7a99'>Questionnaire × 60%</font>",
+                              sty("I2", fontSize=13, leading=17, alignment=TA_CENTER)),
+                    Paragraph(f"<b>{combined['objective']:.0f}%</b><br/><font size=7 color='#6b7a99'>Heart-rate / skin-response × 40%</font>",
+                              sty("I3", fontSize=13, leading=17, alignment=TA_CENTER)),
+                ]], colWidths=[W / 3] * 3)
+                idx_tbl.setStyle(TableStyle([("GRID", (0, 0), (-1, -1), 0.3, BORDER), ("BACKGROUND", (0, 0), (0, 0), LIGHT),
+                                             ("TOPPADDING", (0, 0), (-1, -1), 8), ("BOTTOMPADDING", (0, 0), (-1, -1), 8)]))
+                story.append(idx_tbl)
+                story.append(Spacer(1, 6))
+            else:
+                story.append(Paragraph(mark_script_runs(wearable.get("reason") or
+                                     "No usable heart-rate or skin-response data; a combined score was not calculated."), body_s))
+                story.append(Spacer(1, 6))
 
             for ins in wearable.get("insights", []):
                 c = "#c2410c" if ins["severity"] == "warning" else "#1d4ed8"
@@ -464,7 +491,8 @@ def _generate_pdf(session: AssessmentSession, history=None) -> bytes:
                 return "—" if v is None else f"{v:.0f}%"
             rows = [["Measure", "Result", "Meaning"],
                     ["Time analysed", _fmt_dur(wearable.get("duration_s")),
-                     f"Sensor contact: pulse {pct(cov.get('pulse_pct'))}, skin {pct(cov.get('gsr_pct'))}"]]
+                     f"Signal coverage: pulse {pct(cov.get('pulse_pct'))}, skin {pct(cov.get('gsr_pct'))}, "
+                     f"band {pct(cov.get('wrist_motion_pct'))}"]]
             if stress:
                 rows += [
                     ["Average heart rate", f"{stress['avg_bpm']:.0f} BPM" if stress.get("avg_bpm") else "—",
@@ -474,15 +502,16 @@ def _generate_pdf(session: AssessmentSession, history=None) -> bytes:
                     ["Peak skin-response rise", f"{stress['peak_gsr_rise_pct']:+.0f}%" if stress.get("peak_gsr_rise_pct") is not None else "—",
                      "vs your resting baseline"],
                 ]
-            if post:
+            if wrist:
                 rows += [
-                    ["Time slouching", pct(post["pct_time_bad"]), f"leaning more than {POSTURE_BAD_DEG}°"],
-                    ["Average / max lean", f"{post['avg_angle']:.0f}° / {post['max_angle']:.0f}°",
-                     f"Typical posture: RULA-style band {post['rula_style_score']} ({post['rula_label']})"],
+                    ["Band arm moving", pct(wrist.get("moving_pct")), "motion detected at the band-wearing wrist"],
+                    ["Average / max wrist orientation change",
+                     (f"{wrist['avg_orientation_change_deg']:.1f}° / {wrist['max_orientation_change_deg']:.1f}°"
+                      if wrist.get("avg_orientation_change_deg") is not None else "—"),
+                     "change from the neutral band-wrist baseline; not a posture score"],
                 ]
-            alerts = (post["alerts"] if post else 0) + (stress["alerts"] if stress else 0) + still["alerts"]
-            rows += [["Longest time still", _fmt_dur(still["longest_still_s"]), f"{pct(still['pct_time_still'])} of the time not moving"],
-                     ["On-screen warnings", str(alerts), "posture, stress and movement alerts shown live"]]
+            alerts = stress["alerts"] if stress else 0
+            rows += [["Stress warnings", str(alerts), "based on heart-rate / skin-response signals"]]
             wt = Table([[Paragraph(str(c), small_s if i != 1 else body_s) for i, c in enumerate(r)] for r in rows],
                        colWidths=[48 * mm, 38 * mm, W - 86 * mm])
             wt.setStyle(TableStyle([("BACKGROUND", (0, 0), (-1, 0), LIGHT), ("GRID", (0, 0), (-1, -1), 0.3, BORDER),
@@ -506,12 +535,11 @@ def _generate_pdf(session: AssessmentSession, history=None) -> bytes:
                                          [("Skin response change", series("gsr_change_pct"), colors.HexColor("#2563eb"))],
                                          ch_w, ch_h, min(-10, min(gsr_vals) - 5), max(40, max(gsr_vals) + 5),
                                          threshold=(30, "high stress (+30%)"), shade_until=shade))
-                ang_vals = [y for _, y in series("posture_angle")] or [0, 30]
+                ang_vals = [y for _, y in series("wrist_orientation_change")] or [0, 30]
                 story.append(Spacer(1, 6))
-                story.append(_line_chart("Posture: forward lean (degrees)",
-                                         [("Lean angle", series("posture_angle"), colors.HexColor("#0a9396"))],
-                                         ch_w, ch_h, 0, max(35, max(ang_vals) + 5),
-                                         threshold=(POSTURE_BAD_DEG, f"slouch ({POSTURE_BAD_DEG}°)"), shade_until=shade))
+                story.append(_line_chart("Band-wrist orientation change (degrees)",
+                                         [("Wrist orientation change", series("wrist_orientation_change"), colors.HexColor("#0a9396"))],
+                                         ch_w, ch_h, 0, max(35, max(ang_vals) + 5), shade_until=shade))
             story.append(Paragraph(mark_script_runs(wearable.get("method", "")), small_s))
         story.append(Spacer(1, 6))
 

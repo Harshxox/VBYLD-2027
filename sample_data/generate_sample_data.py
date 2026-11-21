@@ -6,7 +6,7 @@ Regenerates every file in sample_data/ - deterministic, no hardware or server ne
 Outputs
   wearable_session.jsonl   200 one-per-second readings in the exact JSON the ESP32
                            sends (via the demo simulator's body model, seed 42):
-                           0-60 s calm (baseline) | 60-100 calm | 100-140 slouching
+                           0-60 s calm (baseline) | 60-100 calm | 100-140 wrist rotation
                            | 140-180 stressed, upright | 180-200 calm
   answers_low_risk.json    40 answers - the lowest-risk option of every question
   answers_high_risk.json   40 answers - the highest-risk option of every question
@@ -35,7 +35,7 @@ from app.domain.scoring import option_risk                         # noqa: E402
 import demo_simulator                                              # noqa: E402
 
 # (start second, state) - the scripted story of the sample session
-TIMELINE = [(0, "calm"), (100, "slouch"), (140, "stressed"), (180, "calm")]
+TIMELINE = [(0, "calm"), (100, "wrist_turn"), (140, "stressed"), (180, "calm")]
 SECONDS = 200
 BASELINE_S = 60
 
@@ -49,9 +49,9 @@ def wearable_readings() -> list:
     out = []
     for sec in range(SECONDS):
         state = [s for start, s in TIMELINE if sec >= start][-1]
-        body.slouch, body.stressed = state == "slouch", state == "stressed"
+        body.wrist_rotated, body.stressed = state == "wrist_turn", state == "stressed"
         if sec == 0:
-            body.calibrate()                      # starting the baseline zeroes the ESP32's posture
+            body.calibrate()                      # starting the baseline zeroes the band-wrist orientation
         clock["t"] = float(sec)
         r = body.step()
         r["device_id"] = "SAMPLE-01"

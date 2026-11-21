@@ -58,16 +58,18 @@ def logic_checks() -> None:
         d = S.derive(newest[0], base)
         return sorted(w["type"] for w in S.warnings(newest[0], 0.5, d, S.streaks(newest, base), base))
 
-    start = [r(i, moving=(i == 0)) for i in range(3)]
     cases = [
-        ("relaxed and upright -> no warning", [r(i, moving=(i == 9)) for i in range(10)], []),
-        ("slouching 28 deg for 12 s -> posture warning", start + [r(i, tilt=28) for i in range(3, 15)], ["posture"]),
-        ("slouching only 6 s -> no warning yet", start + [r(i, tilt=28) for i in range(3, 9)], []),
-        ("GSR +38% for 16 s -> stress warning", start + [r(i, gsr=610) for i in range(3, 19)], ["stress"]),
-        ("heart +22 BPM for 16 s -> stress warning", start + [r(i, bpm=97) for i in range(3, 19)], ["stress"]),
-        ("GSR +20% -> elevated only, no warning", start + [r(i, gsr=540) for i in range(3, 25)], []),
-        ("still for 125 s -> stretch warning", [r(i) for i in range(125)], ["still"]),
-        ("7 s data gap resets the slouch timer", [r(i, tilt=28) for i in range(8)] + [r(i, tilt=28) for i in range(15, 20)], []),
+        ("neutral band wrist -> no warning", [r(i) for i in range(10)], []),
+        ("wrist orientation change does not trigger a posture warning",
+         [r(i, tilt=28) for i in range(15)], []),
+        ("GSR +38% for 16 s -> stress warning",
+         [r(i, gsr=610) for i in range(16)], ["stress"]),
+        ("heart +22 BPM for 16 s -> stress warning",
+         [r(i, bpm=97) for i in range(16)], ["stress"]),
+        ("GSR +20% -> elevated only, no warning", [r(i, gsr=540) for i in range(22)], []),
+        ("band arm still for 125 s -> no whole-body inactivity warning",
+         [r(i) for i in range(125)], []),
+        ("7 s data gap does not create an orientation warning", [r(i, tilt=28) for i in range(8)] + [r(i, tilt=28) for i in range(15, 20)], []),
         ("no finger + no GSR contact -> 2 sensor warnings",
          [r(i, finger=False, contact=False, moving=True) for i in range(5)], ["sensor", "sensor"]),
     ]
@@ -89,7 +91,7 @@ def scoring_checks() -> None:
                 "gsr_contact": contact, "tilt": tilt, "moving": moving, "pulse_ok": True, "mpu_ok": True}
 
     def session(n=300, **kw):
-        """Baseline 0-60 s (always slouched, to prove it is excluded) + n s of questions."""
+        """Baseline 0-60 s (band rotated, to prove it is excluded) + n s of questions."""
         rows = [reading(t, tilt=40) for t in range(60)]
         for t in range(60, 60 + n):
             i = t - 60
@@ -104,8 +106,8 @@ def scoring_checks() -> None:
     moving_every_min = lambda i: i % 60 == 0
 
     w = score_session(session(moving=moving_every_min), base, start, q())
-    check(w["available"] and w["posture"]["pct_time_bad"] == 0 and kinds(w) == [],
-          "calm + upright session: no insights, baseline slouch excluded",
+    check(w["available"] and w["wrist_motion"]["avg_orientation_change_deg"] == 0 and kinds(w) == [],
+          "calm session: wrist observations are relative to the baseline",
           f"objective {w.get('objective_score')}, index {w.get('combined', {}).get('index')}")
     expect = round(0.6 * 30 + 0.4 * w["objective_score"], 1)
     check(w["combined"]["index"] == expect, "ErgoCare Index = 60% questionnaire + 40% objective",
@@ -122,14 +124,15 @@ def scoring_checks() -> None:
     check(kinds(w) == ["calm_body"], "says high stress + body calm -> Calm during the test")
 
     w = score_session(session(tilt=lambda i: 28 if (i // 30) % 2 else 3, moving=moving_every_min), base, start, q(posture=25))
-    check(kinds(w) == ["posture_blind_spot"] and 45 <= w["posture"]["pct_time_bad"] <= 55,
-          "says good posture + slouched 50% -> Posture blind spot",
-          f"{w['posture']['pct_time_bad']}% slouched, RULA-style {w['posture']['rula_style_score']}")
-    check(any("leaned forward" in a for a in w["actions"]), "posture action added to the action plan")
+    check(kinds(w) == [] and w["wrist_motion"]["avg_orientation_change_deg"] > 0,
+          "wrist orientation change is reported without inferring torso posture",
+          f"average orientation change {w['wrist_motion']['avg_orientation_change_deg']} deg")
+    check(w["objective_score"] == w["stress"]["score"],
+          "wrist movement is not included in the ergonomic risk score")
 
     w = score_session(session(contact=False, finger=False, moving=moving_every_min), base, start, q())
-    check(w["available"] and w["stress"] is None and w["objective_score"] is not None,
-          "no pulse/GSR contact: stress skipped, objective re-weighted", f"objective {w['objective_score']}")
+    check(w["available"] and w["stress"] is None and w["objective_score"] is None and w["combined"] is None,
+          "no pulse/GSR contact: no body-signal score or combined index", f"reason: {w['reason']}")
 
     w = score_session(session(n=20), base, start, q())
     check(not w["available"] and "20 s" in w["reason"], "too little data -> not scored, reason given", w["reason"])
@@ -165,9 +168,9 @@ def fmt_live(d: dict) -> str:
     if der.get("gsr_change_pct") is not None:
         gsr += f" ({der['gsr_change_pct']:+.0f}%)"
     stress = der.get("stress_level") or "unknown"
-    posture = f"{der['posture_angle']:.0f} deg" if der.get("posture_angle") is not None else "--"
+    wrist = f"{der['wrist_orientation_change']:.0f} deg" if der.get("wrist_orientation_change") is not None else "--"
     warns = " | ".join(w["message"] for w in d.get("warnings", [])) or "no warnings"
-    return f"{bpm:<16} {gsr:<16} stress {stress:<9} posture {posture:<7} -> {warns}"
+    return f"{bpm:<16} {gsr:<16} stress {stress:<9} wrist Δ {wrist:<7} -> {warns}"
 
 
 def live_checks(base_url: str, device: str, baseline_s: int, live_s: int) -> None:
@@ -205,7 +208,7 @@ def live_checks(base_url: str, device: str, baseline_s: int, live_s: int) -> Non
 
         st, _ = sapi("POST", f"/api/sessions/{sid}/baseline/start")
         check(st == 200, "baseline started (posture zeroed on the ESP32)")
-        print(f"\n  >>> BASELINE {baseline_s} s: sit upright, fingertip gently on the pulse sensor,")
+        print(f"\n  >>> BASELINE {baseline_s} s: sit comfortably, band wrist neutral, fingertip gently on the pulse sensor,")
         print("      other hand holding both GSR electrodes. Relax.\n")
         for left in range(baseline_s, 0, -1):
             _, d = sapi("GET", f"/api/sessions/{sid}/sensors/latest")
@@ -220,8 +223,8 @@ def live_checks(base_url: str, device: str, baseline_s: int, live_s: int) -> Non
                   f"{base['gsr_readings']} readings, resting GSR {base['gsr']}")
 
         print(f"\n  >>> LIVE {live_s} s: keep the sensors on. Try this and watch the warnings:")
-        print("      1) lean forward and HOLD for 12 s   -> posture warning")
-        print("      2) sit up, then hold your breath / do fast mental maths  -> GSR and stress rise\n")
+        print("      1) rotate the band wrist for 12 s -> orientation changes, but no torso-posture warning")
+        print("      2) hold your breath / do fast mental maths -> GSR and stress may rise\n")
         seen = set()
         for sec in range(live_s):
             _, d = sapi("GET", f"/api/sessions/{sid}/sensors/latest")
@@ -229,7 +232,7 @@ def live_checks(base_url: str, device: str, baseline_s: int, live_s: int) -> Non
             print(f"  {sec + 1:>3}s  {fmt_live(d)}")
             time.sleep(1)
         check(True, "live panel data received every second", f"warning types seen: {sorted(seen) or 'none'}")
-        check("posture" in seen, "posture warning triggered by leaning forward")
+        check("posture" not in seen, "band-wrist movement never triggers a torso-posture warning")
 
         _, hist = sapi("GET", f"/api/sessions/{sid}/sensors/history")
         expected = baseline_s + live_s

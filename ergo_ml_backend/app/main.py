@@ -13,6 +13,7 @@ from contextlib import asynccontextmanager
 from app.db.database import create_db_tables
 from app.api.routes import sessions, answers, reports, sensors, questions, admin
 from app.domain.answer_matcher import warm_up
+from app.research_export import write_data_dictionary
 
 AUDIO_DIR = os.getenv("AUDIO_UPLOAD_DIR", "./uploads/audio")
 os.makedirs(AUDIO_DIR, exist_ok=True)
@@ -21,6 +22,7 @@ os.makedirs(AUDIO_DIR, exist_ok=True)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     create_db_tables()
+    write_data_dictionary()
     warm_up()   # load the answer-matching model in the background
     yield
 

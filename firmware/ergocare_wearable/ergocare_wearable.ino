@@ -3,7 +3,7 @@
  * ==================================
  * Sensors
  *   - HW-058 (MAX30102)  pulse / heart rate      I2C (SDA 21, SCL 22), addr 0x57
- *   - MPU6050            posture tilt + movement I2C (SDA 21, SCL 22), addr 0x68
+ *   - MPU6050            band-wrist orientation + movement I2C (SDA 21, SCL 22), addr 0x68
  *   - GSR module         skin conductance        analog GPIO34 (ADC1 — works with Wi-Fi on)
  *
  * Output (once per second)
@@ -17,7 +17,7 @@
  *     never blocks sampling; if it falls behind, only the newest reading is sent.
  *
  * Serial commands (type in Serial Monitor, newline-terminated)
- *   CAL   — set the current posture as "upright" (tilt = 0)
+ *   CAL   — set the band-wearing wrist's current orientation as neutral (tilt = 0)
  */
 
 #include <Wire.h>
@@ -100,7 +100,7 @@ double   accMagSum = 0, accMagSqSum = 0;
 double   gyroMagSum = 0;
 uint32_t mpuSamples = 0;
 
-// Posture reference ("upright") gravity vector
+// Band-wrist reference ("neutral") gravity vector
 float refX = 0, refY = 0, refZ = 0;
 bool  refSet = false;
 volatile bool calibrateRequested = false;
@@ -167,8 +167,8 @@ bool mpuRead(float &ax, float &ay, float &az, float &gx, float &gy, float &gz) {
   return true;
 }
 
-// Angle in degrees between the current gravity vector and the "upright" one.
-// Works however the sensor is clipped on, because it is relative to calibration.
+// Orientation change in degrees from the band-wrist position captured at calibration.
+// This is not a measurement of torso or answering-hand posture.
 float tiltFromRef(float x, float y, float z) {
   float n1 = sqrtf(x * x + y * y + z * z);
   float n2 = sqrtf(refX * refX + refY * refY + refZ * refZ);
@@ -392,7 +392,7 @@ void report() {
       refX = r.ax; refY = r.ay; refZ = r.az;
       refSet = true;
       calibrateRequested = false;
-      Serial.println("# posture calibrated: current position = upright (tilt 0)");
+      Serial.println("# band wrist calibrated: current orientation = neutral (tilt 0)");
     }
     r.tilt = tiltFromRef(r.ax, r.ay, r.az);
   }
@@ -534,7 +534,7 @@ void setup() {
   } else {
     Serial.println("# wifi: not configured - USB-only mode (see secrets.example.h)");
   }
-  Serial.println("# ready - one JSON reading per second. Type CAL to set upright posture.");
+  Serial.println("# ready - one JSON reading per second. Type CAL to set neutral band-wrist orientation.");
 }
 
 void loop() {

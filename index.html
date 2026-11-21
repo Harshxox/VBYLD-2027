@@ -644,8 +644,6 @@ footer{color:#74877f !important}
 .live-tile.good{border-color:#a7f3d0;background:#f0fdf8}
 .live-tile.warn{border-color:#fcd34d;background:#fffbeb}
 .live-tile.bad{border-color:#fca5a5;background:#fef2f2}
-.posture-bar{height:8px;border-radius:999px;background:#e2e8f0;overflow:hidden;margin-top:6px}
-.posture-bar span{display:block;height:100%;border-radius:999px;transition:width 400ms ease,background 400ms ease}
 .baseline-ring{position:relative;width:190px;height:190px;margin:0 auto}
 .baseline-ring svg{width:100%;height:100%;transform:rotate(-90deg)}
 .baseline-ring .br-num{position:absolute;inset:0;display:grid;place-items:center;text-align:center}
@@ -825,7 +823,7 @@ footer{color:#74877f !important}
       <section class="hero">
         <div class="hero-badge"><span class="hero-badge-dot"></span>Preventive Ergonomic Wellbeing</div>
         <h1>See the strain<br><em>work can hide.</em></h1>
-        <p>A 40-question screening in English, Hindi and Kannada. Combine what you <strong>say</strong> with what your <strong>body shows</strong> — heart rate, skin response and posture — for practical next steps. Not a medical diagnosis.</p>
+        <p>A 40-question screening in English, Hindi and Kannada. Combine what you <strong>report</strong> with baseline-relative <strong>heart-rate and skin-response</strong> signals; the band separately reports motion of the wrist wearing it. Not a medical diagnosis.</p>
         <div class="hero-pillars">
           <span class="hero-pillar"><i>🗣</i>Speak or type</span>
           <span class="hero-pillar"><i>⌚</i>Optional wearable</span>
@@ -881,7 +879,7 @@ footer{color:#74877f !important}
               <span>I agree that ErgoCare may store my details, answers, voice recordings and wearable readings to create my screening report. I am 18 or older (or have a parent's or guardian's permission). <a href="#" onclick="toggleConsentDetails(event)">What is stored and why?</a></span>
             </label>
             <div class="consent-details" id="consent-details" hidden>
-              <p><strong>What we store:</strong> name, email, phone, age, job role; your 40 answers; voice clips and transcripts (voice mode only); wearable readings - heart rate, skin response and posture - once per second (only if you use the wearable).</p>
+              <p><strong>What we store:</strong> name, email, phone, age, job role; your 40 answers; voice clips and transcripts (voice mode only); wearable readings - heart rate, skin response, and band-wrist orientation and movement - once per second (only if you use the wearable).</p>
               <p><strong>Why:</strong> only to calculate your ergonomic screening report. Anonymised results may be used to improve ErgoCare.</p>
               <p><strong>Who can see it:</strong> you, and administrators who sign in to the protected admin panel.</p>
               <p><strong>Your choice:</strong> you can ask an administrator to delete all your data at any time. ErgoCare is a screening tool, <strong>not a medical diagnosis</strong>.</p>
@@ -970,7 +968,7 @@ footer{color:#74877f !important}
           <div class="astat"><div class="astat-num" id="astat-total">0</div><div class="astat-label">Total Clients</div></div>
           <div class="astat"><div class="astat-num" id="astat-avg">—</div><div class="astat-label">Avg Overall Risk</div></div>
           <div class="astat"><div class="astat-num" id="astat-high" style="color:#dc2626">0</div><div class="astat-label">High Risk Clients</div></div>
-          <div class="astat" title="Hidden stress or posture blind spot found by the wearable"><div class="astat-num" id="astat-mismatch" style="color:#d97706">0</div><div class="astat-label">⌚ Mismatch Alerts</div></div>
+          <div class="astat" title="Hidden stress insight found by the wearable"><div class="astat-num" id="astat-mismatch" style="color:#d97706">0</div><div class="astat-label">⌚ Stress Insights</div></div>
         </div>
         <div class="admin-fp-panel">
           <div class="admin-header">
@@ -1250,7 +1248,7 @@ function updateAdminStats() {
   const n = clients.length
   const mm = document.getElementById('astat-mismatch')
   if (mm) mm.textContent = clients.filter(c => (clientWearable(c)?.insights || [])
-    .some(i => i.type === 'hidden_stress' || i.type === 'posture_blind_spot')).length
+    .some(i => i.type === 'hidden_stress')).length
   document.getElementById('astat-total').textContent = n
   const scored = clients.filter(c=>c.scores)
   if (scored.length) {
@@ -1383,7 +1381,7 @@ function renderClients(q, panel) {
     })() : '<div class="score-pill" style="background:#f1f5f9;color:#94a3b8">Pending</div>'
     const hasReport = !!c.scores
     const w = clientWearable(c)
-    const wearPill = w?.available ? (() => {
+    const wearPill = w?.available && w.combined ? (() => {
       const lv = w.combined.level, col = lv==='High'?'#dc2626':lv==='Moderate'?'#d97706':'#059669'
       const flags = (w.insights || []).filter(i => i.severity === 'warning').map(i => i.title)
       return `<div class="score-pill" style="background:#fff7ed;color:${col};margin-top:4px" title="ErgoCare Index: answers + wearable">⌚ Index ${w.combined.index.toFixed(0)}%</div>`
@@ -1420,24 +1418,26 @@ function adminBodySignalsHTML(w) {
   if (!w?.used) return ''
   const head = '<div style="font-size:.8rem;font-weight:700;color:#374151;margin:0 0 10px;text-transform:uppercase;letter-spacing:.05em;">⌚ Body Signals (wearable)</div>'
   if (!w.available) return head + `<div style="background:#f8fafc;border-radius:10px;padding:12px 16px;color:#475569;font-size:.85rem;margin-bottom:1.5rem;">${escH(w.reason || 'Wearable data could not be scored.')}</div>`
-  const c = w.combined, p = w.posture, st = w.stress, still = w.stillness
-  const col = c.level==='High'?'#dc2626':c.level==='Moderate'?'#d97706':'#059669'
+  const c = w.combined, m = w.wrist_motion, st = w.stress
+  const col = c?.level==='High'?'#dc2626':c?.level==='Moderate'?'#d97706':'#059669'
   const pct = v => v == null ? '—' : `${Math.round(v)}%`
-  const alerts = (p?.alerts||0) + (st?.alerts||0) + (still?.alerts||0)
+  const alerts = st?.alerts || 0
   const stat = (k, v) => `<div style="background:#f8fafc;border-radius:10px;padding:10px 12px;"><div style="font-size:.68rem;color:#64748b;text-transform:uppercase;letter-spacing:.05em;font-weight:700;">${k}</div><div style="font-size:1.15rem;font-weight:800;color:#0f172a;">${v}</div></div>`
   const insights = (w.insights || []).map(i => `<div style="background:${i.severity==='warning'?'#fff7ed':'#eff6ff'};border-left:4px solid ${i.severity==='warning'?'#f59e0b':'#3b82f6'};border-radius:8px;padding:10px 14px;margin-bottom:8px;font-size:.85rem;color:#1f2937;"><strong>${i.severity==='warning'?'⚠':'ℹ'} ${escH(i.title)}:</strong> ${escH(i.message)}</div>`).join('')
-  return head + `
+  const index = c ? `
     <div style="display:flex;flex-wrap:wrap;align-items:center;gap:18px;border:1.5px solid #e2e8f0;border-radius:12px;padding:14px 18px;margin-bottom:10px;">
       <div><div style="font-size:.7rem;color:#64748b;font-weight:700;text-transform:uppercase;">ErgoCare Index</div><div style="font-size:2rem;font-weight:900;color:${col};line-height:1.1;">${c.index.toFixed(0)}% <span style="font-size:.85rem;">${escH(c.level)}</span></div></div>
-      <div style="font-size:.85rem;color:#475569;">Questionnaire <b>${c.questionnaire.toFixed(0)}%</b> × 60% &nbsp;+&nbsp; Body signals <b>${c.objective.toFixed(0)}%</b> × 40%</div>
-    </div>
+      <div style="font-size:.85rem;color:#475569;">Questionnaire <b>${c.questionnaire.toFixed(0)}%</b> × 60% &nbsp;+&nbsp; Heart-rate / skin-response score <b>${c.objective.toFixed(0)}%</b> × 40%</div>
+    </div>` : `<div style="background:#fffbeb;border-radius:10px;padding:12px 16px;color:#92400e;font-size:.85rem;margin-bottom:1.5rem;">${escH(w.reason || 'No usable heart-rate or skin-response data; no combined score was calculated.')}</div>`
+  return head + `
+    ${index}
     ${insights}
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;margin-bottom:1.5rem;">
       ${stat('Avg heart rate', st?.avg_bpm ? `${Math.round(st.avg_bpm)} BPM` : '—')}
       ${stat('Time stressed', st ? pct(st.pct_time_high + st.pct_time_elevated) : '—')}
       ${stat('Peak skin response', st?.peak_gsr_rise_pct != null ? `${st.peak_gsr_rise_pct > 0 ? '+' : ''}${Math.round(st.peak_gsr_rise_pct)}%` : '—')}
-      ${stat('Time slouching', p ? pct(p.pct_time_bad) : '—')}
-      ${stat('Longest still', fmtDur(still.longest_still_s))}
+      ${stat('Band arm moving', m ? pct(m.moving_pct) : '—')}
+      ${stat('Avg wrist orientation change', m?.avg_orientation_change_deg != null ? `${m.avg_orientation_change_deg.toFixed(1)}°` : '—')}
       ${stat('Warnings shown', alerts)}
     </div>`
 }
@@ -1647,7 +1647,7 @@ function exportCSV() {
   if (!adminLoggedIn) { openAdminLogin(); return }
   if (!clients.length) { alert('No clients to export yet.'); return }
   const hdrs = ['Name','Email','Phone','Age','Job','Registered','Session ID','Overall Risk','Posture','Eye Strain','Workload','Body Discomfort','Recovery',
-                'Wearable Used','ErgoCare Index','Body Signals Score','Avg Heart Rate','Time Stressed %','Peak Skin Response %','Time Slouching %','Avg Lean deg','Longest Still s','Hidden Stress','Posture Blind Spot']
+                'Wearable Used','ErgoCare Index','Heart Rate / Skin Response Score','Avg Heart Rate','Time Stressed %','Peak Skin Response %','Band Arm Moving %','Avg Wrist Orientation Change deg','Hidden Stress']
   const f1 = v => v == null ? '' : Number(v).toFixed(1)
   // Cells starting with = + - @ would run as formulas in Excel - prefix them with '
   const cell = v => { let t = String(v ?? ''); if (/^[=+\-@\t\r]/.test(t)) t = "'" + t; return `"${t.replace(/"/g,'""')}"` }
@@ -1659,10 +1659,10 @@ function exportCSV() {
       s?s.eyeStrain.toFixed(1):'',s?s.workloadStress.toFixed(1):'',
       s?s.musculoskeletalRisk.toFixed(1):'',s?s.recoveryRisk.toFixed(1):'',
       w?.used ? (ok ? 'yes' : 'no data') : 'no',
-      ok ? f1(w.combined.index) : '', ok ? f1(w.objective_score) : '', ok ? f1(w.stress?.avg_bpm) : '',
+      ok && w.combined ? f1(w.combined.index) : '', ok ? f1(w.objective_score) : '', ok ? f1(w.stress?.avg_bpm) : '',
       ok && w.stress ? f1(w.stress.pct_time_high + w.stress.pct_time_elevated) : '', ok ? f1(w.stress?.peak_gsr_rise_pct) : '',
-      ok ? f1(w.posture?.pct_time_bad) : '', ok ? f1(w.posture?.avg_angle) : '', ok ? w.stillness.longest_still_s : '',
-      ok ? (kinds.has('hidden_stress') ? 'yes' : 'no') : '', ok ? (kinds.has('posture_blind_spot') ? 'yes' : 'no') : '',
+      ok ? f1(w.wrist_motion?.moving_pct) : '', ok ? f1(w.wrist_motion?.avg_orientation_change_deg) : '',
+      ok ? (kinds.has('hidden_stress') ? 'yes' : 'no') : '',
     ].map(cell).join(',')
   })
   const csv = [hdrs.join(','), ...rows].join('\n')
@@ -2239,6 +2239,7 @@ const BASELINE_SECONDS = 60
 const BR_CIRC = 2 * Math.PI * 52
 const wear = {
   deviceId: null,      // wearable in use (auto-detected)
+  answeringHand: null, // the band is worn on the opposite wrist
   active: false,       // linked to this session and streaming
   used: false,         // a baseline was recorded this session (report shows body signals)
   live: null,          // latest poll result
@@ -2270,7 +2271,7 @@ function wearStopPolling() { if (wear.timer) { clearInterval(wear.timer); wear.t
 
 function wearReset() {
   wearStopPolling()
-  Object.assign(wear, { deviceId: null, active: false, used: false, live: null, baseline: null, baselineEndsAt: 0,
+  Object.assign(wear, { deviceId: null, answeringHand: null, active: false, used: false, live: null, baseline: null, baselineEndsAt: 0,
                         starting: false, finishing: false, error: null })
   paintAlerts([])
 }
@@ -2297,7 +2298,7 @@ async function wearTick() {
 }
 
 async function wearStartBaseline() {
-  if (wear.starting || !wear.deviceId || !state.backendSessionId) return
+  if (wear.starting || !wear.deviceId || !wear.answeringHand || !state.backendSessionId) return
   wear.starting = true; wear.error = null
   try {
     await wearFetch(`/api/sessions/${state.backendSessionId}/device`, { method: 'POST', body: JSON.stringify({ device_id: wear.deviceId }) })
@@ -2336,11 +2337,8 @@ function wearSkip() {
 
 const signed = n => { const v = Math.round(n); return v > 0 ? `+${v}` : v === 0 ? '±0' : String(v) }
 const fmtDur = s => s < 60 ? `${s}s` : `${Math.floor(s / 60)}m ${String(s % 60).padStart(2, '0')}s`
-const postureTone = a => a > 20 ? 'bad' : a > 10 ? 'warn' : 'good'
-const TONE_COLOR = { good: '#10b981', warn: '#f59e0b', bad: '#dc2626' }
-
 function wearTilesHTML(live) {
-  const r = live?.reading, d = live?.derived || {}, st = live?.streaks || {}
+  const r = live?.reading, d = live?.derived || {}
   if (!live?.connected || !r) {
     const why = live?.unreachable ? 'The ErgoCare server is not reachable.'
       : 'No readings yet - check the USB cable and that usb_bridge.py is running.'
@@ -2363,38 +2361,32 @@ function wearTilesHTML(live) {
                                          d.gsr_change_pct != null ? `Skin response ${signed(d.gsr_change_pct)}% vs baseline` : 'Heart-rate based')
   else stress = tile('good', '💧 Stress (GSR)', Math.round(r.gsr_raw), 'Skin response (raw)')
 
-  let posture
-  if (!r.mpu_ok) posture = tile('warn', '🧍 Posture', '--', 'Sensor not detected (optional)')
-  else {
-    const ang = d.posture_angle ?? r.tilt ?? 0, tone = postureTone(ang)
-    posture = tile(tone, '🧍 Posture', `${Math.round(ang)}°`,
-                   ang > 20 ? 'Slouching - sit up' : ang > 10 ? 'Leaning slightly' : 'Upright',
-                   `<div class="posture-bar"><span style="width:${Math.min(100, ang / 45 * 100)}%;background:${TONE_COLOR[tone]}"></span></div>`)
-  }
-
-  const still = st.still_s || 0
-  const move = tile(still >= 120 ? 'warn' : '', '🏃 Movement', r.moving ? 'Moving' : 'Still',
-                    still ? `Still for ${fmtDur(still)}` : r.moving ? 'Moving now' : 'Not moving')
-  return heart + stress + posture + move
+  const wrist = !r.mpu_ok
+    ? tile('warn', '⌚ Band wrist', '--', 'Motion sensor not detected')
+    : tile('', '⌚ Wrist orientation change',
+           d.wrist_orientation_change == null ? '--' : `${Math.round(d.wrist_orientation_change)}°`,
+           'Change from neutral band position')
+  const move = tile('', '💪 Band arm', r.moving ? 'Moving' : 'Still',
+                    'Motion at the band-wearing wrist')
+  return heart + stress + wrist + move
 }
 
 function wearPanelHTML(live) {
-  const connected = !!live?.connected, r = live?.reading, d = live?.derived || {}, st = live?.streaks || {}
-  const head = `<div class="live-panel-head"><span>Live body signals</span><span class="wear-status ${connected ? 'on' : ''}"><span class="dot"></span>${connected ? 'Live' : 'Offline'}</span></div>`
+  const connected = !!live?.connected, r = live?.reading, d = live?.derived || {}
+  const head = `<div class="live-panel-head"><span>Live wearable signals</span><span class="wear-status ${connected ? 'on' : ''}"><span class="dot"></span>${connected ? 'Live' : 'Offline'}</span></div>`
   if (!connected || !r) return head + `<div class="lp-hint">Wearable not sending data.</div>`
-  const ang = d.posture_angle ?? 0, tone = postureTone(ang), lvl = d.stress_level || 'unknown'
+  const lvl = d.stress_level || 'unknown'
   const hints = (live.warnings || []).filter(w => w.type === 'sensor').map(w => `<div class="lp-hint">${esc(w.message)}</div>`).join('')
   return head +
     `<div class="lp-row"><span class="lp-k">❤️ Heart</span><span class="lp-v">${d.bpm ? `${Math.round(d.bpm)} BPM${d.bpm_change != null ? ` <small>(${signed(d.bpm_change)})</small>` : ''}` : '--'}</span></div>` +
     `<div class="lp-row"><span class="lp-k">💧 Stress</span><span class="stress-pill ${lvl}">${lvl === 'unknown' ? '--' : lvl}</span></div>` +
-    `<div class="lp-row"><span class="lp-k">🧍 Posture</span><span class="lp-v" style="color:${TONE_COLOR[tone]}">${Math.round(ang)}°</span></div>` +
-    `<div class="posture-bar"><span style="width:${Math.min(100, ang / 45 * 100)}%;background:${TONE_COLOR[tone]}"></span></div>` +
-    `<div class="lp-row"><span class="lp-k">🏃 Still for</span><span class="lp-v">${fmtDur(st.still_s || 0)}</span></div>` + hints
+    `<div class="lp-row"><span class="lp-k">⌚ Wrist orientation change</span><span class="lp-v">${d.wrist_orientation_change == null ? '--' : `${Math.round(d.wrist_orientation_change)}°`}</span></div>` +
+    `<div class="lp-row"><span class="lp-k">💪 Band arm</span><span class="lp-v">${r.mpu_ok ? (r.moving ? 'Moving' : 'Still') : 'Sensor unavailable'}</span></div>` + hints
 }
 
 // Warning banners (these replace a hardware buzzer). Keyed by type so a
 // warning that stays active is updated in place instead of flashing.
-const ALERT_ICONS = { posture: '🧍', stress: '💨', still: '🤸', disconnected: '🔌' }
+const ALERT_ICONS = { stress: '💨', disconnected: '🔌' }
 function paintAlerts(warnings) {
   let box = document.getElementById('sensor-alerts')
   if (!box) {
@@ -2431,14 +2423,21 @@ function paintWear() {
         : live?.unreachable ? 'Server not reachable' : 'Searching for wearable…'}`
     }
     const check = document.getElementById('wear-check')
+    const bandWrist = wear.answeringHand === 'left' ? 'right' : wear.answeringHand === 'right' ? 'left' : null
+    const placement = document.getElementById('wear-placement')
+    if (placement) {
+      placement.textContent = wear.answeringHand
+        ? `Answer with your ${wear.answeringHand} hand; wear the band on your ${bandWrist} wrist.`
+        : 'Choose your answering hand to see which wrist should wear the band.'
+    }
     if (check) check.innerHTML = [
       [connected, 'Wearable connected', 'Plug the ESP32 into USB and run usb_bridge.py'],
       [connected && r?.finger, 'Fingertip on the pulse sensor', 'Rest it gently - do not press'],
-      [connected && r?.gsr_contact, 'GSR electrodes touched', 'Hold both electrodes with your other hand'],
-      [connected && r?.mpu_ok, 'Posture sensor (optional)', r?.mpu_ok ? 'Clip it to the back of your collar' : 'Optional — connect MPU6050 to SDA/SCL'],
+      [connected && r?.gsr_contact, 'GSR electrodes touched', 'Touch both electrodes gently and keep your answering hand free'],
+      [connected && r?.mpu_ok, 'Band motion sensor', r?.mpu_ok ? 'Keep the band on the opposite wrist; it tracks that arm only' : 'Connect the MPU6050 inside the band to SDA/SCL'],
     ].map(([ok, label, hint]) => `<li class="${ok ? 'ok' : ''}"><span class="ic">${ok ? '✓' : '•'}</span><span>${label}<small>${hint}</small></span></li>`).join('')
     const btn = document.getElementById('btn-baseline')
-    if (btn) btn.disabled = !connected || wear.starting
+    if (btn) btn.disabled = !connected || !wear.answeringHand || wear.starting
   }
 
   if (state.screen === 'baseline') {
@@ -2645,7 +2644,13 @@ function renderWearable(){
   <section class="wear-grid">
     <div class="wear-card">
       <div id="wear-status" class="wear-status"><span class="dot"></span>Searching for wearable…</div>
-      <p class="lead">While you answer, the wearable measures what your body shows: <strong>heart rate</strong>, <strong>skin response</strong> (a stress signal) and <strong>posture</strong>. Your answers and your body signals are combined in one report.</p>
+      <p class="lead">While you answer, the wearable measures <strong>heart rate</strong>, <strong>skin response</strong> and movement/orientation of the wrist wearing the band. It cannot measure your back posture or the wrist of the hand you answer with.</p>
+      <fieldset style="border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin:18px 0">
+        <legend style="font-weight:700;padding:0 6px">Which hand will you answer with?</legend>
+        <label style="margin-right:20px;cursor:pointer"><input type="radio" name="answering-hand" data-field="answering-hand" value="left" ${wear.answeringHand==='left'?'checked':''}> Left hand</label>
+        <label style="cursor:pointer"><input type="radio" name="answering-hand" data-field="answering-hand" value="right" ${wear.answeringHand==='right'?'checked':''}> Right hand</label>
+        <p id="wear-placement" class="lt-sub" style="margin:10px 0 0">Choose your answering hand to see which wrist should wear the band.</p>
+      </fieldset>
       <ul class="wear-check" id="wear-check"></ul>
       ${wear.error?`<div class="error-banner">${esc(wear.error)}</div>`:''}
       <div class="wear-actions">
@@ -2658,25 +2663,28 @@ function renderWearable(){
 }
 function renderBaseline(){
   const left=Math.max(0,Math.ceil((wear.baselineEndsAt-Date.now())/1000))
+  const bandWrist=wear.answeringHand==='left'?'right':'left'
   app().innerHTML=`<main class="shell"><header class="topbar"><div><div class="topbar-eyebrow">Wearable · step 2 of 2</div><h1>Relax for ${BASELINE_SECONDS} seconds</h1></div><button class="btn-ghost" data-action="wear-skip">Skip wearable</button></header>
   <section class="wear-grid">
     <div class="wear-card" style="text-align:center">
       <div class="baseline-ring"><svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="52" fill="none" stroke="#e4eaef" stroke-width="9"/><circle id="br-arc" cx="60" cy="60" r="52" fill="none" stroke="var(--teal)" stroke-width="9" stroke-linecap="round" stroke-dasharray="${BR_CIRC}" stroke-dashoffset="${BR_CIRC*left/BASELINE_SECONDS}" style="transition:stroke-dashoffset 1s linear"/></svg><div class="br-num"><div><b id="br-left">${left}</b><div class="lt-sub">seconds left</div></div></div></div>
-      <p class="lead">Sit <strong>upright</strong>, breathe normally and keep your fingers on the sensors. This records your personal resting heart rate and skin response — and your posture right now becomes “upright”.</p>
+      <p class="lead">Answer with your ${esc(wear.answeringHand)} hand and wear the band on your ${bandWrist} wrist. Sit comfortably, breathe normally, and keep your fingers on the sensors. Let the band-wearing arm rest with the wrist in a comfortable neutral position. This records your resting heart rate, skin response and the band’s starting wrist orientation; it does not calibrate back posture.</p>
     </div>
     <div class="wear-card"><h2 style="font-size:1.15rem">Live readings</h2><div class="live-tiles" id="wear-live"></div></div>
   </section></main>`
 }
 function renderBaselineDone(){
   const b=wear.baseline||{}
+  const bandWrist=wear.answeringHand==='left'?'right':'left'
+  const mpuOk=!!wear.live?.reading?.mpu_ok
   const issues=(b.issues||[]).map(i=>`<li>${esc(i)}</li>`).join('')
   app().innerHTML=`<main class="shell"><header class="topbar"><div><div class="topbar-eyebrow">Baseline recorded</div><h1>Your personal normal</h1></div><button class="btn-ghost" data-action="reset">Start Over</button></header>
   <section class="wear-card" style="max-width:780px">
-    <p class="lead">From now on your stress and posture are compared with <strong>your own</strong> resting values — not with an average person.</p>
+    <p class="lead">From now on your heart rate and skin response are compared with <strong>your own</strong> resting values. The band is on your ${bandWrist} wrist and tracks that arm’s orientation and motion only.</p>
     <div class="baseline-result">
       <div class="live-tile ${b.bpm?'good':'warn'}"><span class="lt-label">❤️ Resting heart rate</span><span class="lt-value">${b.bpm?`${Math.round(b.bpm)}<small> BPM</small>`:'--'}</span><span class="lt-sub">${b.pulse_readings||0} good readings</span></div>
       <div class="live-tile ${b.gsr?'good':'warn'}"><span class="lt-label">💧 Resting skin response</span><span class="lt-value">${b.gsr?Math.round(b.gsr):'--'}</span><span class="lt-sub">${b.gsr_readings||0} good readings</span></div>
-      <div class="live-tile good"><span class="lt-label">🧍 Upright posture</span><span class="lt-value">Set</span><span class="lt-sub">Leaning over 20° will be flagged</span></div>
+      <div class="live-tile ${mpuOk?'good':'warn'}"><span class="lt-label">⌚ Band-wrist reference</span><span class="lt-value">${mpuOk?'Set':'--'}</span><span class="lt-sub">${mpuOk?'Neutral wrist orientation recorded':'Motion sensor unavailable'}</span></div>
     </div>
     ${issues?`<div class="notice"><strong>Some signals were weak:</strong><ul style="margin:6px 0 0 18px">${issues}</ul>You can continue, or redo the baseline for better stress detection.</div>`:''}
     <div class="wear-actions">
@@ -2837,7 +2845,7 @@ function renderResults() {
           <h3>📋 Name: ${esc(cl.name)} &nbsp;|&nbsp; Age: ${esc(String(cl.age))} &nbsp;|&nbsp; Occupation: ${esc(cl.job)}</h3>
           <p><strong>Assessment date:</strong> ${new Date().toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'})} &nbsp;|&nbsp; <strong>Tool:</strong> ErgoCare 40-question prototype screening &nbsp;|&nbsp; <strong>Scoring:</strong> transparent, rule-based weighted composite; not clinically validated</p>
           <p><strong>Overall Ergonomic Risk Index:</strong> <span style="font-weight:700;color:${qMeta.color}">${scores.overallRisk.toFixed(1)}% (${report.level} Risk)</span></p>
-          ${report.wearable?.available?`<p><strong>ErgoCare Index (answers + wearable):</strong> <span style="font-weight:700">${report.wearable.combined.index.toFixed(1)}% (${report.wearable.combined.level})</span> · questionnaire ${report.wearable.combined.questionnaire.toFixed(0)}% × 60% + body signals ${report.wearable.combined.objective.toFixed(0)}% × 40%${(report.wearable.insights||[]).length?' · '+report.wearable.insights.map(i=>esc(i.title)).join(', '):''}</p>`:''}
+          ${report.wearable?.combined?`<p><strong>ErgoCare Index (answers + wearable):</strong> <span style="font-weight:700">${report.wearable.combined.index.toFixed(1)}% (${report.wearable.combined.level})</span> · questionnaire ${report.wearable.combined.questionnaire.toFixed(0)}% × 60% + heart-rate / skin-response score ${report.wearable.combined.objective.toFixed(0)}% × 40%${(report.wearable.insights||[]).length?' · '+report.wearable.insights.map(i=>esc(i.title)).join(', '):''}</p>`:''}
           <p><strong>Domain scores:</strong> Musculoskeletal ${scores.musculoskeletalRisk}% · Workload ${scores.workloadStress}% · Posture ${scores.postureRisk}% · Visual Fatigue ${scores.eyeStrain}% · Recovery ${scores.recoveryRisk}%</p>
           ${pd.neck||pd.lower_back||pd.wrist ? `<p><strong>Pain sub-domains:</strong> Cervical ${pd.neck||0}% · Upper back ${pd.upper_back||0}% · Shoulder ${pd.shoulder||0}% · Lumbar ${pd.lower_back||0}% · Wrist/hand ${pd.wrist||0}% · Forearm ${pd.forearm||0}%</p>` : ''}
           <p style="font-size:.82rem;color:#6b7280;margin-top:4px;">These prototype scores are not clinical thresholds. For persistent pain or other concerns, speak with a qualified health professional.</p>
@@ -2981,14 +2989,15 @@ function renderResults() {
 /* ─── Body signals (wearable) section of the report ─── */
 function bodySignalsHTML(w) {
   if (!w?.used) return ''
-  const head = `<div class="section-head"><h2>⌚ Body Signals — what your body showed</h2><p>Measured by the ErgoCare wearable while you answered, compared with your own ${BASELINE_SECONDS}-second resting baseline.</p></div>`
+  const head = `<div class="section-head"><h2>⌚ Wearable Signals</h2><p>Heart rate and skin response are compared with your ${BASELINE_SECONDS}-second baseline. Wrist orientation and motion describe only the arm wearing the band; they do not measure back posture or whole-body activity.</p></div>`
   if (!w.available) return `<section id="body-signals">${head}<div class="notice">${esc(w.reason || 'Wearable data could not be scored.')}</div></section>`
 
-  const c = w.combined, p = w.posture, s = w.stress, st = w.stillness, cov = w.coverage || {}
-  const lvColor = { Low: '#059669', Moderate: '#d97706', High: '#dc2626' }[c.level]
-  const qShare = c.questionnaire * c.weights.questionnaire, oShare = c.objective * c.weights.objective
+  const c = w.combined, m = w.wrist_motion, s = w.stress, cov = w.coverage || {}
+  const lvColor = c ? { Low: '#059669', Moderate: '#d97706', High: '#dc2626' }[c.level] : null
+  const qShare = c ? c.questionnaire * c.weights.questionnaire : 0
+  const oShare = c ? c.objective * c.weights.objective : 0
   const pct = v => v == null ? '--' : `${Math.round(v)}%`
-  const alerts = (p?.alerts || 0) + (s?.alerts || 0) + (st?.alerts || 0)
+  const alerts = s?.alerts || 0
   const card = (k, v, sub) => `<div class="bs-card"><span class="bs-k">${k}</span><span class="bs-v">${v}</span><span class="bs-s">${sub}</span></div>`
 
   const cards = [
@@ -2996,33 +3005,33 @@ function bodySignalsHTML(w) {
          s?.avg_bpm_change != null ? `${signed(s.avg_bpm_change)} vs your resting rate` : 'no pulse data'),
     card('💧 Time stressed', s ? pct(s.pct_time_high + s.pct_time_elevated) : '--',
          s ? `high ${pct(s.pct_time_high)} · elevated ${pct(s.pct_time_elevated)}` : 'no skin-response data'),
-    card('📈 Peak skin response', s?.peak_gsr_rise_pct != null ? `${signed(s.peak_gsr_rise_pct)}%` : '--', 'rise above your baseline'),
-    card('🧍 Time slouching', p ? pct(p.pct_time_bad) : '--', 'leaning more than 20°'),
-    card('📐 Average / max lean', p ? `${Math.round(p.avg_angle)}° / ${Math.round(p.max_angle)}°` : '--',
-         p ? `Typical posture: RULA-style band ${p.rula_style_score} (${esc(p.rula_label)})` : ''),
-    card('🪑 Longest time still', fmtDur(st.longest_still_s), `${pct(st.pct_time_still)} of the time not moving`),
-    card('🔔 On-screen warnings', alerts, `posture ${p?.alerts || 0} · stress ${s?.alerts || 0} · movement ${st.alerts}`),
-    card('⏱️ Time analysed', fmtDur(w.duration_s), `sensor contact: pulse ${pct(cov.pulse_pct)} · skin ${pct(cov.gsr_pct)}`),
+    card('📈 Peak skin-response change', s?.peak_gsr_rise_pct != null ? `${signed(s.peak_gsr_rise_pct)}%` : '--', 'rise above your baseline'),
+    card('⌚ Avg / max wrist orientation change', m?.avg_orientation_change_deg != null ? `${m.avg_orientation_change_deg.toFixed(1)}° / ${m.max_orientation_change_deg.toFixed(1)}°` : '--', 'change from neutral band position'),
+    card('💪 Band arm moving', m ? pct(m.moving_pct) : '--', 'motion detected at the band-wearing wrist'),
+    card('🔔 Stress warnings', alerts, 'based on heart-rate / skin-response signals'),
+    card('⏱️ Time analysed', fmtDur(w.duration_s), `signal coverage: pulse ${pct(cov.pulse_pct)} · skin ${pct(cov.gsr_pct)} · band ${pct(cov.wrist_motion_pct)}`),
   ].join('')
 
   const insights = (w.insights || []).map(i => `<div class="insight-card ${i.severity}"><h4>${i.severity === 'warning' ? '⚠️' : 'ℹ️'} ${esc(i.title)}</h4><p>${esc(i.message)}</p></div>`).join('')
-
-  return `<section id="body-signals" class="body-section">${head}
+  const index = c ? `
     <div class="idx-card">
       <div><div class="bs-k" style="margin-bottom:4px">⭐ ErgoCare Index</div><div class="idx-num" style="color:${lvColor}">${Math.round(c.index)}%</div><div class="cat-badge" style="background:${lvColor}15;color:${lvColor};display:inline-block;margin-top:8px">${c.level} risk</div></div>
       <div>
-        <p style="font-weight:600">Your answers and your body signals, combined.</p>
-        <div class="idx-split" role="img" aria-label="Questionnaire contributes ${Math.round(qShare)} points, body signals ${Math.round(oShare)} points">
+        <p style="font-weight:600">Questionnaire and heart-rate / skin-response signals, combined.</p>
+        <div class="idx-split" role="img" aria-label="Questionnaire contributes ${Math.round(qShare)} points, heart-rate and skin-response signals ${Math.round(oShare)} points">
           <span style="width:${qShare}%;background:var(--teal)"></span><span style="width:${oShare}%;background:#f59e0b"></span>
         </div>
-        <div class="idx-legend"><span>▮ <b>${Math.round(c.questionnaire)}%</b> questionnaire × 60%</span><span style="color:#b45309">▮ <b>${Math.round(c.objective)}%</b> body signals × 40%</span></div>
+        <div class="idx-legend"><span>▮ <b>${Math.round(c.questionnaire)}%</b> questionnaire × 60%</span><span style="color:#b45309">▮ <b>${Math.round(c.objective)}%</b> heart-rate / skin-response score × 40%</span></div>
       </div>
-    </div>
+    </div>` : `<div class="notice">${esc(w.reason || 'No usable heart-rate or skin-response data; a combined score was not calculated.')}</div>`
+
+  return `<section id="body-signals" class="body-section">${head}
+    ${index}
     ${insights ? `<div class="insight-grid">${insights}</div>` : ''}
     <div class="body-stats">${cards}</div>
     <div class="chart-grid-2">
       <div class="chart-card"><h3>Heart rate &amp; skin response</h3><p class="chart-sub">Grey area = resting baseline. Skin response above +30% (dashed) counts as high stress.</p><div class="chart-canvas-wrap" style="height:260px"><canvas id="chart-body-signals"></canvas></div></div>
-      <div class="chart-card"><h3>Posture over time</h3><p class="chart-sub">Forward lean in degrees. Red above the 20° line = slouching.</p><div class="chart-canvas-wrap" style="height:260px"><canvas id="chart-body-posture"></canvas></div></div>
+      <div class="chart-card"><h3>Band-wrist orientation over time</h3><p class="chart-sub">Change in orientation from the band’s neutral baseline. This is not a posture-risk threshold.</p><div class="chart-canvas-wrap" style="height:260px"><canvas id="chart-wrist-orientation"></canvas></div></div>
     </div>
     <p class="method-note">${esc(w.method || '')}</p>
   </section>`
@@ -3061,14 +3070,12 @@ function buildBodyCharts(hist) {
       { label: 'High stress (+30%)', data: [{ x: 0, y: 30 }, { x: pts[pts.length - 1].t, y: 30 }], borderColor: '#94a3b8', borderDash: [5, 4], borderWidth: 1, yAxisID: 'y1' },
     ] },
   }))
-  const c2 = document.getElementById('chart-body-posture')
+  const c2 = document.getElementById('chart-wrist-orientation')
   if (c2) charts.push(new Chart(c2, {
     type: 'line', plugins: [shade], options: { ...common,
-      scales: { x: xAxis, y: { min: 0, suggestedMax: 35, title: { display: true, text: 'Forward lean (°)' }, grid: { color: '#eef2f6' } } } },
+      scales: { x: xAxis, y: { min: 0, suggestedMax: 35, title: { display: true, text: 'Wrist orientation change (°)' }, grid: { color: '#eef2f6' } } } },
     data: { datasets: [
-      { label: 'Forward lean (°)', data: xy('posture_angle'), borderColor: '#0a9396', borderWidth: 1.8, spanGaps: false,
-        segment: { borderColor: ctx => (ctx.p0.parsed.y > 20 || ctx.p1.parsed.y > 20) ? '#dc2626' : '#0a9396' } },
-      { label: 'Slouch threshold (20°)', data: [{ x: 0, y: 20 }, { x: pts[pts.length - 1].t, y: 20 }], borderColor: '#dc2626', borderDash: [5, 4], borderWidth: 1 },
+      { label: 'Band-wrist orientation change (°)', data: xy('wrist_orientation_change'), borderColor: '#0a9396', borderWidth: 1.8, spanGaps: false },
     ] },
   }))
   window._bodyCharts = charts
@@ -3300,6 +3307,13 @@ document.getElementById('app').addEventListener('input',e=>{
   if(t.dataset.field==='transcript'){state.transcript=t.value;scheduleMatch(t.value)}
   const nb=document.querySelector('[data-action="next"]')
   if(nb)nb.disabled=!canContinue()
+})
+document.getElementById('app').addEventListener('change',e=>{
+  const t=e.target
+  if(t.dataset.field==='answering-hand' && (t.value==='left'||t.value==='right')) {
+    wear.answeringHand=t.value
+    paintWear()
+  }
 })
 
 /* ════════════════════════════════════════════════════

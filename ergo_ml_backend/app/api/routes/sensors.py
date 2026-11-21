@@ -9,7 +9,7 @@ Device side (ESP32 over Wi-Fi, or firmware/usb_bridge.py over USB):
 Session side (the web app):
   POST   /api/sessions/{id}/device           attach a wearable to this session
   DELETE /api/sessions/{id}/device           detach it
-  POST   /api/sessions/{id}/baseline/start   begin the 60 s relaxed baseline (+ zero posture)
+  POST   /api/sessions/{id}/baseline/start   begin the 60 s relaxed baseline (+ neutral band-wrist orientation)
   POST   /api/sessions/{id}/baseline/finish  compute the personal baseline
   GET    /api/sessions/{id}/sensors/latest   live values, streaks and on-screen warnings
   GET    /api/sessions/{id}/sensors/history  all readings, for the report graphs
@@ -131,7 +131,7 @@ def ingest_reading(payload: SensorReadingIn, device_id: str = DEVICE_ID, db: Ses
     """
     Receive one reading. Always kept as the device's live value; also stored
     against the linked session when one is active. The reply tells the device
-    to zero its posture when the app has started a baseline.
+    to record the band-wrist's current orientation as neutral during baseline.
     """
     reading = payload.model_dump()
     reading["device_id"] = device_id
@@ -251,7 +251,7 @@ def baseline_start(
     db: Session = Depends(get_db),
     caller: str = Depends(require_session_access),
 ):
-    """Start the relaxed baseline. The device zeroes its posture on its next reading."""
+    """Start the relaxed baseline. The device records neutral band-wrist orientation."""
     _authorized_session(session_id, db, caller)
     link = _get_link(session_id, db)
     if not link.active:
@@ -261,7 +261,7 @@ def baseline_start(
     db.commit()
     S.registry.request_calibrate(link.device_id)
     return {"started": True, "duration_s": S.BASELINE_SECONDS,
-            "message": "Sit upright and relax - keep your fingers on the sensors."}
+            "message": "Sit comfortably and relax - keep the band wrist neutral and fingers on the sensors."}
 
 
 @router.post("/{session_id}/baseline/finish")

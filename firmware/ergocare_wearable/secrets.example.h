@@ -10,3 +10,4 @@
 // Must match DEVICE_INGEST_TOKEN in ergo_ml_backend/.env.
 // Generate one with:  python -c "import secrets;print(secrets.token_urlsafe(32))"
 #define DEVICE_TOKEN  ""
+    

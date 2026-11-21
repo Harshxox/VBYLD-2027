@@ -8,7 +8,7 @@ Every participant (seed 2026) gets:
   - 40 answers from a hidden "true" risk level, with separate levels for posture
     and workload so answers and body can disagree, plus random answer noise;
   - a 60-s calm baseline, then 4-8 minutes of wearable readings (the demo
-    simulator's body model) with a KNOWN share of time spent slouching and stressed;
+    simulator's body model) with a KNOWN share of wrist movement and stress;
   - 5% have poor sensor contact (finger off, electrodes loose) for the whole session.
 They go through the same functions the server uses at /complete:
 calculate_scores() -> compute_baseline() -> score_session().
@@ -17,7 +17,8 @@ Checks
   1. robustness: no crash, every score within 0-100
   2. ErgoCare Index = 60% questionnaire + 40% body signals (and its band)
   3. insight rules applied exactly as documented
-  4. detection vs. what was simulated: slouching >= 30% of the time, stressed >= 40%
+  4. wrist movement remains descriptive (never interpreted as torso posture);
+     stress score follows the simulated stress signal
   5. poor contact never produces a stress result
   6. questionnaire score rises with the participant's true risk level
 
@@ -43,7 +44,7 @@ from app.domain.sensor_scoring import score_session                   # noqa: E4
 import demo_simulator                                                 # noqa: E402
 
 N, SEED = 500, 2026
-SLOUCH_TRUE, STRESS_TRUE = 0.30, 0.40          # the engine's own thresholds (30% / score 40)
+STRESS_TRUE = 0.40                             # the engine's own threshold (score 40)
 MARGIN = 0.05                                  # "clear" cases are at least this far from a threshold
 FIELDS = ("seq", "bpm", "bpm_avg", "finger", "ir", "gsr_raw", "gsr_mv", "gsr_contact",
           "tilt", "gyro", "acc_std", "moving", "pulse_ok", "mpu_ok")
@@ -72,7 +73,7 @@ def blocks(rng, seconds, frac) -> list:
     return state
 
 
-def wearable(rng, live_s, slouch, stressed, poor_contact):
+def wearable(rng, live_s, wrist_turn, stressed, poor_contact):
     clock = {"t": 0.0}
     demo_simulator.time = types.SimpleNamespace(monotonic=lambda: clock["t"])
     demo_simulator.random = rng                  # the simulator's noise follows our seed
@@ -84,11 +85,11 @@ def wearable(rng, live_s, slouch, stressed, poor_contact):
     rows = []
     for sec in range(S.BASELINE_SECONDS + live_s):
         live = sec - S.BASELINE_SECONDS
-        body.slouch = live >= 0 and slouch[live]
+        body.wrist_rotated = live >= 0 and wrist_turn[live]
         body.stressed = live >= 0 and stressed[live]
         body.finger = not (poor_contact and live >= 0)
         if sec == 0:
-            body.calibrate()                     # starting the baseline zeroes posture
+            body.calibrate()                     # starting the baseline zeroes wrist orientation
         clock["t"] = float(sec)
         r = body.step()
         if poor_contact and live >= 0:
@@ -136,34 +137,37 @@ def main() -> int:
         for cat in ("eyes", "pain", "recovery"):
             levels[cat] = min(1.0, max(0.0, general + rng.gauss(0, 0.15)))
         live_s = rng.randint(240, 480)
-        slouch = blocks(rng, live_s, rng.uniform(0, 0.8))
+        wrist_turn = blocks(rng, live_s, rng.uniform(0, 0.8))
         stressed = blocks(rng, live_s, rng.uniform(0, 0.8))
         poor = rng.random() < 0.05
 
         try:
             scores, _ = calculate_scores(answers_for(rng, levels))
-            readings, baseline, t0 = wearable(rng, live_s, slouch, stressed, poor)
+            readings, baseline, t0 = wearable(rng, live_s, wrist_turn, stressed, poor)
             w = score_session(readings, baseline, t0, scores)
         except Exception as exc:                  # robustness check
             problems.append(f"P{pid}: crashed - {exc!r}")
             continue
 
-        truth_slouch = sum(slouch) / live_s
+        truth_wrist_turn = sum(wrist_turn) / live_s
         truth_stress = sum(stressed) / live_s
-        c, p, st = w.get("combined") or {}, w.get("posture") or {}, w.get("stress")
+        c, wrist, st = w.get("combined") or {}, w.get("wrist_motion") or {}, w.get("stress")
         titles = [i["title"] for i in w.get("insights", [])]
         sc = scores.model_dump()
         checks = []
 
-        vals = [v for v in sc.values()] + [c.get("index"), c.get("objective"), p.get("score"),
+        vals = [v for v in sc.values()] + [c.get("index"), c.get("objective"),
                                            (st or {}).get("score")]
         checks.append(("scores within 0-100", all(v is None or 0 <= v <= 100 for v in vals)))
         if w.get("available"):
-            idx = round(0.6 * c["questionnaire"] + 0.4 * c["objective"], 1)
-            band = "High" if c["index"] >= 70 else "Moderate" if c["index"] >= 40 else "Low"
-            checks.append(("index = 0.6 q + 0.4 body", abs(c["index"] - idx) <= 0.1))
-            checks.append(("index band", c["level"] == band))
-            checks.append(("questionnaire part = overall risk", abs(c["questionnaire"] - sc["overall_risk"]) <= 0.1))
+            if c:
+                idx = round(0.6 * c["questionnaire"] + 0.4 * c["objective"], 1)
+                band = "High" if c["index"] >= 70 else "Moderate" if c["index"] >= 40 else "Low"
+                checks.append(("index = 0.6 q + 0.4 body", abs(c["index"] - idx) <= 0.1))
+                checks.append(("index band", c["level"] == band))
+                checks.append(("questionnaire part = overall risk", abs(c["questionnaire"] - sc["overall_risk"]) <= 0.1))
+            else:
+                checks.append(("no body score/index without usable pulse or GSR", w["objective_score"] is None))
             body_stress = (st or {}).get("score")
             exp = set()
             if body_stress is not None:
@@ -171,24 +175,27 @@ def main() -> int:
                     exp.add("Hidden stress" if sc["workload_stress"] < 40 else "Stress confirmed")
                 elif body_stress < 20 and sc["workload_stress"] >= 60:
                     exp.add("Calm during the test")
-            if p and p["pct_time_bad"] >= 30:
-                exp.add("Posture blind spot" if sc["posture_risk"] < 40 else "Posture problem confirmed")
             checks.append(("insight rules", set(titles) == exp))
         else:
             checks.append(("unavailable only with too little data", poor or live_s < 30))
+        checks.append(("wrist movement is descriptive only",
+                       not any("posture" in title.lower() for title in titles)
+                       and (st is None or w["objective_score"] == st["score"])))
         if poor:
-            checks.append(("poor contact -> no stress result", st is None and not any("tress" in t for t in titles)))
+            checks.append(("poor contact -> no stress result", st is None and c == {}))
 
         failed = [name for name, ok in checks if not ok]
         problems += [f"P{pid}: {f}" for f in failed]
         rows.append({
             "participant": pid, "true_risk_level": round(general, 3),
-            "true_slouch_pct": round(100 * truth_slouch, 1), "true_stressed_pct": round(100 * truth_stress, 1),
+            "true_wrist_turn_pct": round(100 * truth_wrist_turn, 1), "true_stressed_pct": round(100 * truth_stress, 1),
             "poor_contact": poor, "session_s": live_s,
             "questionnaire_overall": sc["overall_risk"], "posture_risk": sc["posture_risk"],
             "workload_stress": sc["workload_stress"], "musculoskeletal_risk": sc["musculoskeletal_risk"],
             "eye_strain": sc["eye_strain"], "recovery_risk": sc["recovery_risk"],
-            "measured_slouch_pct": p.get("pct_time_bad"), "body_stress_score": (st or {}).get("score"),
+            "avg_wrist_orientation_change_deg": wrist.get("avg_orientation_change_deg"),
+            "band_arm_moving_pct": wrist.get("moving_pct"),
+            "body_stress_score": (st or {}).get("score"),
             "body_signal_score": c.get("objective"), "ergocare_index": c.get("index"), "index_level": c.get("level"),
             "insights": "; ".join(titles), "checks_failed": "; ".join(failed),
         })
@@ -200,8 +207,7 @@ def main() -> int:
     print(f"  rule checks (index formula, band, insights, 0-100, contact): "
           f"{len([r for r in rows if not r['checks_failed']])}/{len(rows)} participants passed all")
 
-    for name, tkey, mkey, thr in (("Slouching >= 30% of the time", "true_slouch_pct", "measured_slouch_pct", 30),
-                                  ("Stressed >= 40% of the time", "true_stressed_pct", "body_stress_score", 40)):
+    for name, tkey, mkey, thr in (("Stressed >= 40% of the time", "true_stressed_pct", "body_stress_score", STRESS_TRUE * 100),):
         pairs = [(r[tkey] >= thr, r[mkey] is not None and r[mkey] >= thr) for r in good]
         clear = [(r[tkey] >= thr, r[mkey] is not None and r[mkey] >= thr) for r in good
                  if abs(r[tkey] - thr) >= MARGIN * 100]
@@ -219,8 +225,7 @@ def main() -> int:
     print(f"\n  questionnaire score vs true risk level: Spearman rho = {rho:.3f}")
     print("  index levels:", {lv: sum(r["index_level"] == lv for r in rows) for lv in ("Low", "Moderate", "High")})
     print("  insights:", {t: sum(t in r["insights"] for r in rows) for t in
-                          ("Hidden stress", "Stress confirmed", "Calm during the test",
-                           "Posture blind spot", "Posture problem confirmed")})
+                          ("Hidden stress", "Stress confirmed", "Calm during the test")})
     for prob in problems[:20]:
         print("  PROBLEM", prob)
 

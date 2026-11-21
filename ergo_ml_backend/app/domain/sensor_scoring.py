@@ -6,13 +6,13 @@ questionnaire score into the ErgoCare Index, and explains where the two disagree
 Every rule is transparent and hand-set (no trained model), so each number in
 the report can be explained:
 
-  posture score   = 70% x share of time leaning > 20 deg + 30% x average lean (30 deg = 100)
   stress score    = share of time at HIGH stress + half the share at ELEVATED stress
                     (both relative to the person's own 60 s baseline)
-  stillness score = longest period without moving (20 min = 100)
-  objective score = 50% posture + 40% stress + 10% stillness   (re-weighted if a signal is missing)
+  objective score = stress score (only when pulse or skin-response data is available)
   ErgoCare Index  = 60% questionnaire + 40% objective
 
+Wrist orientation and movement are reported as observations only. A wrist-worn
+sensor cannot establish torso posture or whole-body stillness.
 Readings taken during the baseline are excluded — only the questionnaire period counts.
 """
 from __future__ import annotations
@@ -23,21 +23,18 @@ from typing import Callable, Dict, List, Optional
 
 from app.domain import sensors as S
 
-W_POSTURE, W_STRESS, W_STILL = 0.5, 0.4, 0.1
 W_QUESTIONNAIRE, W_OBJECTIVE = 0.6, 0.4
 MIN_READINGS = 30            # need at least ~30 s of questionnaire data
-LEAN_FULL_DEG = 30           # average lean that counts as 100
-STILL_FULL_S = 1200          # 20 min without moving counts as 100
 
 BODY_STRESS_HIGH = 40        # stress score at/above this = body clearly stressed
 BODY_STRESS_LOW = 20
 REPORTED_LOW = 40            # questionnaire score below this = "low" self-report
 REPORTED_HIGH = 60
-SLOUCH_TIME_HIGH = 30        # % of time leaning > 20 deg that counts as poor posture
 
-METHOD = ("Objective score = 50% posture (time leaning > 20 deg and average lean) + "
-          "40% stress (time with skin response or heart rate above your own baseline) + "
-          "10% stillness (longest time without moving). "
+METHOD = ("Body-signal score uses only heart-rate and skin-response changes relative to "
+          "your own 60 s baseline: time at HIGH stress plus half the time at ELEVATED stress. "
+          "Wrist orientation change and band-arm movement are descriptive observations only; "
+          "they do not measure torso posture or whole-body activity. "
           "ErgoCare Index = 60% questionnaire + 40% objective. "
           "Rule-based screening, not a medical diagnosis.")
 
@@ -65,20 +62,6 @@ def _runs(points: List[dict], test: Callable[[dict], bool]) -> List[float]:
     if start is not None:
         runs.append((prev - start).total_seconds() + 1)
     return runs
-
-
-def _rula_style(angle: float) -> tuple[int, str]:
-    """
-    RULA-inspired trunk/upper-back flexion band from the typical lean angle.
-    (RULA proper needs an observer; this uses the measured angle only.)
-    """
-    if angle <= 10:
-        return 1, "Upright (0-10 deg)"
-    if angle <= 20:
-        return 2, "Mild lean (10-20 deg)"
-    if angle <= 60:
-        return 3, "Moderate flexion (20-60 deg)"
-    return 4, "Severe flexion (> 60 deg)"
 
 
 def score_session(readings: List[dict], baseline: Optional[dict],
@@ -109,24 +92,18 @@ def score_session(readings: List[dict], baseline: Optional[dict],
     duration = (pts[-1]["received_at"] - pts[0]["received_at"]).total_seconds() + 1
     out.update({"available": True, "duration_s": round(duration), "readings": len(pts), "baseline": baseline})
 
-    # ── Posture ────────────────────────────────────────────────────────────────
-    angles = [p["posture_angle"] for p in pts if p["mpu_ok"] and p["posture_angle"] is not None]
-    posture = None
-    if angles:
-        pct_bad = _pct(sum(a > S.POSTURE_BAD_DEG for a in angles), len(angles))
-        avg = statistics.mean(angles)
-        rula, rula_label = _rula_style(statistics.median(angles))
-        score = 0.7 * pct_bad + 0.3 * min(100.0, avg / LEAN_FULL_DEG * 100)
-        posture = {
-            "score":        round(score, 1),
-            "pct_time_bad": pct_bad,
-            "avg_angle":    round(avg, 1),
-            "p90_angle":    round(sorted(angles)[int(0.9 * (len(angles) - 1))], 1),
-            "max_angle":    round(max(angles), 1),
-            "rula_style_score": rula,
-            "rula_label":   rula_label,
-            "alerts":       sum(1 for d in _runs(pts, lambda p: p["posture_bad"]) if d >= S.POSTURE_WARN_AFTER_S),
-        }
+    # Wrist data describes only the band-wearing arm; it is not a posture or
+    # sedentary-activity assessment and therefore does not contribute to scores.
+    wrist_angles = [
+        p["wrist_orientation_change"] for p in pts
+        if p["mpu_ok"] and p["wrist_orientation_change"] is not None
+    ]
+    wrist_motion = {
+        "readings": len(wrist_angles),
+        "moving_pct": _pct(sum(p["moving"] for p in pts if p["mpu_ok"]), sum(p["mpu_ok"] for p in pts)),
+        "avg_orientation_change_deg": round(statistics.mean(wrist_angles), 1) if wrist_angles else None,
+        "max_orientation_change_deg": round(max(wrist_angles), 1) if wrist_angles else None,
+    }
 
     # ── Stress (only readings where baseline-relative stress is known) ─────────
     known = [p for p in pts if p["stress_level"] is not None]
@@ -149,48 +126,43 @@ def score_session(readings: List[dict], baseline: Optional[dict],
             "alerts":            sum(1 for d in _runs(pts, lambda p: p["stress_level"] == "high") if d >= S.STRESS_WARN_AFTER_S),
         }
 
-    # ── Stillness ──────────────────────────────────────────────────────────────
-    still_runs = _runs(pts, lambda p: not p["moving"])
-    longest = max(still_runs, default=0)
-    stillness = {
-        "score":           round(min(100.0, longest / STILL_FULL_S * 100), 1),
-        "longest_still_s": round(longest),
-        "pct_time_still":  _pct(sum(not p["moving"] for p in pts), len(pts)),
-        "alerts":          sum(1 for d in still_runs if d >= S.STILL_WARN_AFTER_S),
-    }
-
     out["coverage"] = {
         "pulse_pct":   _pct(sum(p["bpm"] is not None for p in pts), len(pts)),
         "gsr_pct":     _pct(sum(p["gsr"] is not None for p in pts), len(pts)),
-        "posture_pct": _pct(len(angles), len(pts)),
+        "wrist_motion_pct": _pct(len(wrist_angles), len(pts)),
     }
-    out.update({"posture": posture, "stress": stress, "stillness": stillness})
+    out.update({"wrist_motion": wrist_motion, "stress": stress})
 
-    # ── Objective score (re-weighted over the signals that exist) ─────────────
-    parts = [(W_POSTURE, posture), (W_STRESS, stress), (W_STILL, stillness)]
-    parts = [(w, p["score"]) for w, p in parts if p is not None]
-    total_w = sum(w for w, _ in parts)
-    objective = round(sum(w * s for w, s in parts) / total_w, 1)
+    # Wrist motion is intentionally not used as a risk score. Without usable
+    # pulse or skin-response data there is no body-signal score to combine.
+    objective = stress["score"] if stress else None
     out["objective_score"] = objective
 
     # ── ErgoCare Index ─────────────────────────────────────────────────────────
-    q_overall = float(questionnaire.overall_risk)
-    index = round(W_QUESTIONNAIRE * q_overall + W_OBJECTIVE * objective, 1)
-    out["combined"] = {
-        "index":         index,
-        "level":         _level(index),
-        "questionnaire": round(q_overall, 1),
-        "objective":     objective,
-        "weights":       {"questionnaire": W_QUESTIONNAIRE, "objective": W_OBJECTIVE},
-    }
+    if objective is not None:
+        q_overall = float(questionnaire.overall_risk)
+        index = round(W_QUESTIONNAIRE * q_overall + W_OBJECTIVE * objective, 1)
+        out["combined"] = {
+            "index":         index,
+            "level":         _level(index),
+            "questionnaire": round(q_overall, 1),
+            "objective":     objective,
+            "weights":       {"questionnaire": W_QUESTIONNAIRE, "objective": W_OBJECTIVE},
+        }
+    else:
+        out["combined"] = None
+        out["reason"] = (
+            "No usable pulse or skin-response data was captured. "
+            "Wrist motion is shown as an observation, but no body-signal score was calculated."
+        )
 
-    out["insights"] = _insights(questionnaire, posture, stress)
-    out["actions"] = _actions(out["insights"], posture, stress, stillness)
+    out["insights"] = _insights(questionnaire, stress)
+    out["actions"] = _actions(out["insights"], stress)
     return out
 
 
 # ── Where answers and body signals agree / disagree ───────────────────────────
-def _insights(q, posture: Optional[dict], stress: Optional[dict]) -> List[dict]:
+def _insights(q, stress: Optional[dict]) -> List[dict]:
     items: List[dict] = []
     reported_stress = float(q.workload_stress)
     if stress:
@@ -209,29 +181,13 @@ def _insights(q, posture: Optional[dict], stress: Optional[dict]) -> List[dict]:
                           "message": f"You reported high workload stress ({reported_stress:.0f}%), but your body stayed "
                                      f"calm here - your stress may be tied to specific work situations."})
 
-    reported_posture = float(q.posture_risk)
-    if posture and posture["pct_time_bad"] >= SLOUCH_TIME_HIGH:
-        if reported_posture < REPORTED_LOW:
-            items.append({"type": "posture_blind_spot", "severity": "warning", "title": "Posture blind spot",
-                          "message": f"You rated your posture setup as low risk ({reported_posture:.0f}%), but you leaned "
-                                     f"forward more than {S.POSTURE_BAD_DEG} deg for {posture['pct_time_bad']:.0f}% of the time."})
-        else:
-            items.append({"type": "confirmed_posture", "severity": "warning", "title": "Posture problem confirmed",
-                          "message": f"Your answers and the sensor agree: you leaned forward more than "
-                                     f"{S.POSTURE_BAD_DEG} deg for {posture['pct_time_bad']:.0f}% of the time."})
     return items
 
 
-def _actions(insights: List[dict], posture, stress, stillness) -> List[str]:
+def _actions(insights: List[dict], stress: Optional[dict]) -> List[str]:
     kinds = {i["type"] for i in insights}
     actions: List[str] = []
-    if posture and posture["pct_time_bad"] >= SLOUCH_TIME_HIGH:
-        actions.append(f"Wearable: you leaned forward {posture['pct_time_bad']:.0f}% of the time - raise your screen "
-                       f"to eye level and check your posture every 20 minutes.")
     if kinds & {"hidden_stress", "confirmed_stress"}:
         actions.append("Wearable: your body showed stress responses - take a 2-minute slow-breathing break "
                        "(breathe in 4 s, out 6 s) between tasks.")
-    if stillness["longest_still_s"] >= S.STILL_WARN_AFTER_S * 5:
-        actions.append(f"Wearable: you sat still for {stillness['longest_still_s'] // 60} minutes at a stretch - "
-                       f"stand up and move for 2 minutes every 30 minutes.")
     return actions

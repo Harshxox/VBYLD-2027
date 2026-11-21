@@ -7,7 +7,7 @@ to the backend, exactly as the Wi-Fi firmware would:
     ESP32 --USB--> usb_bridge.py --HTTP--> POST {backend}/api/devices/{device_id}/readings
 
 If the backend replies {"calibrate": true} (the app's baseline step), the
-bridge tells the ESP32 to set the current posture as upright.
+bridge tells the ESP32 to use the current band-wrist orientation as neutral.
 
 Keeps running through problems: re-opens the port if the cable is unplugged,
 and keeps reading (with a warning) if the backend is not running.
@@ -17,7 +17,7 @@ Usage:
     python usb_bridge.py --port COM7
     python usb_bridge.py --backend http://127.0.0.1:8000
     python usb_bridge.py --no-backend             # just show readings (no forwarding)
-    Type "cal" + Enter at any time to set the current posture as upright.
+    Type "cal" + Enter at any time to recalibrate the band-wrist orientation.
 
 Close the Arduino IDE Serial Monitor / serial_monitor.py first - only one
 program can use the COM port at a time.
@@ -181,15 +181,27 @@ class Forwarder:
 
 
 def describe(r: dict) -> str:
+    finger = bool(r.get("finger"))
+    bpm = r.get("bpm_avg")
     if not r.get("pulse_ok", True):
         heart = "sensor error"
-    elif r["finger"] and r["bpm_avg"] > 0:
-        heart = f"{r['bpm_avg']:5.1f} BPM"
+    elif finger and bpm is not None and bpm > 0:
+        heart = f"{bpm:5.1f} BPM"
     else:
-        heart = "reading..." if r["finger"] else "no finger"
-    gsr = f"{r['gsr_raw']:.0f}" if r.get("gsr_contact", True) else "no contact"
-    return (f"#{r['seq']:<5} heart {heart:<12} | gsr {gsr:<10} | "
-            f"tilt {r['tilt']:5.1f} deg | {'moving' if r['moving'] else 'still '}")
+        heart = "reading..." if finger else "no finger"
+
+    if not r.get("gsr_contact", True):
+        gsr = "no contact"
+    elif r.get("gsr_raw") is not None:
+        gsr = f"{r['gsr_raw']:.0f}"
+    else:
+        gsr = "unavailable"
+
+    tilt = r.get("tilt")
+    wrist = f"{tilt:5.1f} deg" if tilt is not None else "unavailable"
+    movement = "moving" if r.get("moving") else "still "
+    return (f"#{r.get('seq', '?'):<5} heart {heart:<12} | gsr {gsr:<10} | "
+            f"wrist change {wrist} | {movement}")
 
 
 def main() -> None:
@@ -208,10 +220,10 @@ def main() -> None:
         for line in sys.stdin:
             if line.strip().lower() == "cal" and state["ser"]:
                 state["ser"].write(b"CAL\n")
-                print("[usb] posture recalibration sent")
+                print("[usb] band-wrist orientation recalibration sent")
 
     threading.Thread(target=read_commands, daemon=True).start()
-    print("ErgoCare USB bridge - Ctrl+C to stop, type 'cal' + Enter to recalibrate posture.")
+    print("ErgoCare USB bridge - Ctrl+C to stop, type 'cal' + Enter to recalibrate band-wrist orientation.")
 
     try:
         while True:
@@ -231,18 +243,6 @@ def main() -> None:
                     except json.JSONDecodeError:
                         continue            # partial line after reconnect
 
-                    # If the physical MPU6050 sensor is not connected on the breadboard,
-                    # provide upright posture simulation so the user's assessment and UI work seamlessly.
-                    if not reading.get("mpu_ok", True):
-                        reading["mpu_ok"] = True
-                        reading["tilt"] = reading.get("tilt") or 3.2
-                        reading["ax"] = reading.get("ax") or 0.1
-                        reading["ay"] = reading.get("ay") or 0.2
-                        reading["az"] = reading.get("az") or 9.8
-                        reading["gyro"] = reading.get("gyro") or 0.05
-                        reading["acc_std"] = reading.get("acc_std") or 0.02
-                        reading["moving"] = False
-
                     status = ""
                     if fwd:
                         reply = fwd.send(reading)
@@ -250,7 +250,7 @@ def main() -> None:
                                   else f" | buffered ({len(fwd.pending)} waiting)")
                         if reply and reply.get("calibrate"):
                             ser.write(b"CAL\n")
-                            print("[usb] app requested posture calibration")
+                            print("[usb] app requested band-wrist orientation calibration")
                     print(describe(reading) + status)
             except serial.SerialException:
                 print("[usb] ESP32 disconnected - waiting for it to come back...")

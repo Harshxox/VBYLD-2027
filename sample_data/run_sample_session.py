@@ -12,9 +12,9 @@ the server scores by the time each reading arrives. Run it while no other
 wearable is linked to a session. The test session is deleted at the end
 (needs ADMIN_USERNAME / ADMIN_PASSWORD in ergo_ml_backend/.env).
 
-Expected story: calm 60-s baseline -> low-risk answers -> 40 s of slouching ->
-30 s of stress. So the report must show the wearable, a posture warning and a
-"Posture blind spot" (answers said posture is fine, the sensor says otherwise).
+Expected story: calm 60-s baseline -> low-risk answers -> band-wrist rotation ->
+30 s of stress. Wrist movement is descriptive only and must not trigger a
+torso-posture warning or "Posture blind spot".
 """
 import argparse
 import json
@@ -76,7 +76,7 @@ def main() -> int:
     answers = json.loads((HERE / "answers_low_risk.json").read_text(encoding="utf-8"))["answers"]
     # All 60 s: the server only scores readings from 60 s after the baseline starts
     baseline = [r for r in readings if r["_phase"] == "baseline"]
-    live = [r for r in readings if r["_phase"] in ("slouch", "stressed")]
+    live = [r for r in readings if r["_phase"] in ("wrist_turn", "stressed")]
 
     print("1. Backend and consent")
     if not check("backend is running", call(base, "GET", "/health")[0] == 200, base):
@@ -113,7 +113,7 @@ def main() -> int:
                  for a in answers)
         check("all 40 answers saved", ok == len(answers), f"{ok}/{len(answers)}")
 
-        print(f"\n4. Live readings ({len(live)} s: slouching, then stressed)")
+        print(f"\n4. Live readings ({len(live)} s: wrist rotation, then stress)")
         seen = set()
         for i, r in enumerate(live):
             send_reading(base, r, device_token)
@@ -121,13 +121,17 @@ def main() -> int:
                 _, d = call(base, "GET", f"/api/sessions/{sid}/sensors/latest", headers=auth)
                 seen.update(w["type"] for w in (d or {}).get("warnings", []))
             time.sleep(1)
-        check("on-screen posture warning raised while slouching", "posture" in seen, f"warnings seen: {sorted(seen)}")
+        check("wrist rotation does not trigger a torso-posture warning",
+              "posture" not in seen, f"warnings seen: {sorted(seen)}")
 
         print("\n5. Report")
         st, done = call(base, "POST", f"/api/sessions/{sid}/complete", None, auth)
         if check("session completed and scored", st == 200, f"HTTP {st}"):
             w = (done["report"] or {}).get("wearable") or {}
             check("report includes the wearable section", w.get("available") is True)
+            check("report describes wrist orientation separately from posture",
+                  w.get("wrist_motion", {}).get("avg_orientation_change_deg") is not None
+                  and not w.get("posture"))
             c = w.get("combined") or {}
             if c:
                 expected = round(0.6 * c["questionnaire"] + 0.4 * c["objective"], 1)
@@ -135,9 +139,8 @@ def main() -> int:
                       abs(c["index"] - expected) <= 0.1,
                       f"{c['index']} = 0.6 x {c['questionnaire']} + 0.4 x {c['objective']}")
             titles = [i["title"] for i in w.get("insights", [])]
-            p = w.get("posture") or {}
-            check("'Posture blind spot' found (low-risk answers, but slouching)", "Posture blind spot" in titles,
-                  f"insights: {titles}; leaning > 20 deg {p.get('pct_time_bad')}% of the time")
+            check("no posture insight inferred from wrist movement",
+                  not any("posture" in title.lower() for title in titles), f"insights: {titles}")
         st, pdf = call(base, "GET", f"/api/sessions/{sid}/report.pdf", headers=auth, raw=True)
         check("PDF report downloads", st == 200 and isinstance(pdf, bytes) and pdf[:4] == b"%PDF",
               f"{len(pdf) if isinstance(pdf, bytes) else 0:,} bytes")

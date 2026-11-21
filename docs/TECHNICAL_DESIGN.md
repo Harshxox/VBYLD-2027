@@ -14,7 +14,7 @@ ErgoCare screens students and desk workers for posture- and stress-related strai
 | Source | What it captures | How |
 |---|---|---|
 | **What people say** | 40 questions on workload, eyes, posture, movement, pain and recovery | Typed or spoken, in English, हिन्दी or ಕನ್ನಡ |
-| **What the body shows** | Heart rate, skin response (a stress signal), posture and movement | Low-cost ESP32 wearable, 1 reading per second |
+| **Wearable signals** | Heart rate, skin response, and band-wrist orientation/motion observations | Low-cost ESP32 wearable, 1 reading per second |
 
 Both are merged into one **ErgoCare Index** and a report (web page + PDF) that also points out where answers and body **disagree** — e.g. *"You reported low stress, but your body showed stress responses for 40% of the session."*
 
@@ -29,7 +29,7 @@ flowchart LR
   subgraph W["Wearable (hardware)"]
     P["MAX30102<br/>heart rate"] --> E["ESP32 firmware<br/>100 Hz sampling"]
     G["GSR sensor<br/>skin response"] --> E
-    M["MPU6050<br/>posture + movement"] --> E
+    M["MPU6050<br/>band-wrist motion"] --> E
   end
   subgraph C["Connection"]
     B["usb_bridge.py"]
@@ -140,8 +140,8 @@ sequenceDiagram
   A->>B: GET /api/devices/status (find the band)
   A->>B: POST .../device (link band to session)
   A->>B: POST .../baseline/start
-  B-->>W: reply calibrate: true (posture now = upright)
-  Note over U,W: 60 s at rest: personal heart rate, skin response, posture
+  B-->>W: reply calibrate: true (band-wrist orientation now = neutral)
+  Note over U,W: 60 s at rest: personal heart rate, skin response, neutral band-wrist orientation
   A->>B: POST .../baseline/finish
   loop 40 questions
     U->>A: speak or type an answer
@@ -149,7 +149,7 @@ sequenceDiagram
     B-->>A: Understood as option (user confirms)
     A->>B: POST .../answers
     A->>B: GET .../sensors/latest every 1 s
-    B-->>A: live values + warnings (e.g. slouching > 10 s)
+    B-->>A: live heart-rate, skin-response and band-wrist motion values + stress warnings
   end
   A->>B: POST .../complete
   B-->>A: scores, ErgoCare Index, insights
@@ -163,12 +163,13 @@ sequenceDiagram
 | Sensor | Signal | ESP32 connection |
 |---|---|---|
 | MAX30102 (HW-058) | Heart rate (infrared pulse) | I²C SDA 21 / SCL 22, address 0x57 |
-| MPU6050 | Tilt from upright, movement | Same I²C bus, address 0x68 |
+| MPU6050 (inside wrist band) | Band-wrist orientation change and movement only | Same I²C bus, address 0x68 |
 | GSR module + finger electrodes | Skin conductance (stress) | Analog GPIO34 (ADC1 — works with Wi-Fi on), powered from 3.3 V |
 
-- **Firmware:** core 1 samples every sensor at 100 Hz so no heartbeat is missed; core 0 sends the newest reading over Wi-Fi so a slow network never blocks sampling. Every second one JSON line goes out on USB serial (115200 baud). Serial command `CAL` sets the current posture as upright.
+- **Placement:** the app asks which hand will answer and instructs the participant to wear the band on the opposite wrist. The band tracks only its own wrist/arm; it cannot measure torso posture, the answering-hand wrist, or whole-body activity.
+- **Firmware:** core 1 samples every sensor at 100 Hz so no heartbeat is missed; core 0 sends the newest reading over Wi-Fi so a slow network never blocks sampling. Every second one JSON line goes out on USB serial (115200 baud). Serial command `CAL` records the band-wrist's current orientation as neutral.
 - **USB bridge:** reads the serial lines, forwards each to the backend, re-opens the port if the cable is unplugged and re-sends buffered readings with their age (`age_ms`) so they keep their real time.
-- **Reading format** (validated and range-limited by the server; NaN/Infinity rejected): `seq, uptime_ms, bpm, bpm_avg, finger, ir, gsr_raw (0–4095), gsr_mv, gsr_contact, tilt (0–180°), ax, ay, az, gyro, acc_std, moving, pulse_ok, mpu_ok, wifi, age_ms`. See [`sample_data/wearable_session.jsonl`](../sample_data/wearable_session.jsonl).
+- **Reading format** (validated and range-limited by the server; NaN/Infinity rejected): `seq, uptime_ms, bpm, bpm_avg, finger, ir, gsr_raw (0–4095), gsr_mv, gsr_contact, tilt (legacy wire field for band-wrist orientation change, 0–180°), ax, ay, az, gyro, acc_std, moving, pulse_ok, mpu_ok, wifi, age_ms`. API-derived data calls this `wrist_orientation_change`; it is descriptive only and does not affect the ergonomic risk score. See [`sample_data/wearable_session.jsonl`](../sample_data/wearable_session.jsonl).
 
 ---
 
@@ -248,31 +249,26 @@ The web app keeps an identical copy of step 1–2 (for the body-region chart and
 
 ### 7.2 Body-signal score (`app/domain/sensor_scoring.py`)
 
-Only readings **after** the 60-second baseline are scored; everything is relative to the person's **own** baseline.
+Only readings **after** the 60-second baseline are scored; heart-rate and skin-response values are relative to the person's **own** baseline. Band-wrist motion is reported separately and never used as a torso-posture or whole-body-activity score.
 
-| Part | Rule | Weight |
+| Signal | Rule | Role |
 |---|---|---|
-| Posture | 70% × share of time leaning > 20° + 30% × average lean (30° = 100) | 50% |
-| Stress | share of time at *high* + ½ × share at *elevated*. Elevated = skin response +15% or heart rate +10 BPM over baseline; high = +30% or +20 BPM | 40% |
-| Stillness | longest time without moving (20 min = 100) | 10% |
+| Stress | share of time at *high* + ½ × share at *elevated*. Elevated = skin response +15% or heart rate +10 BPM over baseline; high = +30% or +20 BPM | Body-signal score |
+| Wrist orientation / movement | Descriptive band-arm observations; no ergonomic risk threshold | Reported separately; not scored |
 
-**ErgoCare Index = 60% questionnaire + 40% body-signal score.** At least 30 s of wearable data during the questions is required, otherwise the report says why the wearable part is missing.
+The **body-signal score** is the stress score when usable heart-rate or skin-response data exists. The **ErgoCare Index = 60% questionnaire + 40% body-signal score**; it is omitted when those signals are unavailable. At least 30 s of wearable data during the questions is required, otherwise the report says why the wearable part is missing.
 
 ### 7.3 Live warnings and insights
 
 | On screen while answering | Trigger |
 |---|---|
-| "Sit up straight…" | leaning > 20° for 10 s |
 | "Stress rising – take 3 slow, deep breaths" | high stress for 15 s |
-| "You have been still for N min…" | no movement for 2 min |
 
 | Report insight | Rule |
 |---|---|
 | **Hidden stress** | body stress score ≥ 40 but reported workload stress < 40 |
 | Stress confirmed | body stress ≥ 40 and reported ≥ 40 |
 | Calm during the test | body stress < 20 but reported ≥ 60 |
-| **Posture blind spot** | leaning > 20° for ≥ 30% of the time but reported posture risk < 40 |
-| Posture problem confirmed | leaning ≥ 30% of the time and reported posture risk ≥ 40 |
 
 ---
 

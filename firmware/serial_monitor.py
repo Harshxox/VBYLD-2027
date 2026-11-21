@@ -8,7 +8,7 @@ can use the COM port at a time).
 Usage:
     python serial_monitor.py            # COM7 by default
     python serial_monitor.py COM5
-    Type "cal" + Enter at any time to set the current posture as upright.
+    Type "CAL" + Enter at any time to recalibrate the band-wrist orientation.
 """
 import json
 import sys
@@ -27,7 +27,7 @@ def read_commands(ser: serial.Serial) -> None:
 
 def main() -> None:
     ser = serial.Serial(PORT, 115200, timeout=1)
-    print(f"Listening on {PORT} - Ctrl+C to stop, type 'cal' + Enter to recalibrate posture.\n")
+    print(f"Listening on {PORT} - Ctrl+C to stop, type 'cal' + Enter to recalibrate band-wrist orientation.\n")
     threading.Thread(target=read_commands, args=(ser,), daemon=True).start()
     try:
         while True:
@@ -49,7 +49,7 @@ def main() -> None:
             print(
                 f"#{r['seq']:<5} HEART {pulse} (IR {r['ir']:>6}) | "
                 f"GSR {gsr:>10} | "
-                f"TILT {r['tilt']:5.1f} deg | "
+                f"WRIST CHANGE {r['tilt']:5.1f} deg | "
                 f"{'MOVING' if r['moving'] else 'still '} (gyro {r['gyro']:4.1f}) | "
                 f"wifi {'on' if r['wifi'] else 'off'}"
             )

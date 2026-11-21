@@ -2,9 +2,9 @@
 
 ### 🎬 [Watch the video demo](https://drive.google.com/file/d/14X7rOB4qwmAodeaaF95S1YOx9dwb4tKK/view?usp=sharing)
 
-**Posture and stress screening that combines what people *say* with what their *body shows*.**
+**Ergonomic screening that combines what people report with baseline-relative heart-rate and skin-response signals.**
 
-ErgoCare pairs a 40-question ergonomic assessment (typed or spoken, in **English, हिन्दी or ಕನ್ನಡ**) with a low-cost ESP32 wearable that measures **heart rate, skin response (a stress signal) and posture** while the person answers. Both are combined into one report — the **ErgoCare Index** — that also flags where answers and body disagree, e.g. *"You reported low stress, but your body showed stress responses for 59% of the session."*
+ErgoCare pairs a 40-question ergonomic assessment (typed or spoken, in **English, हिन्दी or ಕನ್ನಡ**) with a low-cost ESP32 wearable that measures **heart rate and skin response** while the person answers. Those signals can be combined with the questionnaire in the **ErgoCare Index**. The band-worn MPU6050 reports movement and orientation changes of the band arm only; it does not measure back posture, the answering-hand wrist, or whole-body activity.
 
 > ErgoCare is a **screening tool, not a medical diagnosis.**
 
@@ -22,13 +22,7 @@ Built for **Hack for Social Cause · VBYLD 2027** — theme *Healthcare, Wellbei
 
 **Tested at a glance** — AI answer matcher: **492 / 500** answers in English, Hindi and Kannada (98.4%; 87.8% on its first, unseen run) · **500 / 500** simulated participants pass every scoring-rule check · 9 automated test suites + an end-to-end replay, all passing ([results](docs/TEST_CASES.md)).
 
-| Connect the wearable | Live posture warning while answering |
-|---|---|
-| ![Connect wearable](docs/screenshots/wearable-connect.png) | ![Posture warning](docs/screenshots/posture-warning.png) |
-| **Report: ErgoCare Index, "Hidden stress" and "Posture blind spot"** | **Kannada question, spoken answer understood** |
-| ![Body signals report](docs/screenshots/body-signals-report.png) | ![Kannada question](docs/screenshots/kannada-question.png) |
-
-<sub>Screenshots from the current app; the wearable data in them comes from the built-in demo simulator (DEMO-01), not a real person.</sub>
+<sub>Older wearable screenshots in `docs/screenshots/` show the superseded collar-based posture prototype and are not representative of current wrist-band readings.</sub>
 
 ---
 
@@ -36,13 +30,13 @@ Built for **Hack for Social Cause · VBYLD 2027** — theme *Healthcare, Wellbei
 
 | | Feature |
 |---|---|
-| 🧍 | **Live posture tracking** — forward lean measured by an MPU6050 on the collar; on-screen warning after 10 s of slouching |
+| ⌚ | **Band-wrist motion observations** — orientation change and motion from the wrist wearing the band; never presented as torso posture or sedentary-time measurement |
 | 💧 | **Stress from the body** — skin response (GSR) and heart rate (MAX30102) compared with *your own* 60-second resting baseline |
 | 📝 | **40-question assessment** across workload, eyes, posture, movement, pain and recovery — typed or spoken |
 | 🗣 | **Understands spoken answers** — "my eyes are really tired by evening" → *Very tired*; Hindi or Kannada in their own script or in English letters ("Ek Ghanta" → *1 hour*), shown as "Understood as…" for the person to confirm |
 | 🌐 | **English, Hindi, Kannada** — questions, options and voice input |
-| ⭐ | **ErgoCare Index** = 60% questionnaire + 40% body signals, plus **Hidden stress** / **Posture blind spot** insights |
-| 📄 | **Report and PDF** with heart-rate, skin-response and posture graphs |
+| ⭐ | **ErgoCare Index** = 60% questionnaire + 40% baseline-relative heart-rate / skin-response score, plus **Hidden stress** insights |
+| 📄 | **Report and PDF** with heart-rate, skin-response and band-wrist orientation graphs |
 | 🔐 | **Consent, admin login, CSV export** for college health centres / camps |
 
 ## How it works
@@ -63,20 +57,19 @@ flowchart LR
 ```
 Full architecture, sequence and data-model diagrams: [Technical Design Document](docs/TECHNICAL_DESIGN.md) (PNG copies in [`docs/diagrams/`](docs/diagrams/)).
 
-1. **Connect** — the app finds the wearable and checks finger / electrode / sensor contact.
-2. **60-second baseline** — resting heart rate and skin response are recorded; the current posture becomes "upright".
-3. **Questions** — answers are saved one by one while a live panel shows heart rate, stress level and posture; warnings pop up on screen.
+1. **Choose hands and connect** — select the hand you will answer with; wear the band on the opposite wrist. The app checks finger / electrode / sensor contact.
+2. **60-second baseline** — resting heart rate and skin response are recorded; the band-wearing wrist's starting orientation is saved as neutral.
+3. **Questions** — answers are saved one by one while a live panel shows heart rate, stress level and movement/orientation of the band arm. Stress warnings are based on the heart-rate / skin-response baseline.
 4. **Report** — questionnaire scores, body-signal scores, the ErgoCare Index, insights, graphs and a PDF.
 
 ### Scoring (transparent rules — every number can be explained)
 
 | Score | Rule |
 |---|---|
-| Posture | 70% × share of time leaning > 20° + 30% × average lean (30° = 100) |
 | Stress | share of time at *high* stress + ½ × share at *elevated* (GSR +15% / +30%, or heart rate +10 / +20 BPM above your baseline) |
-| Stillness | longest time without moving (20 min = 100) |
-| Body-signal score | 50% posture + 40% stress + 10% stillness |
-| **ErgoCare Index** | **60% questionnaire + 40% body-signal score** |
+| Band-wrist motion | Orientation change and moving/still readings are descriptive only; they are not posture or inactivity scores |
+| Body-signal score | Stress score, only when usable heart-rate or skin-response data is available |
+| **ErgoCare Index** | **60% questionnaire + 40% body-signal score**; omitted when no usable stress signal is captured |
 
 The questionnaire score and all thresholds are hand-set expert rules (see `ergo_ml_backend/app/domain/`), not a trained model. The machine-learning part is the answer matcher (next section).
 
@@ -197,7 +190,7 @@ Wi-Fi is optional: copy `secrets.example.h` to `secrets.h` (git-ignored) and fil
 |---|---|---|
 | ESP32 DevKit (CP2102 USB) | microcontroller | ₹350–450 |
 | MAX30102 / HW-058 | pulse (heart rate) | ₹150–250 |
-| MPU6050 | posture tilt + movement | ₹150–200 |
+| MPU6050 | band-wrist orientation change + movement | ₹150–200 |
 | GSR module + finger electrodes | skin response (stress) | ₹300–600 |
 | Wires, band, clip | mounting | ₹100–200 |
 | **Total** | | **≈ ₹1,000–1,700** |
@@ -210,7 +203,7 @@ Wi-Fi is optional: copy `secrets.example.h` to `secrets.h` (git-ignored) and fil
 | MPU6050 VCC / GND / SDA / SCL | 3V3 / GND / GPIO21 / GPIO22 (I²C 0x68, shared bus) |
 | GSR VCC / GND / SIG | 3V3 / GND / GPIO34 (ADC1 — works with Wi-Fi on) |
 
-Power the GSR module from **3.3 V** so its output never exceeds the ESP32's 3.3 V input. Wear the MPU6050 on the back of the collar / upper back, a fingertip on the MAX30102, and the GSR electrodes on two fingers of the other hand.
+Power the GSR module from **3.3 V** so its output never exceeds the ESP32's 3.3 V input. Mount the MPU6050 securely inside the wrist band and wear the band on the wrist opposite the hand used to answer. At setup, choose the answering hand; for example, right-hand answers mean the band goes on the left wrist. Keep the band arm relaxed during the baseline. This sensor only measures that wrist's orientation and movement; it cannot measure torso posture or the answering wrist. Place a fingertip gently on the MAX30102 and touch both GSR electrodes as instructed by the connect screen.
 
 ## Testing
 

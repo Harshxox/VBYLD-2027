@@ -7,7 +7,7 @@ panel, on-screen warnings, report and PDF. It is clearly labelled DEMO-01 in
 the app - never present simulated data as a real measurement.
 
 Controls (press a key, no Enter needed on Windows):
-    s  slouch (lean forward ~27 deg)      u  sit upright
+    r  rotate the band wrist ~27 deg      u  return the band wrist to neutral
     t  stress rises (skin response +45%, heart rate +16)
     c  calm down                           m  move / fidget for 3 s
     f  take finger off / put it back       q  quit
@@ -48,7 +48,7 @@ class Body:
     def __init__(self):
         self.start = time.monotonic()
         self.seq = 0
-        self.slouch = False
+        self.wrist_rotated = False
         self.stressed = False
         self.finger = True
         self.move_until = 0.0
@@ -65,7 +65,7 @@ class Body:
         gsr_target = 450 * (1.45 if self.stressed else 1.0)
         self.bpm += (bpm_target - self.bpm) * 0.25
         self.gsr += (gsr_target - self.gsr) * (0.18 if self.stressed else 0.08)
-        tilt_target = 27 if self.slouch else 3
+        tilt_target = 27 if self.wrist_rotated else 3
         self.tilt += (tilt_target - self.tilt) * 0.35
         moving = time.monotonic() < self.move_until
         bpm = self.bpm + 2.5 * math.sin(t / 7) + random.gauss(0, 1.0)
@@ -82,7 +82,7 @@ class Body:
         }
 
     def calibrate(self):
-        """The app's baseline step: current posture becomes 'upright' (tilt 0)."""
+        """The app's baseline step: current band-wrist orientation becomes neutral."""
         self.tilt_zero = self.tilt
 
 
@@ -104,8 +104,8 @@ def read_keys(body: Body, stop: threading.Event):
         getkey = lambda: (sys.stdin.readline().strip()[:1] or " ").lower()
     while not stop.is_set():
         k = getkey()
-        if k == "s": body.slouch = True
-        elif k == "u": body.slouch = False
+        if k == "r": body.wrist_rotated = True
+        elif k == "u": body.wrist_rotated = False
         elif k == "t": body.stressed = True
         elif k == "c": body.stressed = False
         elif k == "m": body.move_until = time.monotonic() + 3
@@ -135,8 +135,8 @@ def main():
             if ok_before is False:
                 print("\n[backend] reachable again")
             ok_before = True
-            state = (f"{'SLOUCHING' if body.slouch else 'upright  '} | {'STRESSED' if body.stressed else 'calm    '} | "
-                     f"{'finger on ' if body.finger else 'finger OFF'} | HR {r['bpm']:5.1f} | GSR {r['gsr_raw']:4d} | tilt {r['tilt']:4.1f}")
+            state = (f"{'wrist rotated' if body.wrist_rotated else 'wrist neutral '} | {'STRESSED' if body.stressed else 'calm    '} | "
+                     f"{'finger on ' if body.finger else 'finger OFF'} | HR {r['bpm']:5.1f} | GSR {r['gsr_raw']:4d} | wrist Δ {r['tilt']:4.1f}")
             print(f"\r#{r['seq']:<5} {state}   ", end="", flush=True)
         except urllib.error.HTTPError as exc:
             if exc.code in (401, 403):

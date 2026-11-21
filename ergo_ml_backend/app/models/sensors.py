@@ -44,7 +44,7 @@ class SensorReading(Base):
     gsr_raw     = Column(Float)
     gsr_mv      = Column(Float)
     gsr_contact = Column(Boolean)
-    tilt        = Column(Float)      # degrees away from calibrated upright posture
+    tilt        = Column(Float)      # band-wrist orientation change from its neutral calibration
     gyro        = Column(Float)
     acc_std     = Column(Float)
     moving      = Column(Boolean)
