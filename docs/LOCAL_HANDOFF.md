@@ -1,99 +1,78 @@
-# Local Setup and Handoff
+# Local Application Verification
 
-Prepared on 23 November 2026 from repository commit
-`ff2a2bce91ac92654be2a414c167ca03956e153e`.
+Verified on Windows on 24 November 2026. This is local software validation,
+not production deployment, clinical validation, or physical-device acceptance.
 
-## Open the App
+## Start
 
-Double-click `Open-ErgoCare.bat` in the repository root. This starts the backend
-and frontend as hidden local processes, waits for readiness, and opens the app.
-The launcher selects free ports starting at 8000 and 5173. It binds to loopback,
-not the LAN. The current addresses and process identities are stored in
-`logs/local-run.json`.
+Follow README.md to install dependencies and prepare the voice model, then
+double-click `Open-ErgoCare.bat`. Actual URLs are recorded in
+`logs/local-run.json`. Stop only those servers with `Stop-Local.ps1`.
+Continue without the optional wearable for an application-only assessment.
 
-To stop the processes it started:
+Each machine generates its own ignored configuration. Keep `.env`,
+`LOCAL_ACCESS.txt`, databases, uploads and research exports private. The local
+database may contain participant data; do not copy it into a handoff archive.
+
+## Automated Checks
+
+Run from the repository root:
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\Stop-Local.ps1
+./ergo_ml_backend/.venv/Scripts/python.exe ergo_ml_backend/scripts/verify_handoff.py
 ```
 
-Administrator credentials are in the ignored `LOCAL_ACCESS.txt` file. Unique
-admin and device secrets were generated in the ignored backend `.env`. Keep
-both files private. No real participant data was imported.
+The runner records output in ignored `logs/handoff-verification.json`. All 12
+suites passed in the delivery run:
 
-This launcher does not start a simulated or physical band. Use **Continue without
-wearable** for a questionnaire-only session. To test a band, follow the firmware
-instructions in README.md. Simulator readings must be labelled as simulated.
-
-## Fixes in This Checkout
-
-- Persist the selected typed/voice mode after registration, with authenticated
-  access and rejection of mode changes after answers have been recorded.
-- Stay on the same question after a failed answer save or recording upload;
-  retain the entered answer and recording for retry.
-- Do not replace a failed server report with a silently generated local report.
-- Respect the configured production backend URL; Vite previously substituted the
-  literal comparison as well as the meta tag, causing an unintended localhost fallback.
-- Validate question IDs and retain authoritative server question wording.
-- Preserve the recording link when a text response is revised; reject unrelated
-  client-supplied recording URLs.
-- Bound upload reads, check both media type and extension, and inspect common
-  audio-container signatures. This is not full codec or malware validation.
-- Keep the previous recording until the replacement is committed.
-- Remove a deleted session from research CSV copies as well as the database.
-  Research exports are pseudonymized, not guaranteed anonymous: free text can
-  still contain identifiers and requires review and access controls.
-- Update the frontend dependency lockfile within its existing version ranges;
-  the npm audit now reports zero findings for this installed frontend tree.
-
-## Verification Completed
-
-| Check | Result |
+| Suite | Result |
 |---|---|
-| New backend session integrity regressions | 12/12 |
-| New frontend parsing and save-failure checks | 6/6 |
-| Existing questionnaire scoring | 27/27 |
-| Existing frontend/backend scoring parity | 206 values across 40 questions |
-| Existing sensor security checks | 36/36 |
-| Existing wearable logic with simulated readings | 20/20 |
-| Existing real-HTTP simulated wearable smoke test | 30/30 |
-| Existing Hindi/Kannada PDF text round trip | Pass |
-| Existing USB bridge unit test | 1/1 |
-| Existing 500-answer synthetic matcher set | 492/500; 1 wrong, 7 abstentions |
-| Existing 500 simulated participant rule checks | 500/500 |
-| TypeScript and Vite production build | Pass |
+| Frontend integrity, including parsing and media/save retries | 13/13 |
+| Session integrity, including 40 clips and transcript persistence | 16/16 |
+| Speech route authentication, decoding and failure handling | 10/10 |
+| Questionnaire scoring | 27/27 |
+| Frontend/backend parity | 206 option values and 100 complete sessions |
+| Sensor security | 36/36 |
+| Synthetic wearable logic | 20/20 |
+| Synthetic real-HTTP integration | 30/30 |
+| Hindi/Kannada/Latin PDF rendering | Pass |
+| Installed Python dependency consistency | Pass |
+| TypeScript | Pass |
+| Vite production build | Pass |
 
-The synthetic matcher set has already been used for tuning. Its 98.4% result is
-not an unseen-data estimate, a speech-recognition result, or clinical accuracy.
+These are synthetic fixtures, not recognition accuracy or medical effectiveness
+measurements. Existing upstream matcher benchmarks were not repeated in this
+delivery and are not Whisper speech-accuracy benchmarks.
 
-Chrome UI verification reached registration, voice-mode selection, and sequential
-saves through question 12. Later browser automation timed out, so a completed
-40-question browser session and a fresh mobile visual audit are not claimed.
-The full HTTP smoke test is separate from that partial browser check.
+## Browser Acceptance
 
-## Remaining Work
+- Completed all 40 questions in typed mode; previous-question navigation
+  retained the original free text and confirmed option.
+- Completed all 40 questions in voice mode. Question 1 used a synthetic English
+  speech WAV; local Whisper produced its transcript and matched the one-hour
+  option. The other 39 used confirmed options, not microphone recordings.
+- Played the uploaded clip to completion without an audio-element error.
+- Downloaded authenticated participant PDFs from both browser sessions.
+- Signed in as admin, reopened the synthetic voice session, verified 40/40
+  answers and its saved transcript, played its server-stored recording to
+  completion and downloaded its protected PDF. Signed out afterward.
+- A separate isolated API test saves and reads back 40 recordings and 40
+  transcripts in one session; this is not 40 human-spoken browser answers.
 
-Physical sensor and contact testing, spoken-input testing with real speakers,
-native-speaker translation review, mobile and accessibility review, independent
-clinical evaluation, and production deployment/security review remain necessary.
-The backend dependency set was installed as supplied; a comprehensive backend
-dependency-security audit was not performed. Existing partial-session completion
-behavior is unchanged. Multiple concurrent workers writing research CSVs need
-cross-process locking or a database-backed export queue before scaling.
+## Limits
 
-This document records local validation, not production deployment. Git history
-and the associated pull request identify the published changes. Follow
-`TEAM_INTEGRATION.md` for the integration checklist.
+Real microphone capture was not established unattended: the test browser's
+permission request did not resolve. A timeout now releases the control and
+preserves existing audio. Real speakers, Hindi/Kannada speech accuracy,
+mobile-device audio permissions, accessibility and physical sensor contact
+still need acceptance tests on target devices.
 
-## Reproduce Focused Tests
+Missing models, unclear speech, busy inference, invalid clips and network
+failures produce visible retryable messages. No arbitrary neutral score or
+silently substituted local report is generated. Prepare the model before a
+demonstration. CPU transcription is serialized, not a scaled inference service.
 
-```powershell
-node scripts/verify_frontend_integrity.mjs
-cd ergo_ml_backend
-.\.venv\Scripts\python.exe scripts/verify_session_integrity.py
-.\.venv\Scripts\python.exe scripts/verify_scoring.py
-.\.venv\Scripts\python.exe scripts/verify_sensor_security.py
-```
-
-For a fresh environment install `ergo_ml_backend/requirements-dev.txt` and run
-`npm ci`. Node.js 22.12+ is required for the current Vite tooling.
+Production review remains necessary: HTTPS, CORS, private persistent storage,
+backups, deletion/retention policy, dependency security, concurrent database
+upserts and multi-worker research-export coordination. Dependency consistency
+is not a vulnerability audit. See TEAM_INTEGRATION.md for receiving steps.

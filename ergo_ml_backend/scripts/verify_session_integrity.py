@@ -82,6 +82,10 @@ class SessionIntegrityTests(unittest.TestCase):
         self.assertEqual(self.upload(content=b"not audio", mime="text/plain").status_code, 415)
         self.assertEqual(self.upload(content=b"not audio").status_code, 415)
 
+    def test_header_only_audio_cannot_be_saved_for_playback(self):
+        self.assertEqual(self.upload(content=b"RIFF0000WAVEinvalid").status_code, 422)
+        self.assertEqual(client.get(self.url, headers=self.headers).json()["audio_files"], [])
+
     def test_extensionless_non_audio_rejected(self):
         self.assertEqual(self.upload(name="blob", content=b"plain text", mime="text/plain").status_code, 415)
 
@@ -119,6 +123,41 @@ class SessionIntegrityTests(unittest.TestCase):
                 rows = list(csv.DictReader(fh))
             self.assertFalse(any(row["session_id"] == self.sid for row in rows))
             self.assertTrue(any(row["session_id"] == "keep-other-session" for row in rows))
+
+    def test_partial_session_cannot_generate_report(self):
+        self.save()
+        response = client.post(self.url + "/complete", headers=self.headers)
+        self.assertEqual(response.status_code, 422)
+        self.assertEqual(len(response.json()["detail"]["missing_question_ids"]), 39)
+
+    def test_full_typed_session_and_protected_pdf(self):
+        for q in QUESTIONS:
+            r = self.save(question_id=q["id"], typed_answer=q["options"][0])
+            self.assertEqual(r.status_code, 201)
+        self.assertEqual(client.post(self.url + "/complete", headers=self.headers).status_code, 200)
+        self.assertEqual(client.get(self.url + "/report.pdf").status_code, 401)
+        pdf = client.get(self.url + "/report.pdf", headers=self.headers)
+        self.assertEqual(pdf.status_code, 200)
+        self.assertTrue(pdf.content.startswith(b"%PDF"))
+
+    def test_full_voice_session_keeps_forty_clips_and_transcripts(self):
+        client.patch(self.url + "/mode", json={"input_mode": "voice"}, headers=self.headers)
+        for q in QUESTIONS:
+            spoken = "Synthetic spoken response for question " + str(q["id"])
+            upload = client.post(self.url + f"/answers/{q['id']}/audio", headers=self.headers,
+                                files={"file": ("answer.wav", audio_bytes(), "audio/wav")},
+                                data={"transcript": spoken})
+            self.assertEqual(upload.status_code, 201)
+            self.assertEqual(self.save(question_id=q["id"], typed_answer=q["options"][0], transcript=spoken,
+                                       audio_url=upload.json()["audio_url"]).status_code, 201)
+        record = client.get(self.url, headers=self.headers).json()
+        self.assertEqual(record["input_mode"], "voice")
+        self.assertEqual(len(record["answers"]), 40)
+        self.assertEqual(len(record["audio_files"]), 40)
+        for answer in record["answers"]:
+            self.assertEqual(answer["transcript"], "Synthetic spoken response for question " + str(answer["question_id"]))
+            self.assertEqual(client.get(answer["audio_url"], headers=self.headers).content, audio_bytes())
+        self.assertEqual(client.post(self.url + "/complete", headers=self.headers).status_code, 200)
 
 
 if __name__ == "__main__":

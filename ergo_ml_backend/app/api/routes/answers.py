@@ -1,8 +1,6 @@
 """
-Answers route — v3.2
-Fixes over v3.1:
-  - Bug 4: Re-uploading audio for the same question now deletes the old file from disk
-    before saving the new one (previously the old .webm was orphaned on disk).
+Answers, authenticated recordings and local speech transcription.
+Replacement recordings are committed before the previous file is removed.
 """
 import os
 import shutil
@@ -18,6 +16,8 @@ from app.db.database import get_db
 from app.models.assessment import AssessmentSession, AssessmentAnswer, AudioFile
 from app.models.schemas import AnswerIn, AnswerOut
 from app.domain.questions import QUESTIONS_BY_ID
+from app.domain.transcription import transcribe_audio, validate_audio
+from starlette.concurrency import run_in_threadpool
 from app.security import require_session_access, session_token_matches
 
 router = APIRouter()
@@ -163,6 +163,24 @@ def _question_or_422(question_id: int):
     return question
 
 
+@router.post("/{session_id}/answers/{question_id}/transcribe")
+async def transcribe_answer(
+    session_id: str, question_id: int, file: UploadFile = File(...),
+    language: str = Form(default="en"), db: Session = Depends(get_db),
+    x_session_token: Optional[str] = Header(default=None),
+    caller: str = Depends(require_session_access),
+):
+    session = _get_session_or_404(session_id, db)
+    if caller.startswith("session:") and not session_token_matches(session.access_token, x_session_token):
+        raise HTTPException(status_code=403, detail="That access token belongs to a different session.")
+    _question_or_422(question_id)
+    _check_file_type(file)
+    data = await file.read(MAX_AUDIO_BYTES + 1)
+    _check_file_size(data)
+    _check_audio_header(data)
+    return await run_in_threadpool(transcribe_audio, data, language)
+
+
 @router.post("/{session_id}/answers", response_model=AnswerOut, status_code=201)
 def save_answer(
     session_id: str,
@@ -247,6 +265,7 @@ async def upload_audio(
     _check_audio_header(data)
 
     # ── Guard 3: disk space ───────────────────────────────────────────────────
+    await run_in_threadpool(validate_audio, data)
     _check_disk_space()
 
     # Preserve the existing recording until its replacement has committed.

@@ -11,6 +11,7 @@ aiofiles==24.1.0
 # downloaded once into models_cache/). Without it the matcher falls back to rules only.
 fastembed==0.8.1
 numpy>=1.26
+faster-whisper==1.2.1
 
 # ── All ML is implemented in pure Python (ml_engine.py) ──────────────────────
 # No scikit-learn or numpy required — the algorithms are self-contained:

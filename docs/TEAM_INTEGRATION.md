@@ -2,86 +2,79 @@
 
 Prepared for Shree Pranav G and Harshdeep on 24 November 2026.
 
-## Change Scope
+## Delivery
 
-This revision starts from upstream commit
-`ff2a2bce91ac92654be2a414c167ca03956e153e` and addresses application persistence
-and local setup. It does not remove or redesign the repository's optional
-hardware integration. The separate academic paper is application-only and is
-not included in this code change.
+Review and merge https://github.com/Harshxox/VBYLD-2027/pull/1.
+The branch is `fix/session-integrity-handoff` on
+https://github.com/culturedpotato04/VBYLD-2027. Upstream base is
+`ff2a2bce91ac92654be2a414c167ca03956e153e`.
 
-- Persist the typed/voice choice on the backend before collecting answers.
-- Keep the current question, answer, and recording available when saving fails.
-- Keep server report failures visible instead of silently replacing their output.
-- Validate question IDs and use canonical question wording on the server.
-- Preserve recording links during answer edits and reject unrelated audio URLs.
-- Validate upload media types, extensions, sizes, and basic container signatures.
-- Commit a replacement recording before deleting the old file.
-- Remove deleted sessions from research CSV copies as well as session storage.
-- Respect the configured backend URL in the production frontend build.
-- Provide local Windows launchers, private configuration generation, and tests.
-- Refresh the frontend lockfile within the existing dependency version ranges.
+This revision finishes the application-side handoff. Optional wearable
+interfaces are retained; physical hardware acceptance belongs to the receiving
+team. The separate academic paper is application-only and is not changed here.
+Its earlier snapshot needs alignment with the new transcription and completion
+rules before final submission.
 
-## Run Locally
+## Included Changes
 
-Install dependencies using the Windows instructions in `README.md`, then open
-`Open-ErgoCare.bat`. For an application-only assessment, continue without the
-optional device and select typed or voice answers. No device is needed to test
-the questionnaire and reporting path.
+- Authenticated typed/voice mode persistence and canonical question validation.
+- Preserve answers and clips on failed saves; retry final report generation
+  without saving the final answer a second time.
+- Require all 40 answers before completing; keep completion idempotent.
+- Match typed or spoken free text to an explicit confirmed option; no silent
+  neutral score. Preserve raw text and previous answers.
+- CPU-local multilingual Whisper transcription of recorded/uploaded clips,
+  with model preparation, language validation and bounded decoding.
+- Recorder final-chunk synchronization, correct MIME/extension, permission
+  timeout, maximum duration and recoverable transcription failures.
+- Validate clips before persistence; retain old clips on failed replacement.
+  Remove deleted sessions from research exports.
+- Authenticated participant/admin PDFs and admin recording playback, without
+  putting access tokens into media URLs.
+- Align browser composite scores with backend scoring, including 100 complete
+  synthetic-session comparisons.
+- Configured API URL, Windows launchers, private configuration generation and
+  a reproducible 12-suite verification runner.
 
-The launcher binds only to the local computer. Its actual frontend and API URLs
-are saved in `logs/local-run.json`. It does not publish the app to the internet.
-Keep each developer's `.env`, `LOCAL_ACCESS.txt`, database, recordings, and
-research exports private. None belongs in a Git commit or shared code archive.
-
-## Verification Repeated on 24 November 2026
-
-| Check | Result |
-|---|---|
-| Backend session integrity regressions | 12/12 pass |
-| Frontend integrity checks | 6/6 pass, including inline script parsing |
-| Questionnaire scoring checks | 27/27 pass |
-| Frontend/backend scoring parity | 206 values across 40 questions |
-| TypeScript and Vite production build | Pass |
-
-Run the focused checks from the repository root:
+## Receiving Machine
 
 ```powershell
-node scripts/verify_frontend_integrity.mjs
-./ergo_ml_backend/.venv/Scripts/python.exe ergo_ml_backend/scripts/verify_session_integrity.py
-./ergo_ml_backend/.venv/Scripts/python.exe ergo_ml_backend/scripts/verify_scoring.py
-./ergo_ml_backend/.venv/Scripts/python.exe ergo_ml_backend/scripts/verify_frontend_parity.py
-npm run build
+npm ci
+python -m venv ergo_ml_backend/.venv
+./ergo_ml_backend/.venv/Scripts/python.exe -m pip install -r ergo_ml_backend/requirements-dev.txt
+./ergo_ml_backend/.venv/Scripts/python.exe ergo_ml_backend/scripts/prepare_voice_model.py
+./ergo_ml_backend/.venv/Scripts/python.exe ergo_ml_backend/scripts/verify_handoff.py
 ```
 
-These checks use synthetic fixtures and are not clinical validation or a
-complete browser acceptance test. See `LOCAL_HANDOFF.md` for the earlier test
-coverage and its limits.
+Use Python 3.10+ and Node 22.12+. Initial voice-model preparation needs internet
+and disk space; multilingual `base` is about 145 MB before cache duplication.
+Set backend `WHISPER_MODEL` and `VOICE_MODEL_CACHE` if needed, then restart.
+Run `Open-ErgoCare.bat` after preparation.
 
-## Integration Checklist
+The launcher binds to loopback and does not start a band or publish the app.
+Each developer needs unique configuration and credentials. Do not share
+`.env`, `LOCAL_ACCESS.txt`, model caches, real records or recordings.
 
-1. Review the pull request and run the focused tests on the receiving machine.
-2. Exercise one full typed session and one voice session in the target browser.
-   Verify transcript correction, one clip per question, saved mode, and PDF output.
-3. Interrupt the API during saving and confirm that the answer is retained for
-   retry without falsely advancing. Retry after restoring the API.
-4. Use synthetic records to verify admin report access and session deletion,
-   including associated recording files and exported CSV rows.
-5. Merge after review, then configure the deployment's backend URL, CORS origins,
-   unique secrets, private storage, and database backups independently.
+## Acceptance Before Merge/Deployment
 
-## Remaining Work
+1. Run the suite; inspect LOCAL_HANDOFF.md for test evidence and limits.
+2. Speak into a real microphone in the target browser. Review/correct the
+   transcript, confirm the option and verify each saved recording. Check
+   Hindi/Kannada with native speakers, not only English fixtures.
+3. Complete typed and voice sessions, reopen them as admin, play saved clips
+   and download PDFs. Interrupt the API and verify retry preserves input.
+4. Perform physical sensor/contact and firmware integration tests separately.
+   Passing synthetic suites are not physical validation.
+5. Configure HTTPS, backend URL, CORS, durable private storage, secrets, access
+   control, backups and retention on the production host.
 
-- Require all 40 answers or explicitly label partial reports. Current non-empty
-  partial sessions can still be completed.
-- Add database uniqueness and safe concurrent upserts for session-question pairs.
-- Add cross-process export locking or a database-backed export queue before
-  running multiple backend workers.
-- Review recommendation wording and the questionnaire with the guide and a
-  qualified subject-matter reviewer; the scoring rules are not diagnostic models.
-- Test actual speech recognition, mobile layouts, accessibility, and translations
-  with real speakers and target devices.
-- Perform a backend dependency audit and production security review.
+## Remaining Engineering Limits
 
-No secrets, participant records, recordings, or generated academic documents
-are required to review or merge this change.
+Concurrent session-question upserts and cross-process CSV exports need stronger
+database/queue coordination before multi-worker scaling. Speech inference is
+single-flight CPU work; concurrent demand gets a visible retry response.
+Translation, accessibility, real-device mobile checks, independent scoring and
+clinical review, and a full backend vulnerability audit remain pending.
+
+No participant data, secrets or generated academic files are required to review
+or merge the code archive.

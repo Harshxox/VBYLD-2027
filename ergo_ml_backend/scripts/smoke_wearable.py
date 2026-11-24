@@ -192,13 +192,13 @@ def main() -> int:
 
         # One answer per request, exactly as index.html sends it. Options are plain strings.
         saved = 0
-        for q in qs[:5]:
+        for q in qs:
             st, ans = req("POST", f"/api/sessions/{sid}/answers",
                           {"question_id": q["id"], "question_text": q["text"],
                            "typed_answer": q["options"][0]}, hdr)
             if st in (200, 201):
                 saved += 1
-        check("answers saved (5/5)", saved == 5, f"saved {saved}")
+        check("answers saved (40/40)", saved == 40, f"saved {saved}")
 
         st, noauth = req("POST", f"/api/sessions/{sid}/answers",
                          {"question_id": qs[6]["id"], "question_text": qs[6]["text"],

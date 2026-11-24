@@ -25,6 +25,7 @@ from app.models.sensors import SensorLink, SensorReading
 from app.domain.sensor_scoring import score_session
 from app.domain.sensors import history_points
 from app.domain.scoring import calculate_scores, build_report
+from app.domain.questions import QUESTIONS_BY_ID
 from app.security import require_session_access, session_token_matches
 from app.api.routes.pdf_fonts import mark_script_runs, register_fonts
 from app.research_export import export_completed_session
@@ -83,6 +84,14 @@ def complete_session(
     session = _load_session(db, session_id, caller, x_session_token)
     if not session.answers:
         raise HTTPException(status_code=422, detail="No answers — cannot score empty session")
+    answered = {a.question_id for a in session.answers
+                if (a.typed_answer or a.transcript or "").strip()}
+    missing = sorted(set(QUESTIONS_BY_ID) - answered)
+    if missing:
+        raise HTTPException(status_code=422, detail={
+            "message": "Answer all questionnaire questions before generating a report.",
+            "missing_question_ids": missing,
+        })
 
     answers = _answers_as_dicts(session)
     scores, ml = calculate_scores(answers)

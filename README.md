@@ -100,6 +100,7 @@ From the repository root, install the frontend and backend dependencies once:
 npm ci
 python -m venv ergo_ml_backend/.venv
 ./ergo_ml_backend/.venv/Scripts/python.exe -m pip install -r ergo_ml_backend/requirements-dev.txt
+./ergo_ml_backend/.venv/Scripts/python.exe ergo_ml_backend/scripts/prepare_voice_model.py
 ```
 
 Then double-click `Open-ErgoCare.bat`. The launcher generates ignored local
@@ -108,6 +109,17 @@ servers on available loopback ports, and opens the app. New local admin
 credentials are written to `LOCAL_ACCESS.txt`; never commit or share that file.
 Existing `.env` files are preserved, so keep using their configured credentials.
 Run `Stop-Local.ps1` to stop only the processes tracked by the launcher.
+
+Voice clips can also be attached. When browser recognition supplies no text,
+the backend transcribes locally with multilingual Whisper (`base`, CPU int8).
+Prepare its model before the demo (initial download about 145 MB). Review the
+transcript and confirm the matched option before saving. Clips are limited to
+120 seconds. Errors preserve input for retry; reports require all 40 answers.
+Optional backend settings: `WHISPER_MODEL` and `VOICE_MODEL_CACHE`.
+
+Run `./ergo_ml_backend/.venv/Scripts/python.exe ergo_ml_backend/scripts/verify_handoff.py`
+for the focused 12-suite verification. Browser recognition can require internet;
+local Whisper works after model preparation.
 
 See [local verification notes](docs/LOCAL_HANDOFF.md) and the
 [team integration checklist](docs/TEAM_INTEGRATION.md) before integration.
