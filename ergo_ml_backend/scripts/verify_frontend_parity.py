@@ -20,7 +20,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from app.domain.questions import QUESTIONS            # noqa: E402
-from app.domain.scoring import option_risk            # noqa: E402
+from app.domain.scoring import option_risk, calculate_scores  # noqa: E402
 from app.domain.ml_engine import get_weight           # noqa: E402
 
 INDEX_HTML = os.path.join(ROOT, "index.html")
@@ -38,6 +38,7 @@ function slice(startPat, endPat) {
 }
 const questions = eval(slice(/^const questions = \[/, /^\]$/) + '; questions');
 const Q_WEIGHTS = eval(slice(/^const Q_WEIGHTS = \{/, /^\}$/) + '; Q_WEIGHTS');
+const PAIN_SUBDOMAIN = eval(slice(/^const PAIN_SUBDOMAIN = \{/, /^\}$/) + '; PAIN_SUBDOMAIN');
 const optionRiskSrc = slice(/^function optionRisk\(/, /^}$/);
 const optionRisk = eval('(' + optionRiskSrc + ')');
 const out = {};
@@ -47,7 +48,13 @@ for (const q of questions) {
   rows['__weight__'] = Q_WEIGHTS[q.id] !== undefined ? Q_WEIGHTS[q.id] : 1.0;
   out[q.id] = rows;
 }
-fs.writeFileSync(process.argv[3], JSON.stringify(out), 'utf8');
+const calcScores = eval('(' + slice(/^function calcScores\(/, /^}$/) + ')');
+const composites = [];
+for(let seed=0;seed<100;seed++){
+  const answers=questions.map(q=>({qId:q.id,answer:q.options[(q.id*17+seed*13+Math.floor(seed/4))%q.options.length]}));
+  composites.push({answers,scores:calcScores(answers)});
+}
+fs.writeFileSync(process.argv[3], JSON.stringify({values:out,composites}), 'utf8');
 """
 
 
@@ -79,7 +86,8 @@ def main() -> int:
         return 1
 
     with tempfile.TemporaryDirectory() as tmpdir:
-        fe = frontend_values(tmpdir)
+        output = frontend_values(tmpdir)
+        fe = output['values']
 
     failures = []
     checked = 0
@@ -112,6 +120,14 @@ def main() -> int:
 
     print(f"checked {checked} values across {len(be_ids)} questions "
           f"(risk per option + feature weight)")
+    fields={'postureRisk':'posture_risk','eyeStrain':'eye_strain','workloadStress':'workload_stress',
+            'musculoskeletalRisk':'musculoskeletal_risk','recoveryRisk':'recovery_risk','overallRisk':'overall_risk'}
+    for i, case in enumerate(output['composites']):
+        scores,_=calculate_scores([{'question_id':a['qId'],'typed_answer':a['answer']} for a in case['answers']])
+        for frontend,backend in fields.items():
+            if abs(case['scores'][frontend]-getattr(scores,backend))>0.000001:
+                failures.append(f"composite {i} {frontend}: frontend={case['scores'][frontend]} server={getattr(scores,backend)}")
+    print('checked 100 full-session composites across all six reported scores')
     if failures:
         print(f"FAIL  {len(failures)} mismatch(es)")
         for f in failures[:40]:

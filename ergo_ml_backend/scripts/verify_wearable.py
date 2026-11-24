@@ -239,8 +239,11 @@ def live_checks(base_url: str, device: str, baseline_s: int, live_s: int) -> Non
         check(hist["total_readings"] >= expected * 0.8, "readings stored for the report",
               f"{hist['total_readings']} stored (~{expected} expected)")
 
-        sapi("POST", f"/api/sessions/{sid}/answers",
-            {"question_id": 1, "question_text": "verify", "typed_answer": "1 hour"})
+        _, bank = sapi("GET", "/api/questions")
+        for question in bank:
+            sapi("POST", f"/api/sessions/{sid}/answers",
+                 {"question_id": question["id"], "question_text": question["text"],
+                  "typed_answer": question["options"][0]})
         st, _ = sapi("POST", f"/api/sessions/{sid}/complete")
         n1 = sapi("GET", f"/api/sessions/{sid}/sensors/history")[1]["total_readings"]
         time.sleep(3)

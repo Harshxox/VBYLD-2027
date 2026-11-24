@@ -1,4 +1,4 @@
-"""Export completed assessments into reproducible, non-PII research CSV files."""
+"""Export pseudonymized research CSVs; free text may still contain identifiers."""
 from __future__ import annotations
 
 import csv
@@ -222,6 +222,26 @@ def export_completed_session(
         "export_version": EXPORT_VERSION,
     }
     _upsert_csv("wearable_features.csv", [features])
+
+
+def delete_session_exports(session_id: str) -> None:
+    """Remove a session from the research copies without touching other rows."""
+    for filename, (fieldnames, _) in CSV_SCHEMAS.items():
+        path = EXPORT_DIR / filename
+        if not path.exists():
+            continue
+        with path.open("r", newline="", encoding="utf-8") as fh:
+            rows = [row for row in csv.DictReader(fh) if row.get("session_id") != session_id]
+        fd, temporary = tempfile.mkstemp(prefix=f"{filename}.", dir=EXPORT_DIR)
+        try:
+            with os.fdopen(fd, "w", newline="", encoding="utf-8") as fh:
+                writer = csv.DictWriter(fh, fieldnames=fieldnames, extrasaction="ignore")
+                writer.writeheader()
+                writer.writerows(rows)
+            os.replace(temporary, path)
+        finally:
+            if os.path.exists(temporary):
+                os.unlink(temporary)
 
 
 def write_data_dictionary() -> None:

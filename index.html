@@ -10,7 +10,7 @@
   // Read backend URL from meta tag (set by Vite env replacement).
   // Falls back to localhost for local development when meta value is the literal placeholder.
   var _rawMeta = document.querySelector('meta[name="api-base"]')?.content || ''
-  window.__ERGO_API__ = (_rawMeta && _rawMeta !== '%VITE_API_BASE%') ? _rawMeta : 'http://127.0.0.1:8000'
+  window.__ERGO_API__ = /^https?:\/\//.test(_rawMeta) ? _rawMeta : 'http://127.0.0.1:8000'
 </script>
 <!-- Hindi / Kannada text (public/i18n.js) - loaded before the app script -->
 <script src="/i18n.js"></script>
@@ -1516,7 +1516,7 @@ function openClientReport(clientId) {
           ${hasLocalAudio||hasBackendAudio ? `<span style="font-size:.68rem;background:#e8f7f4;color:#0a9396;border-radius:999px;padding:2px 8px;white-space:nowrap;font-weight:700;flex-shrink:0;">🎙 Audio</span>` : ''}
         </div>
         ${hasLocalAudio ? `<audio controls style="width:100%;height:32px;margin-top:8px;border-radius:6px;" src="${a._localAudio.url}"></audio>` : ''}
-        ${!hasLocalAudio && hasBackendAudio ? `<audio controls style="width:100%;height:32px;margin-top:8px;border-radius:6px;" src="${API_BASE}${escH(a.audio_url)}"></audio>` : ''}
+        ${!hasLocalAudio && hasBackendAudio ? `<button type="button" data-audio-path="${escH(a.audio_url)}" onclick="loadProtectedAudio(this)">Play recording</button>` : ''}
       </div>`
     }).join('')
   }
@@ -1579,7 +1579,7 @@ function openClientReport(clientId) {
             <div style="font-size:1.5rem;font-weight:900;color:${lvMeta.color};font-family:var(--font-display);">${lvMeta.emoji} ${lvMeta.label} — ${scores.overallRisk.toFixed(0)}%</div>
             <div style="font-size:.8rem;color:#64748b;margin-top:4px;">Weighted composite of 5 questionnaire domains</div>
           </div>
-          ${c.backendSessionId&&!String(c.backendSessionId).startsWith('offline')?`<button onclick="window.open('${API}/api/sessions/${escH(c.backendSessionId)}/report.pdf','_blank')" style="background:${lvMeta.color};color:#fff;border:none;border-radius:10px;padding:10px 20px;font-weight:700;cursor:pointer;font-size:.88rem;box-shadow:0 4px 12px ${lvMeta.color}40;">⬇ PDF Report</button>`:''}
+          ${c.backendSessionId&&!String(c.backendSessionId).startsWith('offline')?`<button onclick="downloadSessionPdf('${escH(c.backendSessionId)}',true)" style="background:${lvMeta.color};color:#fff;border:none;border-radius:10px;padding:10px 20px;font-weight:700;cursor:pointer;font-size:.88rem;box-shadow:0 4px 12px ${lvMeta.color}40;">⬇ PDF Report</button>`:''}
         </div>
 
         <!-- Score cards -->
@@ -1635,6 +1635,8 @@ function openClientReport(clientId) {
 function closeClientReport() {
   const modal = document.getElementById('admin-client-modal')
   if (modal) modal.style.display = 'none'
+  for (const url of protectedMediaUrls) URL.revokeObjectURL(url)
+  protectedMediaUrls.clear()
 }
 
 // Keyboard ESC to close modal
@@ -1854,7 +1856,7 @@ function setLang(code) {
 const state = {
   screen:'landing', mode:null, idx:0,
   selectedOption:'', freeText:'', transcript:'',
-  recording:false, recorder:null, recognition:null, audioChunks:[],
+  recording:false, recorder:null, recognition:null, audioChunks:[], audioMimeType:'', stopping:false,
   notice:'', saving:false, errorMessage:null,
   answers:[], scores:null, report:null, sensorHistory:null, match:null, sessionId:null, backendSessionId:null,
   sessionToken: null,
@@ -1866,12 +1868,8 @@ const API_BASE = API   // alias used in modal audio src URLs
 const _fetchWithTimeout = async (url, options = {}) => {
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), 60000);
-  const response = await fetch(url, {
-    ...options,
-    signal: controller.signal
-  });
-  clearTimeout(id);
-  return response;
+  try { return await fetch(url, { ...options, signal: controller.signal }); }
+  finally { clearTimeout(id); }
 };
 async function apiReq(path,opts={}){
   const headers = {
@@ -1891,6 +1889,34 @@ async function apiReqAdmin(path,opts={}){
   if(r.status===401){ adminLogout(); throw new Error('Admin login required') }
   if(!r.ok) throw new Error(`${r.status}`)
   return r.json()
+}
+const protectedMediaUrls = new Set()
+async function protectedBlob(path, asAdmin = false) {
+  if (!/^\/api\/sessions\/[^/]+\/(report\.pdf|audio\/[^/]+)$/.test(path)) throw new Error('Invalid media path')
+  const headers = asAdmin ? { Authorization:`Bearer ${adminToken}` } : { 'X-Session-Token':state.sessionToken || '' }
+  const response = await _fetchWithTimeout(API + path, { headers })
+  if (!response.ok) throw new Error(response.status === 401 ? 'Please sign in again.' : `Download failed (${response.status}). Please retry.`)
+  return response.blob()
+}
+async function downloadSessionPdf(sessionId, asAdmin = false) {
+  try {
+    const blob = await protectedBlob(`/api/sessions/${encodeURIComponent(sessionId)}/report.pdf`, asAdmin)
+    const url = URL.createObjectURL(blob), link = document.createElement('a')
+    link.href = url; link.download = `ErgoCare-${sessionId}.pdf`
+    document.body.appendChild(link); link.click(); link.remove()
+    setTimeout(() => URL.revokeObjectURL(url), 60000)
+  } catch (error) { alert(error.message) }
+}
+async function loadProtectedAudio(button) {
+  button.disabled = true
+  try {
+    const blob = await protectedBlob(button.dataset.audioPath, true)
+    if (!button.isConnected) return
+    const url = URL.createObjectURL(blob), audio = document.createElement('audio')
+    protectedMediaUrls.add(url); audio.controls = true; audio.src = url
+    audio.style.width = '100%'; button.replaceWith(audio)
+    audio.play().catch(() => {})
+  } catch (error) { button.disabled = false; button.textContent = error.message }
 }
 // Keep the admin signed in across page reloads in this tab (the token expires on the server)
 ;(async()=>{ const t=loadAdminToken(); if(!t) return
@@ -1964,7 +1990,7 @@ function calcScores(answers) {
     if (!v.length) return 0
     const sumW = v.reduce((s, x) => s + x.w, 0)
     const sumRW = v.reduce((s, x) => s + x.risk * x.w, 0)
-    return Math.round(sumRW / sumW)
+    return sumRW / sumW
   }
 
   // Sub-domain pain averages
@@ -1981,20 +2007,20 @@ function calcScores(answers) {
   const painRaw       = wavg('pain')
   const recoveryRaw   = wavg('recovery')
 
-  // Posture = posture 65% + movement 35% (movement strongly mediates posture risk)
-  const postureRisk = Math.round(postureRaw * 0.65 + movementRaw * 0.35)
-  const eyeStrain         = eyesRaw
-  const workloadStress    = workloadRaw
-  const musculoskeletalRisk = painRaw
-  const recoveryRisk      = recoveryRaw
+  // Match the backend questionnaire composite, retaining one decimal place.
+  const roundScore = value => Math.round((value + Number.EPSILON) * 10) / 10
+  const postureRisk = roundScore(postureRaw * 0.68 + movementRaw * 0.32)
+  const eyeStrain         = roundScore(eyesRaw)
+  const workloadStress    = roundScore(workloadRaw)
+  const musculoskeletalRisk = roundScore(painRaw)
+  const recoveryRisk      = roundScore(recoveryRaw)
 
-  // Prototype composite weights: musculoskeletal 30%, workload 22%, posture 20%, eye 16%, recovery 12%.
-  const overallRisk = Math.round(
-    musculoskeletalRisk * 0.30 +
+  const overallRisk = roundScore(
+    musculoskeletalRisk * 0.28 +
     workloadStress      * 0.22 +
     postureRisk         * 0.20 +
-    eyeStrain           * 0.16 +
-    recoveryRisk        * 0.12
+    eyeStrain           * 0.17 +
+    recoveryRisk        * 0.13
   )
 
 
@@ -2082,8 +2108,9 @@ async function startAssessment(mode){
   try{
     // If we already have a session from registration, update its mode; else create fresh
     if(state.backendSessionId){
-      // Session already created at registration — just update mode via a lightweight patch
-      // (backend doesn't need a separate call; answers will go to the existing session)
+      await apiReq(`/api/sessions/${state.backendSessionId}/mode`, {
+        method:'PATCH', body:JSON.stringify({input_mode:mode})
+      })
     } else {
       const cl = currentClient || {}
       const sess = await apiReq('/api/sessions',{
@@ -2104,6 +2131,11 @@ async function startAssessment(mode){
       state.sessionToken = sess.access_token || null
     }
   }catch(e){
+    if(state.backendSessionId){
+      state.saving=false;state.screen='landing';render()
+      alert('Could not save your assessment mode. Please retry when the backend is available.')
+      return
+    }
     state.errorMessage='Backend unreachable — running in offline mode.'
     state.sessionToken = null
     if(!state.sessionId) state.sessionId='offline-'+Date.now()
@@ -2116,26 +2148,58 @@ async function startAssessment(mode){
   else { state.screen='assessment'; render() }
 }
 // Recording no longer blocks Continue: saveAnswer stops the mic itself.
-function canContinue(){ if(state.saving)return false; if(state.lang!=='en')return !!state.selectedOption; if(state.mode==='typed')return!!(state.freeText.trim()||state.selectedOption); return!!(state.transcript.trim()||state.freeText.trim()||state.selectedOption) }
+function canContinue(){ if(state.saving||state.stopping)return false; if(state.lang!=='en')return !!state.selectedOption; if(state.mode==='typed')return!!(state.freeText.trim()||state.selectedOption); return!!(state.transcript.trim()||state.freeText.trim()||state.selectedOption) }
+function recordingBlob() {
+  const mime = state.audioMimeType || state.audioChunks[0]?.type || 'audio/webm'
+  return new Blob(state.audioChunks, { type:mime })
+}
+function audioExtension(mime) {
+  return ({'audio/mp4':'m4a','audio/mpeg':'mp3','audio/ogg':'ogg','audio/wav':'wav'})[mime.split(';')[0]] || 'webm'
+}
+async function transcribeRecording({quiet=false}={}) {
+  if(!state.audioChunks.length||!state.backendSessionId)return
+  const qid=questions[state.idx].id, session=state.backendSessionId
+  const blob=recordingBlob(), form=new FormData()
+  form.append('file',blob,`q${qid}.${audioExtension(blob.type)}`);form.append('language',state.lang)
+  state.stopping=true;state.notice='Transcribing recording…';if(!quiet)render()
+  try {
+    const response=await _fetchWithTimeout(`${API}/api/sessions/${session}/answers/${qid}/transcribe`,{
+      method:'POST',headers:{'X-Session-Token':state.sessionToken||''},body:form})
+    const data=await response.json()
+    if(!response.ok)throw new Error(typeof data.detail==='string'?data.detail:'Transcription failed. Please retry.')
+    if(state.backendSessionId!==session||questions[state.idx].id!==qid)return
+    state.transcript=data.transcript;state.manualPick=false;state.selectedOption=''
+    await runMatch(state.transcript);state.notice='Transcript ready for review.'
+  } catch(error) {state.notice=`Recording retained. ${error.message}`}
+  finally {state.stopping=false;if(!quiet)render()}
+}
 async function saveAnswer(){
   if(!canContinue())return
+  if(state.reportPending){state.saving=true;await finishSession();return}
+  state.saving=true
+  state.stopping=true
   if(state.recording) await stopRecording({quiet:true})
+  if(state.mode==='voice'&&state.audioChunks.length&&!state.transcript.trim())await transcribeRecording({quiet:true})
+  state.stopping=false
   // Voice: make sure what was said has been matched to an option before saving it
-  if(state.mode==='voice' && !state.selectedOption && state.transcript.trim()) await runMatch(state.transcript)
+  const supplied=state.mode==='typed'?state.freeText.trim():state.transcript.trim()
+  if(!state.selectedOption && supplied) await runMatch(supplied)
+  if(!state.selectedOption){
+    state.notice='Please select the option that best matches your answer before saving.'
+    state.saving=false;render();return
+  }
   const q=questions[state.idx]
   const ans=state.mode==='typed'?(state.freeText.trim()||state.selectedOption):(state.transcript.trim()||state.freeText.trim()||state.selectedOption)
 
   // Save audio blob to local store immediately when answer is saved
   if(state.mode==='voice' && state.audioChunks.length && currentClientId){
-    const mimeType=['audio/webm;codecs=opus','audio/webm','audio/ogg;codecs=opus','audio/mp4','audio/mpeg'].find(m=>MediaRecorder.isTypeSupported(m))||'audio/webm'
-    const blob=new Blob(state.audioChunks,{type:mimeType})
-    storeAudio(currentClientId, q.id, blob, mimeType, ans)
+    const blob=recordingBlob()
+    storeAudio(currentClientId, q.id, blob, blob.type, ans)
   }
 
   // voice, and Hindi/Kannada: save the English option confirmed on screen (+ what was said as the transcript)
-  const chosen=(state.mode==='voice'||state.lang!=='en')?(state.selectedOption||null):ans
-  const said=(state.mode==='voice'||state.lang!=='en')?ans:null
-  state.answers=state.answers.filter(a=>a.qId!==q.id).concat({qId:q.id,answer:chosen||ans,transcript:said})
+  const chosen=state.selectedOption
+  const said=(state.mode==='voice'||state.lang!=='en'||ans!==chosen)?ans:null
   state.saving=true; render()
 
   try{
@@ -2144,25 +2208,42 @@ async function saveAnswer(){
 
       // Upload audio blob to backend if voice mode
       if(state.mode==='voice' && state.audioChunks && state.audioChunks.length>0){
-        try{
-          const mimeType=['audio/webm;codecs=opus','audio/webm','audio/ogg;codecs=opus','audio/mp4','audio/mpeg'].find(m=>MediaRecorder.isTypeSupported(m))||'audio/webm'
-          const blob=new Blob(state.audioChunks,{type:mimeType})
+        {
+          const blob=recordingBlob()
           const form=new FormData()
-          form.append('file', blob, `session-${state.backendSessionId}-q${q.id}.webm`)
+          form.append('file', blob, `q${q.id}.${audioExtension(blob.type)}`)
           form.append('transcript', ans||'')
           const headers = state.sessionToken ? { 'X-Session-Token': state.sessionToken } : {}
           const up=await fetch(`${API}/api/sessions/${state.backendSessionId}/answers/${q.id}/audio`,{method:'POST',headers,body:form})
-          if(up.ok){ const r=await up.json(); audioUrl=r.audio_url; console.log('Audio uploaded:', audioUrl) }
-        }catch(e){ console.warn('Audio upload failed (continuing):', e) }
+          if(!up.ok) throw new Error(`Audio upload failed (${up.status}). Please retry.`)
+          const r=await up.json(); audioUrl=r.audio_url
+        }
       }
 
       // Save answer text + audio URL reference to backend
       await apiReq(`/api/sessions/${state.backendSessionId}/answers`,{method:'POST',body:JSON.stringify({question_id:q.id,question_text:q.text,typed_answer:chosen,transcript:said,audio_url:audioUrl})})
     }
-  }catch(e){ console.warn('Save answer failed (offline mode):', e) }
+  }catch(e){
+    console.warn('Answer was not saved:', e)
+    state.notice='Not saved. Your answer and recording are still here. Check the connection and retry.'
+    state.saving=false;render()
+    return
+  }
+  state.answers=state.answers.filter(a=>a.qId!==q.id).concat({qId:q.id,answer:chosen||ans,transcript:said})
 
-  if(state.idx===questions.length-1){ await finishSession() }
-  else{ state.idx++; state.selectedOption='';state.manualPick=false; state.freeText=''; state.transcript=''; state.audioChunks=[]; state.notice=''; state.match=null; state.saving=false; render() }
+  if(state.idx===questions.length-1){ state.reportPending=true;await finishSession() }
+  else{ await goToQuestion(state.idx+1) }
+}
+async function goToQuestion(index) {
+  if (state.recording) await stopRecording({quiet:true})
+  clearTimeout(matchTimer); matchSeq++
+  state.idx=index
+  const saved=state.answers.find(a=>a.qId===questions[index].id)
+  const clip=getAudioForClient(currentClientId)[questions[index].id]
+  state.selectedOption=questions[index].options.includes(saved?.answer)?saved.answer:''
+  state.manualPick=!!state.selectedOption;state.freeText=state.mode==='typed'?(saved?.transcript||saved?.answer||''):''
+  state.transcript=saved?.transcript||'';state.audioChunks=clip?[clip.blob]:[]
+  state.audioMimeType=clip?.mimeType||'';state.match=null;state.notice='';state.saving=false;render()
 }
 async function finishSession(){
   wearStopPolling(); paintAlerts([])   // backend stops recording sensor data on /complete
@@ -2181,7 +2262,14 @@ async function finishSession(){
       }
     }else throw new Error('offline')
   }catch(e){
-    // Offline fallback — score locally
+    if(state.backendSessionId){
+      console.warn('Server report generation failed:', e)
+      state.notice='Answers saved, but the server report is not ready. Check the connection and retry.'
+      state.screen='assessment';state.saving=false;render()
+      if(wear.active)wearStartPolling()
+      return
+    }
+    // Explicit offline sessions can still score locally.
     state.scores=calcScores(state.answers)
     state.report=buildReport(state.scores)
   }
@@ -2217,12 +2305,14 @@ async function finishSession(){
   }
   // Refresh admin lists if logged in
   if(adminLoggedIn){ renderClients('','inline'); renderClients('','admin'); updateAdminStats() }
-  state.screen='results'; state.saving=false; render()
+  state.reportPending=false;state.screen='results'; state.saving=false; render()
 }
 function resetApp(){
+  if (state.recording) stopRecording({quiet:true})
+  clearTimeout(matchTimer);matchSeq++
   if(wear.active&&state.backendSessionId) wearFetch(`/api/sessions/${state.backendSessionId}/device`,{method:'DELETE'}).catch(()=>{})
   wearReset()
-  Object.assign(state,{screen:'landing',mode:null,idx:0,selectedOption:'',freeText:'',transcript:'',recording:false,recorder:null,recognition:null,audioChunks:[],notice:'',saving:false,errorMessage:null,answers:[],scores:null,report:null,sensorHistory:null,match:null,sessionId:null,backendSessionId:null})
+  Object.assign(state,{screen:'landing',mode:null,idx:0,selectedOption:'',freeText:'',transcript:'',recording:false,recorder:null,recognition:null,audioChunks:[],audioMimeType:'',stopping:false,reportPending:false,notice:'',saving:false,errorMessage:null,answers:[],scores:null,report:null,sensorHistory:null,match:null,sessionId:null,backendSessionId:null})
   document.getElementById('sub-register').style.display=''
   document.getElementById('sub-app').style.display='none'
   render()
@@ -2476,7 +2566,7 @@ async function runMatch(text) {
       body: JSON.stringify({ text: t, lang: state.lang, labels: q.options.map(optLabel) }) })
     if (seq !== matchSeq || questions[state.idx].id !== q.id) return          // an older request
     state.match = { qid: q.id, ...r }
-    if (r.option && !state.manualPick && (state.mode === 'voice' || state.lang !== 'en')) state.selectedOption = r.option
+    if (r.option && !state.manualPick) state.selectedOption = r.option
     paintMatch()
     const nb = document.querySelector('[data-action="next"]'); if (nb) nb.disabled = !canContinue()
   } catch (e) { /* matcher unavailable: the person simply taps an option */ }
@@ -2509,6 +2599,8 @@ const audioStore = {}
 
 function storeAudio(clientId, qId, blob, mimeType, transcript) {
   if (!audioStore[clientId]) audioStore[clientId] = {}
+  const previous=audioStore[clientId][qId]
+  if(previous?.url)URL.revokeObjectURL(previous.url)
   audioStore[clientId][qId] = { blob, mimeType, transcript, url: URL.createObjectURL(blob) }
 }
 
@@ -2521,13 +2613,26 @@ function getAudioForClient(clientId) {
    better restart logic, and per-question blob storage
 ════════════════════════════════════════════════════ */
 async function toggleRecording() {
+  if(state.requestingMic||state.saving||state.stopping)return
   if (state.recording) { stopRecording(); return }
   if (!navigator.mediaDevices?.getUserMedia) {
     state.notice = 'Microphone not available in this browser. Please type your answer.'
     render(); return
   }
+  const session=state.backendSessionId, index=state.idx
+  let permissionActive=true, timer, stream
+  state.requestingMic=true
   try {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false })
+    stream = await Promise.race([
+      navigator.mediaDevices.getUserMedia({audio:true,video:false}).then(value=>{
+        if(!permissionActive){value.getTracks().forEach(t=>t.stop());throw new Error('Microphone request expired.')}
+        return value
+      }),
+      new Promise((_,reject)=>{timer=setTimeout(()=>reject(new Error('Microphone permission timed out.')),15000)})
+    ])
+    if(state.backendSessionId!==session||state.idx!==index||state.mode!=='voice'){
+      stream.getTracks().forEach(t=>t.stop());return
+    }
     state.audioChunks = []
 
     // Pick best supported MIME type
@@ -2536,19 +2641,23 @@ async function toggleRecording() {
 
     const recOpts = mimeType ? { mimeType } : {}
     const rec = new MediaRecorder(stream, recOpts)
-    rec.ondataavailable = e => { if (e.data && e.data.size > 0) state.audioChunks.push(e.data) }
+    state.audioMimeType = rec.mimeType || mimeType || 'audio/webm'
+    state.transcript='';state.selectedOption='';state.manualPick=false;state.match=null
+    const recordedClient=currentClientId, recordedQuestion=questions[state.idx].id
+    const chunks=state.audioChunks, recordedMime=state.audioMimeType
+    rec.ondataavailable = e => { if (e.data && e.data.size > 0) chunks.push(e.data) }
     rec.onstop = () => {
       stream.getTracks().forEach(t => t.stop())
       // Save blob immediately so it's available even if page re-renders
-      if (state.audioChunks.length && currentClientId) {
-        const blob = new Blob(state.audioChunks, { type: mimeType || 'audio/webm' })
-        const q = questions[state.idx]
-        storeAudio(currentClientId, q.id, blob, mimeType || 'audio/webm', state.transcript)
+      if (chunks.length && recordedClient) {
+        const blob = new Blob(chunks, { type: recordedMime })
+        storeAudio(recordedClient, recordedQuestion, blob, recordedMime, state.transcript)
       }
     }
 
     // Start MediaRecorder with 250ms timeslice for smoother data collection
     rec.start(250)
+    setTimeout(()=>{if(state.recorder===rec&&state.recording)stopRecording()},120000)
     state.recorder = rec
     state.recording = true
     state.notice = ''   // drop "Recording saved" from an earlier take
@@ -2558,9 +2667,12 @@ async function toggleRecording() {
 
     render()
   } catch(err) {
+    stream?.getTracks().forEach(t=>t.stop())
     console.error('Recording error:', err)
-    state.notice = 'Microphone permission denied. You can still type your answer or select an option.'
+    state.notice = 'Microphone unavailable or permission not granted. Attach an answer recording, or enter the answer manually.'
     render()
+  } finally {
+    permissionActive=false;clearTimeout(timer);state.requestingMic=false
   }
 }
 
@@ -2595,10 +2707,15 @@ function startSpeechRecog() {
       if (e.error === 'no-speech') return // ignore silences
       if (e.error === 'aborted') return
       console.warn('Speech recognition error:', e.error)
+      if (['network','not-allowed','service-not-allowed','audio-capture'].includes(e.error)) {
+        state.recognition=null
+        state.notice='Live transcription is unavailable. Your recording is retained; enter its transcript or select an option before saving.'
+        render()
+      }
     }
     recog.onend = () => {
       // Only restart if still recording
-      if (state.recording) {
+      if (state.recording && state.recognition === recog) {
         try { recog.start() } catch(e) { /* already started */ }
       }
     }
@@ -2622,9 +2739,12 @@ function stopRecording({ quiet = false } = {}) {
   })
   state.recording = false
   if (!quiet) {
+    return done.then(async () => {
     state.notice = tr('recordingSaved')
     render()
-    runMatch(state.transcript)
+    if(!state.transcript.trim()&&state.audioChunks.length)await transcribeRecording()
+    else runMatch(state.transcript)
+    })
   }
   return done
 }
@@ -2696,7 +2816,15 @@ function renderBaselineDone(){
 function renderAssessment(){
   const q=questions[state.idx]; const prog=Math.round(((state.idx+1)/questions.length)*100)
   const cl=currentClient||{name:'User',email:'—',age:'—',job:'—'}
-  const ansBlock=state.mode==='typed'?`<label class="answer-field"><span>${esc(tr('yourAnswer'))}</span><textarea data-field="typed" placeholder="${esc(tr('typePlaceholder'))}" ${state.saving?'disabled':''}>${esc(state.freeText)}</textarea></label>`:`<div class="voice-tools"><button class="btn-record ${state.recording?'recording':''}" data-action="record" ${state.saving?'disabled':''}>${esc(state.recording?tr('stopRecording'):tr('record'))}</button><span>${esc(state.recording?tr('listening'):tr('oneClip'))}</span></div><label class="answer-field"><span>${esc(tr('transcript'))}</span><textarea data-field="transcript" placeholder="${esc(tr('transcriptPlaceholder'))}" ${state.saving?'disabled':''}>${esc(state.transcript)}</textarea></label>`
+  const disabled=state.saving||state.stopping
+  const clip=getAudioForClient(currentClientId)[q.id]
+  const ansBlock=state.mode==='typed'
+    ? `<label class="answer-field"><span>${esc(tr('yourAnswer'))}</span><textarea data-field="typed" placeholder="${esc(tr('typePlaceholder'))}" ${disabled?'disabled':''}>${esc(state.freeText)}</textarea></label>`
+    : `<div class="voice-tools"><button class="btn-record ${state.recording?'recording':''}" data-action="record" ${disabled?'disabled':''}>${esc(state.recording?tr('stopRecording'):tr('record'))}</button><span>${esc(state.recording?tr('listening'):tr('oneClip'))}</span></div>
+       <label class="answer-field"><span>Answer recording</span><input type="file" data-field="recording" accept="audio/*,.webm,.m4a" ${disabled||state.recording?'disabled':''}></label>
+       ${clip&&!state.recording?`<audio controls aria-label="Answer recording playback" src="${esc(clip.url)}" style="width:100%;margin:12px 0"></audio>`:''}
+       ${state.audioChunks.length&&!state.recording?`<button class="btn-ghost" data-action="transcribe" ${disabled?'disabled':''}>Transcribe recording</button>`:''}
+       <label class="answer-field"><span>${esc(tr('transcript'))}</span><textarea data-field="transcript" placeholder="${esc(tr('transcriptPlaceholder'))}" ${disabled?'disabled':''}>${esc(state.transcript)}</textarea></label>`
   app().innerHTML=`<main class="shell assessment"><header class="topbar"><div><div class="topbar-eyebrow">${esc(state.mode==='voice'?tr('voiceSession'):tr('typedSession'))}</div><h1>${esc(tr('questionOf',{n:q.id,total:questions.length}))}</h1></div><button class="btn-ghost" data-action="reset">${esc(tr('startOver'))}</button></header><section class="q-layout"><aside class="progress-panel"><div class="progress-ring-wrap"><div class="p-ring" style="--p:${prog}"><span>${prog}%</span></div></div><div class="p-cat-label">${esc(catLabel(q.category))}</div><div class="client-pill"><div class="cp-name">${esc(cl.name)}</div><div class="cp-sub">${esc(cl.job)} · Age ${esc(String(cl.age))}</div><div class="cp-sub">${esc(cl.email)}</div></div>${wear.active?'<div class="live-panel" id="live-panel"></div>':''}<div class="saved-note">${esc(tr('answersSaved',{n:state.answers.length}))}</div></aside><section class="q-card"><p class="q-text" lang="${state.lang}">${esc(qText(q))}</p><div class="option-grid">${q.options.map(o=>`<button class="option-btn ${state.selectedOption===o?'selected':''}" data-option="${esc(o)}" lang="${state.lang}" ${state.saving?'disabled':''}>${esc(optLabel(o))}</button>`).join('')}</div><div class="match-note" id="match-note" aria-live="polite"></div>${ansBlock}${state.notice?`<p class="notice">${esc(state.notice)}</p>`:''} ${state.saving?`<p class="notice saving">⏳ ${esc(tr('saving'))}</p>`:''}<div class="q-actions"><button class="btn-ghost" data-action="previous" ${state.idx===0||state.saving?'disabled':''}>${esc(tr('previous'))}</button><button class="btn-primary" data-action="next" ${canContinue()&&!state.saving?'':'disabled'}>${esc(state.saving?tr('saving'):state.idx===questions.length-1?tr('generateReport'):tr('saveContinue'))}</button></div></section></section></main>`
 }
 /* ─── Clinical chart styles injected once ─── */
@@ -3243,10 +3371,10 @@ function buildCharts(scores, catData, pd) {
   // ── 4. Donut chart ──
   const dCtx = document.getElementById('chart-donut')?.getContext('2d')
   if (dCtx) {
-    const domainWeights = [0.30, 0.22, 0.20, 0.16, 0.12]
+    const domainWeights = [0.28, 0.22, 0.20, 0.17, 0.13]
     const domainVals    = [scores.musculoskeletalRisk, scores.workloadStress, scores.postureRisk, scores.eyeStrain, scores.recoveryRisk]
     const weighted      = domainVals.map((v,i) => Math.round(v * domainWeights[i]))
-    const donutLabels   = ['Musculoskeletal (30%)','Workload (22%)','Posture (20%)','Visual Fatigue (16%)','Recovery (12%)']
+    const donutLabels   = ['Musculoskeletal (28%)','Workload (22%)','Posture (20%)','Visual Fatigue (17%)','Recovery (13%)']
     const donutColors   = ['#0a9396','#4564d6','#f59e0b','#7c3aed','#059669']
     new Chart(dCtx, {
       type: 'doughnut',
@@ -3292,24 +3420,38 @@ document.getElementById('app').addEventListener('click',e=>{
   if(a==='start-typed')startAssessment('typed')
   if(a==='start-voice')startAssessment('voice')
   if(a==='reset')resetApp()
-  if(a==='previous'){if(state.idx>0){state.idx--;state.selectedOption='';state.manualPick=false;state.freeText='';state.transcript='';state.match=null;render()}}
+  if(a==='previous'&&!state.saving&&!state.stopping&&state.idx>0)goToQuestion(state.idx-1)
   if(a==='next')saveAnswer()
   if(a==='record')toggleRecording()
+  if(a==='transcribe'&&!state.recording&&!state.saving&&!state.stopping)transcribeRecording()
   if(a.startsWith('lang-'))setLang(a.slice(5))
   if(a==='wear-baseline'||a==='wear-redo')wearStartBaseline()
   if(a==='wear-skip')wearSkip()
   if(a==='wear-begin'){state.screen='assessment';render()}
-  if(a==='download-pdf'&&state.backendSessionId)window.open(`${API}/api/sessions/${state.backendSessionId}/report.pdf`,'_blank')
+  if(a==='download-pdf'&&state.backendSessionId)downloadSessionPdf(state.backendSessionId)
 })
 document.getElementById('app').addEventListener('input',e=>{
   const t=e.target
-  if(t.dataset.field==='typed'){state.freeText=t.value;scheduleMatch(t.value)}
-  if(t.dataset.field==='transcript'){state.transcript=t.value;scheduleMatch(t.value)}
+  if(t.dataset.field==='typed'||t.dataset.field==='transcript'){
+    if(t.dataset.field==='typed')state.freeText=t.value
+    else state.transcript=t.value
+    state.manualPick=false;state.selectedOption=questions[state.idx].options.find(o=>o.toLowerCase()===t.value.trim().toLowerCase()||optLabel(o)===t.value.trim())||''
+    scheduleMatch(t.value)
+  }
   const nb=document.querySelector('[data-action="next"]')
   if(nb)nb.disabled=!canContinue()
 })
-document.getElementById('app').addEventListener('change',e=>{
+document.getElementById('app').addEventListener('change',async e=>{
   const t=e.target
+  if(t.dataset.field==='recording'&&!state.recording&&!state.saving&&!state.stopping){
+    const file=t.files?.[0];if(!file)return
+    if(file.size>10*1024*1024){state.notice='Recording must be no larger than 10 MB.';render();return}
+    const fallback=({'wav':'audio/wav','mp3':'audio/mpeg','m4a':'audio/mp4','mp4':'audio/mp4','ogg':'audio/ogg','webm':'audio/webm'})[file.name.split('.').pop().toLowerCase()]
+    state.audioChunks=[file];state.audioMimeType=file.type||fallback||'application/octet-stream'
+    state.transcript='';state.selectedOption='';state.manualPick=false;state.match=null
+    const blob=recordingBlob();storeAudio(currentClientId,questions[state.idx].id,blob,blob.type,'')
+    await transcribeRecording();return
+  }
   if(t.dataset.field==='answering-hand' && (t.value==='left'||t.value==='right')) {
     wear.answeringHand=t.value
     paintWear()

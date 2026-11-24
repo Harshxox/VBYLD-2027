@@ -24,7 +24,8 @@ from typing import Optional
 
 from app.db.database import get_db
 from app.models.assessment import AssessmentSession, AudioFile
-from app.models.schemas import SessionCreate, SessionOut, SessionCreateOut
+from app.models.schemas import SessionCreate, SessionOut, SessionCreateOut, SessionModeUpdate
+from app.research_export import delete_session_exports
 from app.models.sensors import SensorLink, SensorReading
 from app.models.consent import Consent, CONSENT_VERSION
 from app.security import (
@@ -145,6 +146,23 @@ def get_session(
 
 # ── Delete session (admin only) ───────────────────────────────────────────────
 
+@router.patch("/{session_id}/mode", response_model=SessionOut)
+def set_session_mode(
+    session_id: str,
+    payload: SessionModeUpdate,
+    db: Session = Depends(get_db),
+    x_session_token: Optional[str] = Header(default=None),
+    caller: str = Depends(require_session_access),
+):
+    session = _get_session_for(db, session_id, caller, x_session_token)
+    if session.answers or session.completed_at:
+        raise HTTPException(status_code=409, detail="Mode cannot change after answers have been saved.")
+    session.input_mode = payload.input_mode
+    db.commit()
+    db.refresh(session)
+    return session
+
+
 @router.delete("/{session_id}", status_code=204)
 def delete_session(
     session_id: str,
@@ -158,6 +176,9 @@ def delete_session(
     session = db.query(AssessmentSession).filter(AssessmentSession.id == session_id).first()
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
+
+    # Exported rows are also participant data and must be removed on request.
+    delete_session_exports(session_id)
 
     # Remove audio files from disk
     session_audio_dir = os.path.join(AUDIO_DIR, session_id)

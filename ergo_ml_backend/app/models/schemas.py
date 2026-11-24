@@ -1,6 +1,6 @@
 from __future__ import annotations
 from datetime import datetime
-from typing import Optional, List, Any, Dict
+from typing import Optional, List, Any, Dict, Literal
 from pydantic import BaseModel, EmailStr, Field, field_validator
 from pydantic_core import PydanticCustomError
 
@@ -66,6 +66,10 @@ class SessionCreate(BaseModel):
     # Accepted but ignored: the server stamps its own CONSENT_VERSION so the
     # record always matches the wording the participant actually saw.
     consent_version: Optional[str] = None
+
+class SessionModeUpdate(BaseModel):
+    input_mode: Literal["typed", "voice"]
+
 
 class AudioFileOut(BaseModel):
     id:          int
