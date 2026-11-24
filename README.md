@@ -90,7 +90,29 @@ The held-out set scored 70%, then 85%, the first times it was run; the general f
 
 ## Setup
 
-**Needs:** Python 3.10+, Node.js 18+, Chrome or Edge, and the Arduino IDE only if you flash the ESP32. No hardware? Use demo mode (step 4).
+**Needs:** Python 3.10+, Node.js 22.12+ (Node 24 LTS recommended for Vite 8), Chrome or Edge, and the Arduino IDE only if you flash the ESP32. No hardware? Use demo mode (step 4).
+
+### Windows local launcher
+
+From the repository root, install the frontend and backend dependencies once:
+
+```powershell
+npm ci
+python -m venv ergo_ml_backend/.venv
+./ergo_ml_backend/.venv/Scripts/python.exe -m pip install -r ergo_ml_backend/requirements-dev.txt
+```
+
+Then double-click `Open-ErgoCare.bat`. The launcher generates ignored local
+configuration with unique secrets when no backend `.env` exists, starts both
+servers on available loopback ports, and opens the app. New local admin
+credentials are written to `LOCAL_ACCESS.txt`; never commit or share that file.
+Existing `.env` files are preserved, so keep using their configured credentials.
+Run `Stop-Local.ps1` to stop only the processes tracked by the launcher.
+
+See [local verification notes](docs/LOCAL_HANDOFF.md) and the
+[team integration checklist](docs/TEAM_INTEGRATION.md) before integration.
+
+### Manual setup
 
 **1. Get the code**
 ```bat

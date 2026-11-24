@@ -17,6 +17,7 @@ from sqlalchemy.orm import Session
 from app.db.database import get_db
 from app.models.assessment import AssessmentSession, AssessmentAnswer, AudioFile
 from app.models.schemas import AnswerIn, AnswerOut
+from app.domain.questions import QUESTIONS_BY_ID
 from app.security import require_session_access, session_token_matches
 
 router = APIRouter()
@@ -29,7 +30,8 @@ ALLOWED_TYPES    = {
     "audio/wav",  "audio/wave", "audio/x-wav",
     "audio/m4a",  "video/webm",                 # Chrome labels .webm as video/webm
 }
-ALLOWED_EXTS     = {".webm", ".ogg", ".mp4", ".wav", ".m4a"}
+ALLOWED_EXTS     = {".webm", ".ogg", ".mp4", ".wav", ".m4a", ".mp3"}
+ALLOWED_TYPES.add("audio/mpeg")
 
 os.makedirs(AUDIO_DIR, exist_ok=True)
 
@@ -72,7 +74,7 @@ def _check_file_type(file: UploadFile):
     mime_ok = mime in ALLOWED_TYPES
     ext_ok  = ext in ALLOWED_EXTS or ext == ""   # ext may be empty for blobs
 
-    if not mime_ok and not ext_ok:
+    if not mime_ok or not ext_ok:
         raise HTTPException(
             status_code=415,
             detail=(
@@ -140,6 +142,27 @@ def _check_file_size(data: bytes):
 
 # ── Routes ────────────────────────────────────────────────────────────────────
 
+def _check_audio_header(data: bytes):
+    """Reject obvious disguised text; signatures do not validate an entire codec."""
+    valid = (
+        (data.startswith(b"RIFF") and data[8:12] == b"WAVE")
+        or data.startswith(b"OggS")
+        or data.startswith(b"\x1a\x45\xdf\xa3")
+        or (len(data) >= 12 and data[4:8] == b"ftyp")
+        or data.startswith(b"ID3")
+        or (len(data) >= 2 and data[0] == 0xff and data[1] & 0xe0 == 0xe0)
+    )
+    if not valid:
+        raise HTTPException(status_code=415, detail="The content is not a supported audio container.")
+
+
+def _question_or_422(question_id: int):
+    question = QUESTIONS_BY_ID.get(question_id)
+    if question is None:
+        raise HTTPException(status_code=422, detail="Unknown questionnaire question id.")
+    return question
+
+
 @router.post("/{session_id}/answers", response_model=AnswerOut, status_code=201)
 def save_answer(
     session_id: str,
@@ -156,21 +179,27 @@ def save_answer(
     if caller.startswith("session:") and not session_token_matches(session.access_token, x_session_token):
         raise HTTPException(status_code=403, detail="That access token belongs to a different session.")
 
-    # Upsert: remove existing answer for the same question
-    db.query(AssessmentAnswer).filter(
+    question = _question_or_422(payload.question_id)
+    if not (payload.typed_answer or "").strip() and not (payload.transcript or "").strip():
+        raise HTTPException(status_code=422, detail="An answer or transcript is required.")
+    recording = db.query(AudioFile).filter(
+        AudioFile.session_id == session_id,
+        AudioFile.question_id == payload.question_id,
+    ).first()
+    audio_url = recording.audio_url if recording else None
+    if payload.audio_url and payload.audio_url != audio_url:
+        raise HTTPException(status_code=422, detail="Audio must be uploaded for this session and question.")
+    answer = db.query(AssessmentAnswer).filter(
         AssessmentAnswer.session_id  == session_id,
         AssessmentAnswer.question_id == payload.question_id,
-    ).delete()
-
-    answer = AssessmentAnswer(
-        session_id    = session_id,
-        question_id   = payload.question_id,
-        question_text = payload.question_text,
-        typed_answer  = payload.typed_answer,
-        transcript    = payload.transcript,
-        audio_url     = payload.audio_url,
-        created_at    = datetime.now(timezone.utc),
-    )
+    ).first()
+    if answer is None:
+        answer = AssessmentAnswer(session_id=session_id, question_id=payload.question_id)
+    answer.question_text = question["text"]
+    answer.typed_answer = payload.typed_answer
+    answer.transcript = payload.transcript
+    answer.audio_url = audio_url
+    answer.created_at = datetime.now(timezone.utc)
     db.add(answer)
     db.commit()
     db.refresh(answer)
@@ -196,7 +225,7 @@ async def upload_audio(
       - Server must have ≥ MIN_FREE_MB disk space free        → 507
 
     On success:
-      - Deletes old audio file from disk if one existed (Bug 4 fix)
+      - Replaces old audio only after the new recording is committed
       - Saves file to  uploads/audio/{session_id}/q{n}_{uuid}{ext}
         (name is generated server-side; a client filename can never escape the folder)
       - Updates        assessment_answers row (audio_url + transcript)
@@ -209,25 +238,23 @@ async def upload_audio(
         raise HTTPException(status_code=403, detail="That access token belongs to a different session.")
 
     # ── Guard 1: file type ────────────────────────────────────────────────────
+    question = _question_or_422(question_id)
     _check_file_type(file)
 
     # ── Guard 2: read into memory so we can size-check before touching disk ──
-    data = await file.read()
+    data = await file.read(MAX_AUDIO_BYTES + 1)
     _check_file_size(data)
+    _check_audio_header(data)
 
     # ── Guard 3: disk space ───────────────────────────────────────────────────
     _check_disk_space()
 
-    # ── Bug 4 fix: delete old audio file from disk before saving the new one ─
+    # Preserve the existing recording until its replacement has committed.
     old_audio = db.query(AudioFile).filter(
         AudioFile.session_id  == session_id,
         AudioFile.question_id == question_id,
     ).first()
-    if old_audio and os.path.isfile(old_audio.file_path):
-        try:
-            os.remove(old_audio.file_path)
-        except OSError:
-            pass  # already gone — that's fine
+    old_path = old_audio.file_path if old_audio else None
 
     # ── Delete the old AudioFile DB row ───────────────────────────────────────
     db.query(AudioFile).filter(
@@ -271,18 +298,27 @@ async def upload_audio(
         if transcript:
             existing.transcript = transcript
     else:
-        from app.domain.questions import QUESTIONS_BY_ID
-        q = QUESTIONS_BY_ID.get(question_id)
         db.add(AssessmentAnswer(
             session_id    = session_id,
             question_id   = question_id,
-            question_text = q["text"] if q else f"Question {question_id}",
+            question_text = question["text"],
             transcript    = transcript or None,
             audio_url     = audio_url,
             created_at    = datetime.now(timezone.utc),
         ))
 
-    db.commit()
+    try:
+        db.commit()
+    except Exception:
+        db.rollback()
+        os.remove(file_path)
+        raise
+
+    if old_path and old_path != file_path and os.path.isfile(old_path):
+        try:
+            os.remove(old_path)
+        except OSError:
+            pass
 
     limit_mb  = MAX_AUDIO_BYTES // (1024 * 1024)
     actual_mb = round(file_size / (1024 * 1024), 2)

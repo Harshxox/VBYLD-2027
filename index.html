@@ -10,7 +10,7 @@
   // Read backend URL from meta tag (set by Vite env replacement).
   // Falls back to localhost for local development when meta value is the literal placeholder.
   var _rawMeta = document.querySelector('meta[name="api-base"]')?.content || ''
-  window.__ERGO_API__ = (_rawMeta && _rawMeta !== '%VITE_API_BASE%') ? _rawMeta : 'http://127.0.0.1:8000'
+  window.__ERGO_API__ = /^https?:\/\//.test(_rawMeta) ? _rawMeta : 'http://127.0.0.1:8000'
 </script>
 <!-- Hindi / Kannada text (public/i18n.js) - loaded before the app script -->
 <script src="/i18n.js"></script>
@@ -2082,8 +2082,9 @@ async function startAssessment(mode){
   try{
     // If we already have a session from registration, update its mode; else create fresh
     if(state.backendSessionId){
-      // Session already created at registration — just update mode via a lightweight patch
-      // (backend doesn't need a separate call; answers will go to the existing session)
+      await apiReq(`/api/sessions/${state.backendSessionId}/mode`, {
+        method:'PATCH', body:JSON.stringify({input_mode:mode})
+      })
     } else {
       const cl = currentClient || {}
       const sess = await apiReq('/api/sessions',{
@@ -2104,6 +2105,11 @@ async function startAssessment(mode){
       state.sessionToken = sess.access_token || null
     }
   }catch(e){
+    if(state.backendSessionId){
+      state.saving=false;state.screen='landing';render()
+      alert('Could not save your assessment mode. Please retry when the backend is available.')
+      return
+    }
     state.errorMessage='Backend unreachable — running in offline mode.'
     state.sessionToken = null
     if(!state.sessionId) state.sessionId='offline-'+Date.now()
@@ -2135,7 +2141,6 @@ async function saveAnswer(){
   // voice, and Hindi/Kannada: save the English option confirmed on screen (+ what was said as the transcript)
   const chosen=(state.mode==='voice'||state.lang!=='en')?(state.selectedOption||null):ans
   const said=(state.mode==='voice'||state.lang!=='en')?ans:null
-  state.answers=state.answers.filter(a=>a.qId!==q.id).concat({qId:q.id,answer:chosen||ans,transcript:said})
   state.saving=true; render()
 
   try{
@@ -2144,7 +2149,7 @@ async function saveAnswer(){
 
       // Upload audio blob to backend if voice mode
       if(state.mode==='voice' && state.audioChunks && state.audioChunks.length>0){
-        try{
+        {
           const mimeType=['audio/webm;codecs=opus','audio/webm','audio/ogg;codecs=opus','audio/mp4','audio/mpeg'].find(m=>MediaRecorder.isTypeSupported(m))||'audio/webm'
           const blob=new Blob(state.audioChunks,{type:mimeType})
           const form=new FormData()
@@ -2152,14 +2157,21 @@ async function saveAnswer(){
           form.append('transcript', ans||'')
           const headers = state.sessionToken ? { 'X-Session-Token': state.sessionToken } : {}
           const up=await fetch(`${API}/api/sessions/${state.backendSessionId}/answers/${q.id}/audio`,{method:'POST',headers,body:form})
-          if(up.ok){ const r=await up.json(); audioUrl=r.audio_url; console.log('Audio uploaded:', audioUrl) }
-        }catch(e){ console.warn('Audio upload failed (continuing):', e) }
+          if(!up.ok) throw new Error(`Audio upload failed (${up.status}). Please retry.`)
+          const r=await up.json(); audioUrl=r.audio_url
+        }
       }
 
       // Save answer text + audio URL reference to backend
       await apiReq(`/api/sessions/${state.backendSessionId}/answers`,{method:'POST',body:JSON.stringify({question_id:q.id,question_text:q.text,typed_answer:chosen,transcript:said,audio_url:audioUrl})})
     }
-  }catch(e){ console.warn('Save answer failed (offline mode):', e) }
+  }catch(e){
+    console.warn('Answer was not saved:', e)
+    state.notice='Not saved. Your answer and recording are still here. Check the connection and retry.'
+    state.saving=false;render()
+    return
+  }
+  state.answers=state.answers.filter(a=>a.qId!==q.id).concat({qId:q.id,answer:chosen||ans,transcript:said})
 
   if(state.idx===questions.length-1){ await finishSession() }
   else{ state.idx++; state.selectedOption='';state.manualPick=false; state.freeText=''; state.transcript=''; state.audioChunks=[]; state.notice=''; state.match=null; state.saving=false; render() }
@@ -2181,7 +2193,14 @@ async function finishSession(){
       }
     }else throw new Error('offline')
   }catch(e){
-    // Offline fallback — score locally
+    if(state.backendSessionId){
+      console.warn('Server report generation failed:', e)
+      state.notice='Answers saved, but the server report is not ready. Check the connection and retry.'
+      state.screen='assessment';state.saving=false;render()
+      if(wear.active)wearStartPolling()
+      return
+    }
+    // Explicit offline sessions can still score locally.
     state.scores=calcScores(state.answers)
     state.report=buildReport(state.scores)
   }
